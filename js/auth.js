@@ -80,7 +80,10 @@ const Auth = (() => {
       const cred = await fbAuth.createUserWithEmailAndPassword(toEmail(username), password);
       const uid = cred.user.uid;
 
-      // Firestore 프로필 저장 (onAuthStateChanged 보다 먼저)
+      // 토큰 갱신 대기 (Firestore 권한 활성화)
+      await cred.user.getIdToken(true);
+
+      // Firestore 프로필 저장
       await fsdb.collection('users').doc(uid).set({
         id: uid,
         username,
