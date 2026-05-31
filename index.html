@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#0A0A0A">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/auth.css">
-<link href="https://fonts.googleapis.com/css2?family=Monoton&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Geist+Mono:wght@400;600&display=swap" rel="stylesheet">
 
 <!-- Firebase SDK (compat 버전) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -34,7 +34,7 @@
       <rect x="8" y="22" width="10" height="10" rx="2.5" fill="var(--lime)" opacity=".6"/>
       <rect x="22" y="22" width="10" height="10" rx="2.5" fill="var(--lime)" opacity=".3"/>
     </svg>
-    <span class="splash-name" style="font-family:'Monoton',cursive;letter-spacing:2px">CoWork</span>
+    <span class="splash-name" style="font-family:'Press Start 2P',cursive;letter-spacing:2px;font-size:20px">CoWork</span>
   </div>
 </div>
 
@@ -49,7 +49,7 @@
         <rect x="8" y="22" width="10" height="10" rx="2.5" fill="var(--lime)" opacity=".6"/>
         <rect x="22" y="22" width="10" height="10" rx="2.5" fill="var(--lime)" opacity=".3"/>
       </svg>
-      <h1 class="auth-title" style="font-family:'Monoton',cursive;letter-spacing:2px">CoWork</h1>
+      <h1 class="auth-title" style="font-family:'Press Start 2P',cursive;letter-spacing:2px;font-size:22px;line-height:1.4">CoWork</h1>
       <p class="auth-sub" data-i18n="auth.tagline">팀과 함께하는 스마트 협업</p>
     </div>
 
@@ -134,7 +134,7 @@
           <rect x="8" y="22" width="10" height="10" rx="2.5" fill="var(--lime)" opacity=".6"/>
           <rect x="22" y="22" width="10" height="10" rx="2.5" fill="var(--lime)" opacity=".3"/>
         </svg>
-        <span style="font-family:'Monoton',cursive;letter-spacing:1px;font-size:16px">CoWork</span>
+        <span style="font-family:'Press Start 2P',cursive;letter-spacing:1px;font-size:13px">CoWork</span>
       </div>
       <div class="project-user-wrap">
         <span id="proj-username" class="proj-username"></span>
@@ -237,5 +237,31 @@
 <script src="js/chat.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/app.js"></script>
+
+<!-- 캐시버전 표시 -->
+<div style="
+  position:fixed;
+  bottom:6px;
+  left:50%;
+  transform:translateX(-50%);
+  font-family:'Geist Mono',monospace;
+  font-size:9px;
+  color:rgba(255,255,255,.15);
+  pointer-events:none;
+  z-index:9999;
+  letter-spacing:1px;
+  white-space:nowrap;
+" id="cache-version">v1.0.3</div>
+<script>
+// 라이트 모드일 때 버전 색상 조정
+(function(){
+  const v = document.getElementById('cache-version');
+  const obs = new MutationObserver(() => {
+    const theme = document.documentElement.getAttribute('data-theme');
+    v.style.color = theme === 'light' ? 'rgba(0,0,0,.15)' : 'rgba(255,255,255,.15)';
+  });
+  obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+})();
+</script>
 </body>
 </html>
