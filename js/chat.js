@@ -60,8 +60,8 @@ const Chat = (() => {
           <textarea id="chat-input" class="chat-input" placeholder="${I18n.t('chat.msgPh')}" rows="1"
             onkeydown="Chat.onKeyDown(event)" oninput="Chat.autoResize(this)"
             style="flex:1;background:none;border:none;outline:none;font-size:15px;color:var(--txt);resize:none;max-height:120px;line-height:1.5;padding:6px 0;font-family:var(--font-body)"></textarea>
-          <button class="chat-send-btn" onclick="Chat.send()" style="width:36px;height:36px;border-radius:12px;background:var(--lime);flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;stroke:#000"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+          <button class="chat-send-btn" onclick="Chat.send()" style="width:36px;height:36px;border-radius:12px;background:var(--accent);flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;stroke:#fff"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
           </button>
         </div>
       </div>`;

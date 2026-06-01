@@ -92,7 +92,7 @@ function togglePw(inputId, btn) {
     .loading-row { display:flex; justify-content:center; padding:60px 0; }
     .spinner {
       width:28px; height:28px; border-radius:50%;
-      border:2.5px solid var(--border); border-top-color:var(--lime);
+      border:2.5px solid var(--border); border-top-color:var(--accent);
       animation:_spin .7s linear infinite;
     }
 
@@ -116,7 +116,7 @@ function togglePw(inputId, btn) {
       background:var(--card2); border:1px solid var(--border);
       flex-shrink:0; transition:all .2s;
     }
-    .todo-ftab.active { background:var(--lime-dim); border-color:var(--lime-border); color:var(--lime); }
+    .todo-ftab.active { background:var(--accent-dim); border-color:var(--accent-border); color:var(--accent); }
 
     .todo-list { padding:8px 20px 0; }
     .todo-item {
@@ -131,7 +131,7 @@ function togglePw(inputId, btn) {
     .todo-item::before {
       content:''; position:absolute; left:0; top:0; bottom:0;
       width:3px; border-radius:0 2px 2px 0;
-      background:var(--lime); opacity:0; transition:opacity .2s;
+      background:var(--accent); opacity:0; transition:opacity .2s;
     }
     .todo-item:active { background:var(--card2); }
     .todo-urgent::before { opacity:1; }
@@ -143,7 +143,7 @@ function togglePw(inputId, btn) {
       display:flex; align-items:center; justify-content:center;
       background:var(--card2); transition:all .18s;
     }
-    .todo-check.checked { background:var(--lime); border-color:var(--lime); }
+    .todo-check.checked { background:var(--accent); border-color:var(--accent); }
     .todo-body { flex:1; min-width:0; }
     .todo-title { font-size:13px; font-weight:600; color:var(--txt); line-height:1.4; }
     .todo-done .todo-title { text-decoration:line-through; opacity:.35; }
@@ -186,13 +186,13 @@ function togglePw(inputId, btn) {
       border-radius:10px; cursor:pointer; position:relative; transition:background .12s;
     }
     .cal-d:active { background:var(--card2); }
-    .cal-d.today { background:var(--lime); color:#000; font-weight:800; border-radius:12px; }
+    .cal-d.today { background:var(--accent); color:#fff; font-weight:800; border-radius:12px; }
     .cal-d.selected { background:var(--card2); color:var(--txt); border:1px solid var(--border); }
     .cal-d.has-dot::after {
       content:''; width:4px; height:4px; border-radius:50%;
-      background:var(--lime); position:absolute; bottom:3px;
+      background:var(--accent); position:absolute; bottom:3px;
     }
-    .cal-d.today.has-dot::after { background:#000; }
+    .cal-d.today.has-dot::after { background:#fff; }
     .cal-d.inactive { opacity:.18; pointer-events:none; }
     .cal-sel-label {
       font-family:var(--font-display); font-size:14px; font-weight:700; color:var(--txt2);
@@ -232,7 +232,7 @@ function togglePw(inputId, btn) {
       width:18px; height:18px; border-radius:50%;
       background:var(--txt3); transition:all .22s cubic-bezier(.34,1.56,.64,1);
     }
-    .toggle-wrap input:checked ~ .toggle { background:var(--lime); border-color:var(--lime-dark); }
+    .toggle-wrap input:checked ~ .toggle { background:var(--accent); border-color:var(--accent); }
     .toggle-wrap input:checked ~ .toggle::after { left:21px; background:#000; }
 
     /* ══ CHAT ══ */
@@ -262,7 +262,7 @@ function togglePw(inputId, btn) {
       font-size:14px; line-height:1.55; word-break:break-word;
     }
     .msg-bubble.mine {
-      background:var(--lime); color:#000;
+      background:var(--accent); color:#fff;
       border-radius:18px 4px 18px 18px;
     }
     .msg-bubble.theirs {
@@ -285,7 +285,7 @@ function togglePw(inputId, btn) {
     .settings-icon  { width:20px; height:20px; stroke:var(--txt2); flex-shrink:0; }
     .settings-label { flex:1; font-size:14px; font-weight:500; color:var(--txt); }
     .settings-arrow { width:16px; height:16px; stroke:var(--txt3); flex-shrink:0; }
-    .settings-check { width:18px; height:18px; stroke:var(--lime); flex-shrink:0; }
+    .settings-check { width:18px; height:18px; stroke:var(--accent); flex-shrink:0; }
 
     /* NOTIF read */
     .notif-item.read { opacity:.45; }

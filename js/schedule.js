@@ -2,7 +2,7 @@
 const Schedule = (() => {
   let _projectId=null, _unsub=null, _events=[];
   let _selDate=null, _year=null, _month=null;
-  const COLORS=['#BEFF00','#4499FF','#FF9944','#9966FF','#44CC88','#FF5555'];
+  const COLORS=['#C8703C','#E89B6C','#6B9BD8','#A584C8','#7BA86B','#E5604F'];
 
   function init(projectId) {
     if (_projectId===projectId && _unsub){_render();return;}

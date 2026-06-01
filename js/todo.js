@@ -72,7 +72,7 @@ const Todo = (() => {
       <div class="todo-item ${t.done?'todo-done':''} ${t.priority==='high'&&!t.done?'todo-urgent':''}"
            onclick="Todo.showEdit('${t.id}')">
         <button class="todo-check ${t.done?'checked':''}" onclick="event.stopPropagation();Todo.toggleDone('${t.id}')">
-          ${t.done?`<svg viewBox="0 0 12 12" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"><polyline points="2,6 5,9 10,3"/></svg>`:''}
+          ${t.done?`<svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><polyline points="2,6 5,9 10,3"/></svg>`:''}
         </button>
         <div class="todo-body">
           <div class="todo-title">${escHtml(t.title)}</div>

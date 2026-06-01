@@ -1,6 +1,6 @@
 'use strict';
 const Projects = (() => {
-  const COLORS = ['#BEFF00','#4499FF','#FF9944','#9966FF','#44CC88','#FF5555'];
+  const COLORS = ['#C8703C','#E89B6C','#6B9BD8','#A584C8','#7BA86B','#E5604F'];
   function getColor(i) { return COLORS[i % COLORS.length]; }
 
   async function renderList(userId) {
@@ -237,7 +237,7 @@ function escHtml(str) {
   return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function strColor(str) {
-  const colors = ['#BEFF00','#4499FF','#FF9944','#9966FF','#44CC88','#FF5555','#FF66CC','#44DDDD'];
+  const colors = ['#C8703C','#E89B6C','#A85A35','#D88A5C','#B8704A','#E5604F','#A584C8','#6B9BD8'];
   let h = 0;
   for (let i=0;i<(str||'').length;i++) h=((h<<5)-h)+str.charCodeAt(i);
   return colors[Math.abs(h)%colors.length];
