@@ -123,6 +123,11 @@ ul { list-style: none; }
   opacity: 1; transform: translateY(0);
   pointer-events: all;
 }
+/* 채팅은 자체 flex 레이아웃 사용 */
+#s-chat {
+  overflow: hidden !important;
+  padding-bottom: 0 !important;
+}
 
 /* ─── TOPBAR ─── */
 .topbar {
