@@ -147,32 +147,46 @@ ul { list-style: none; }
 /* ─── BOTTOM NAV ─── */
 .bnav {
   display: flex;
-  padding: 8px 8px 24px;
+  padding: 10px 12px 28px;
   background: var(--bnav-bg);
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--border2);
   flex-shrink: 0; z-index: 10;
-  position: relative;
+  gap: 8px;
 }
 .bn {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 4px 0; border-radius: 14px;
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  padding: 0; border-radius: 14px;
   transition: all .2s;
   position: relative;
 }
 .bn-pill {
-  width: 40px; height: 28px;
+  width: 100%; height: 44px;
   display: flex; align-items: center; justify-content: center;
-  border-radius: 100px;
+  gap: 6px;
+  border-radius: 14px;
+  background: transparent;
   transition: all .25s cubic-bezier(.34,1.56,.64,1);
 }
-.bn.active .bn-pill { background: var(--lime); width: 54px; }
-.bn svg { width: 20px; height: 20px; stroke: var(--txt3); transition: stroke .2s; }
+.bn.active .bn-pill {
+  background: var(--lime);
+  width: 100%;
+}
+.bn svg { width: 18px; height: 18px; stroke: var(--txt3); transition: stroke .2s; flex-shrink: 0; }
 .bn.active svg { stroke: #000; }
-.bn-label { font-size: 10px; font-weight: 600; color: var(--txt3); letter-spacing: .3px; transition: color .2s; }
-.bn.active .bn-label { color: var(--lime); }
+.bn-label {
+  font-size: 11px; font-weight: 700;
+  color: var(--txt3);
+  letter-spacing: .3px;
+  transition: color .2s;
+  display: none;
+}
+.bn.active .bn-label {
+  display: block;
+  color: #000;
+}
 .nav-badge {
-  position: absolute; top: 0; right: calc(50% - 24px);
+  position: absolute; top: 4px; right: 4px;
   background: var(--red); color: #fff;
   font-size: 9px; font-weight: 800; min-width: 16px; height: 16px;
   border-radius: 100px; padding: 0 4px;
@@ -180,7 +194,17 @@ ul { list-style: none; }
   border: 2px solid var(--bg);
 }
 
-/* ─── BTN ─── */
+/* ─── BTN SPINNER ─── */
+.btn-spinner {
+  display: inline-block;
+  width: 20px; height: 20px;
+  border: 3px solid rgba(0,0,0,.2);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  vertical-align: middle;
+}
+.btn-primary:disabled { opacity: .8; cursor: not-allowed; }
 .btn-primary {
   background: var(--lime); color: #000;
   font-weight: 700; font-size: 15px;
