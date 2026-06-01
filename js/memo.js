@@ -67,19 +67,18 @@ const Memo = (() => {
     const isEdit = !!memo;
     const html = `
       <div class="modal-handle"></div>
-      <div class="modal-title">${I18n.t(isEdit?'memo.edit':'memo.new')}</div>
-      <div class="modal-body">
+      ${isEdit ? `<div class="modal-title">${I18n.t('memo.edit')}</div>` : ''}
+      <div class="modal-body" style="${isEdit?'':'padding-top:8px'}">
+        <div class="field-group">
+          <textarea id="memo-content" class="field-textarea" placeholder="${I18n.t('memo.contentPh')}" rows="10" style="min-height:200px">${escHtml(memo?.content||'')}</textarea>
+          <div id="memo-char-count" class="field-hint" style="text-align:right"></div>
+        </div>
         <div class="field-group">
           <label class="field-label">${I18n.t('memo.titleField')}</label>
           <div class="field-wrap">
             <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
             <input id="memo-title" class="field-input" type="text" placeholder="${I18n.t('memo.titlePh')}" value="${escHtml(memo?.title||'')}" maxlength="80">
           </div>
-        </div>
-        <div class="field-group">
-          <label class="field-label">${I18n.t('memo.content')}</label>
-          <textarea id="memo-content" class="field-textarea" placeholder="${I18n.t('memo.contentPh')}" rows="8">${escHtml(memo?.content||'')}</textarea>
-          <div id="memo-char-count" class="field-hint" style="text-align:right"></div>
         </div>
       </div>
       <div class="modal-footer">
@@ -88,15 +87,30 @@ const Memo = (() => {
         <button class="btn-primary" style="flex:2" onclick="Memo._save('${memo?.id||''}')">${I18n.t('memo.save')}</button>
       </div>`;
     Modal.open(html);
-    setTimeout(()=>{
+    setTimeout(() => {
       const ta = document.getElementById('memo-content');
+      const titleEl = document.getElementById('memo-title');
       const cc = document.getElementById('memo-char-count');
-      if (ta&&cc) {
+
+      // 글자수 카운터
+      if (ta && cc) {
         cc.textContent = ta.value.length + I18n.t('memo.chars');
-        ta.addEventListener('input', ()=>{ cc.textContent = ta.value.length+I18n.t('memo.chars'); });
+        ta.addEventListener('input', () => {
+          cc.textContent = ta.value.length + I18n.t('memo.chars');
+          // 신규 메모: 첫 10토큰을 제목으로 자동 입력
+          if (!isEdit && titleEl) {
+            const words = ta.value.trim().split(/\s+/).slice(0, 10).join(' ');
+            titleEl.value = words.slice(0, 80);
+          }
+        });
       }
-      document.getElementById('memo-title')?.focus();
-    },300);
+
+      // 본문 우선 포커스
+      if (ta) {
+        ta.focus();
+        ta.setSelectionRange(0, 0);
+      }
+    }, 300);
   }
 
   async function _save(existingId) {
