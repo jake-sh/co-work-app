@@ -108,8 +108,8 @@ const Todo = (() => {
 
     const html = `
       <div class="modal-handle"></div>
-      <div class="modal-title">${I18n.t(isEdit?'todo.edit':'todo.new')}</div>
-      <div class="modal-body">
+      ${isEdit ? `<div class="modal-title">${I18n.t('todo.edit')}</div>` : ''}
+      <div class="modal-body" style="${isEdit?'':'padding-top:4px'}">
         <div class="field-group">
           <label class="field-label">${I18n.t('todo.taskName')}</label>
           <div class="field-wrap">

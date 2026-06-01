@@ -44,21 +44,24 @@ const Chat = (() => {
 
   function _render(){
     const el=document.getElementById('s-chat');
+    // 채팅 화면 flex 구조로 설정
+    el.style.cssText='display:flex;flex-direction:column;height:100%;overflow:hidden;';
     el.innerHTML=`
-      <div class="page-hd">
+      <div class="page-hd" style="flex-shrink:0">
         <div class="page-hd-left">
           <h1 class="page-title">${I18n.t('chat.title')}</h1>
           <p class="page-sub" id="chat-online-count"></p>
         </div>
       </div>
-      <div id="chat-member-pins" class="chat-members"></div>
-      <div class="chat-messages" id="chat-messages"></div>
-      <div class="chat-input-wrap">
-        <div class="chat-input-inner">
+      <div id="chat-member-pins" class="chat-members" style="flex-shrink:0"></div>
+      <div class="chat-messages" id="chat-messages" style="flex:1;overflow-y:auto;padding:12px 20px;display:flex;flex-direction:column;gap:2px;"></div>
+      <div class="chat-input-wrap" style="flex-shrink:0;padding:10px 16px 16px;background:var(--bnav-bg);border-top:1px solid var(--border2);">
+        <div class="chat-input-inner" style="display:flex;gap:8px;align-items:flex-end;background:var(--card);border-radius:18px;padding:6px 6px 6px 14px;border:1px solid var(--border);">
           <textarea id="chat-input" class="chat-input" placeholder="${I18n.t('chat.msgPh')}" rows="1"
-            onkeydown="Chat.onKeyDown(event)" oninput="Chat.autoResize(this)"></textarea>
-          <button class="chat-send-btn" onclick="Chat.send()">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+            onkeydown="Chat.onKeyDown(event)" oninput="Chat.autoResize(this)"
+            style="flex:1;background:none;border:none;outline:none;font-size:15px;color:var(--txt);resize:none;max-height:120px;line-height:1.5;padding:6px 0;font-family:var(--font-body)"></textarea>
+          <button class="chat-send-btn" onclick="Chat.send()" style="width:36px;height:36px;border-radius:12px;background:var(--lime);flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;stroke:#000"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
           </button>
         </div>
       </div>`;
