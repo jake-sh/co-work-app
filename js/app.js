@@ -240,8 +240,8 @@ function togglePw(inputId, btn) {
     }
     .chat-member-chip.online { border-color:rgba(190,255,0,.3); }
     .chat-messages {
-      padding:12px 20px; display:flex; flex-direction:column; gap:2px;
-      min-height:120px;
+      padding:12px 20px 12px; display:flex; flex-direction:column; gap:2px;
+      overflow-y:auto; flex:1;
     }
     .chat-date-sep {
       text-align:center; font-size:11px; color:var(--txt3);
@@ -259,10 +259,19 @@ function togglePw(inputId, btn) {
     .msg-bubble.theirs { background:var(--card2); color:var(--txt); border-radius:4px 18px 18px 18px; }
     .msg-time { font-size:10px; color:var(--txt3); margin-top:3px; font-family:var(--font-mono); padding:0 2px; }
     .msg-row.mine .msg-time { text-align:right; }
+    /* 채팅 화면 전체를 flex column으로 */
+    #s-chat {
+      display:flex; flex-direction:column;
+    }
     .chat-input-wrap {
-      padding:10px 16px 16px; background:var(--bnav-bg);
+      padding:10px 16px 16px;
+      background:var(--bnav-bg);
       border-top:1px solid var(--border2);
-      position:sticky; bottom:0; z-index:5;
+      flex-shrink:0;
+      /* 키패드 위 고정 */
+      position:sticky;
+      bottom:0;
+      z-index:10;
     }
     .chat-input-inner {
       display:flex; gap:8px; align-items:flex-end;
@@ -369,7 +378,8 @@ const App = (() => {
     document.getElementById('login-form').onsubmit = async e => {
       e.preventDefault();
       const btn = e.target.querySelector('button[type=submit]');
-      btn.disabled = true; btn.textContent = '...';
+      btn.disabled = true;
+      btn.innerHTML = '<span class="btn-spinner"></span>';
       const res = await Auth.login(
         document.getElementById('login-id').value,
         document.getElementById('login-pw').value
@@ -389,7 +399,8 @@ const App = (() => {
       const pw2 = document.getElementById('reg-pw2').value;
       const err = document.getElementById('reg-error');
       if (pw !== pw2) { err.textContent = I18n.t('auth.err.pwMismatch'); err.classList.remove('hidden'); return; }
-      btn.disabled = true; btn.textContent = '...';
+      btn.disabled = true;
+      btn.innerHTML = '<span class="btn-spinner"></span>';
       const res = await Auth.register(
         document.getElementById('reg-id').value,
         document.getElementById('reg-name').value,
