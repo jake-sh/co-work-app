@@ -14,9 +14,9 @@ const Memo = (() => {
   }
 
   const STYLES = [
-    { bg:'var(--card-warm)', title:'#fff', text:'rgba(255,255,255,.85)', meta:'rgba(255,255,255,.6)', tag:'background:rgba(255,255,255,.18);color:#fff' },
-    { bg:'var(--card)', title:'var(--txt)', text:'var(--txt2)', meta:'var(--txt3)', tag:'background:var(--accent-dim);color:var(--accent)' },
-    { bg:'var(--card2)', title:'var(--txt)', text:'var(--txt2)', meta:'var(--txt3)', tag:'background:var(--accent-dim);color:var(--accent)' },
+    { bg:'var(--point)', title:'var(--txt-on-point)', text:'rgba(26,26,26,.75)', meta:'rgba(26,26,26,.55)', tag:'background:rgba(26,26,26,.12);color:var(--txt-on-point)' },
+    { bg:'var(--card)', title:'var(--txt)', text:'var(--txt2)', meta:'var(--txt3)', tag:'background:var(--point-dim);color:var(--point)' },
+    { bg:'var(--surface-dark)', title:'#fff', text:'rgba(255,255,255,.7)', meta:'rgba(255,255,255,.45)', tag:'background:rgba(255,255,255,.12);color:var(--point)' },
   ];
 
   function _render() {

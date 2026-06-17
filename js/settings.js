@@ -1,8 +1,25 @@
 'use strict';
 const Settings = (() => {
   const KEY='cw_settings';
+  const AVATAR_KEY='cw_avatar';
+  const AVATAR_GRID_KEY='cw_avatar_grid';
   function get(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return{}}}
   function save(data){localStorage.setItem(KEY,JSON.stringify({...get(),...data}));}
+
+  function getAvatar(){ return localStorage.getItem(AVATAR_KEY) || null; }
+  function getAvatarGrid(){ try{return JSON.parse(localStorage.getItem(AVATAR_GRID_KEY)||'null')}catch{return null} }
+  function editAvatar(){
+    const grid = getAvatarGrid();
+    Avatar.open(grid, ({grid, dataURL}) => {
+      localStorage.setItem(AVATAR_KEY, dataURL);
+      localStorage.setItem(AVATAR_GRID_KEY, JSON.stringify(grid));
+      Toast.show(I18n.getLang()==='ko'?'아바타가 저장되었습니다':'Avatar saved','success');
+      // 화면 갱신
+      const u = Auth.currentUser();
+      if (document.getElementById('s-settings')?.classList.contains('active')) render();
+      if (typeof Todo!=='undefined' && Todo.refresh) Todo.refresh();
+    });
+  }
 
   function render(projectId){
     const el=document.getElementById('s-settings');
@@ -15,10 +32,11 @@ const Settings = (() => {
 
       <div class="section-lbl">${I18n.t('settings.account')}</div>
       <div class="settings-group">
-        <div class="settings-item">
-          <div class="avatar avatar-md" style="background:${strColor(user.displayName)}">${user.displayName[0].toUpperCase()}</div>
-          <div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--txt)">${escHtml(user.displayName)}</div><div style="font-size:12px;color:var(--txt3)">@${user.username}</div></div>
-        </div>
+        <button class="settings-item" onclick="Settings.editAvatar()">
+          <div class="avatar avatar-md" style="background:${getAvatar()?'transparent':strColor(user.displayName)}">${getAvatar()?`<img src="${getAvatar()}" style="width:100%;height:100%;object-fit:cover;image-rendering:pixelated">`:user.displayName[0].toUpperCase()}</div>
+          <div style="flex:1;text-align:left"><div style="font-size:15px;font-weight:700;color:var(--txt)">${escHtml(user.displayName)}</div><div style="font-size:12px;color:var(--txt3)">@${user.username}</div></div>
+          <span style="font-size:11px;color:var(--point);font-weight:700">${I18n.getLang()==='ko'?'아바타 편집':'Edit Avatar'}</span>
+        </button>
         <div class="divider"></div>
         <button class="settings-item" onclick="Settings.showChangePw()">
           <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
@@ -86,7 +104,7 @@ const Settings = (() => {
         <div class="settings-item">
           <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           <span class="settings-label">${I18n.t('settings.version')}</span>
-          <span style="font-size:12px;color:var(--txt3);font-family:var(--font-mono)">v1.0.8</span>
+          <span style="font-size:12px;color:var(--txt3);font-family:var(--font-mono)">v1.0.9</span>
         </div>
       </div>
 
@@ -145,5 +163,5 @@ const Settings = (() => {
     if(s.lang) I18n.setLang(s.lang);
   }
 
-  return{get,save,render,setTheme,setLang,showChangePw,_submitPw,applyOnLoad};
+  return{get,save,render,setTheme,setLang,showChangePw,_submitPw,applyOnLoad,getAvatar,getAvatarGrid,editAvatar};
 })();

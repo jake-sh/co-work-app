@@ -186,13 +186,13 @@ function togglePw(inputId, btn) {
       border-radius:10px; cursor:pointer; position:relative; transition:background .12s;
     }
     .cal-d:active { background:var(--card2); }
-    .cal-d.today { background:var(--accent); color:#fff; font-weight:800; border-radius:12px; }
+    .cal-d.today { background:var(--accent); color:var(--txt-on-point); font-weight:800; border-radius:12px; }
     .cal-d.selected { background:var(--card2); color:var(--txt); border:1px solid var(--border); }
     .cal-d.has-dot::after {
       content:''; width:4px; height:4px; border-radius:50%;
       background:var(--accent); position:absolute; bottom:3px;
     }
-    .cal-d.today.has-dot::after { background:#fff; }
+    .cal-d.today.has-dot::after { background:var(--txt-on-point); }
     .cal-d.inactive { opacity:.18; pointer-events:none; }
     .cal-sel-label {
       font-family:var(--font-display); font-size:14px; font-weight:700; color:var(--txt2);
@@ -262,7 +262,7 @@ function togglePw(inputId, btn) {
       font-size:14px; line-height:1.55; word-break:break-word;
     }
     .msg-bubble.mine {
-      background:var(--accent); color:#fff;
+      background:var(--accent); color:var(--txt-on-point);
       border-radius:18px 4px 18px 18px;
     }
     .msg-bubble.theirs {

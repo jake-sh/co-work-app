@@ -38,8 +38,29 @@ const Todo = (() => {
       return (po[a.priority]||1)-(po[b.priority]||1) || (b.createdAt||0)-(a.createdAt||0);
     });
 
+    const user = Auth.currentUser();
+    const uname = user ? user.displayName : '';
+    const avatarData = Settings.getAvatar ? Settings.getAvatar() : null;
+    const avatarHtml = avatarData
+      ? `<img src="${avatarData}" alt="avatar">`
+      : (uname ? uname[0].toUpperCase() : '?');
+
     el.innerHTML = `
-      <div class="page-hd">
+      <div class="welcome-hd">
+        <div class="welcome-top">
+          <button class="welcome-avatar" onclick="Settings.editAvatar()" style="background:${avatarData?'transparent':strColor(uname)}">
+            ${avatarHtml}
+          </button>
+          <button class="btn-icon" onclick="App.switchTab('chat')" style="border-radius:50%;width:42px;height:42px">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          </button>
+        </div>
+        <div class="welcome-text">
+          <div class="welcome-greeting">${I18n.getLang()==='ko'?'환영합니다,':'Welcome Back,'}</div>
+          <div class="welcome-name">${escHtml(uname)}</div>
+        </div>
+      </div>
+      <div class="page-hd" style="padding-top:8px">
         <div class="page-hd-left">
           <h1 class="page-title">${I18n.t('todo.title')}</h1>
           <p class="page-sub">${inProgress}${I18n.getLang()==='ko'?' 개 진행 중':' in progress'} · ${doneCount}${I18n.getLang()==='ko'?' 개 완료':' done'}</p>
@@ -72,7 +93,7 @@ const Todo = (() => {
       <div class="todo-item ${t.done?'todo-done':''} ${t.priority==='high'&&!t.done?'todo-urgent':''}"
            onclick="Todo.showEdit('${t.id}')">
         <button class="todo-check ${t.done?'checked':''}" onclick="event.stopPropagation();Todo.toggleDone('${t.id}')">
-          ${t.done?`<svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><polyline points="2,6 5,9 10,3"/></svg>`:''}
+          ${t.done?`<svg viewBox="0 0 12 12" fill="none" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round"><polyline points="2,6 5,9 10,3"/></svg>`:''}
         </button>
         <div class="todo-body">
           <div class="todo-title">${escHtml(t.title)}</div>
@@ -198,5 +219,5 @@ const Todo = (() => {
 
   function destroy() { if (_unsub) { _unsub(); _unsub=null; } _todos=[]; }
 
-  return { init, setFilter, toggleDone, showAdd, showEdit, _save, _delete, destroy };
+  return { init, setFilter, toggleDone, showAdd, showEdit, _save, _delete, destroy, refresh:_render };
 })();
