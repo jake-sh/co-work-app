@@ -12,7 +12,7 @@ const en: Dictionary = {
   auth: {
     login: "Log In",
     signup: "Sign Up",
-    email: "Email",
+    username: "ID",
     password: "Password",
     displayName: "Name",
     loginButton: "Log In",
@@ -22,6 +22,7 @@ const en: Dictionary = {
     logout: "Log Out",
     colorAssigned: "You'll be assigned your own color on signup",
     genericError: "Something went wrong. Please try again.",
+    usernameTaken: "This ID is already taken.",
   },
   project: {
     title: "Project",
@@ -29,7 +30,7 @@ const en: Dictionary = {
     name: "Project name",
     description: "Overview",
     members: "Members",
-    addMember: "Add member (email)",
+    addMember: "Add member (ID)",
     period: "Period",
     startDate: "Start date",
     endDate: "End date",

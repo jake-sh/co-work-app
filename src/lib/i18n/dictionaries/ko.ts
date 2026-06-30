@@ -12,7 +12,7 @@ const ko: Dictionary = {
   auth: {
     login: "로그인",
     signup: "회원가입",
-    email: "이메일",
+    username: "아이디",
     password: "비밀번호",
     displayName: "이름",
     loginButton: "로그인",
@@ -22,6 +22,7 @@ const ko: Dictionary = {
     logout: "로그아웃",
     colorAssigned: "가입 시 회원님만의 색상이 지정됩니다",
     genericError: "오류가 발생했습니다. 다시 시도해주세요.",
+    usernameTaken: "이미 사용 중인 아이디입니다.",
   },
   project: {
     title: "프로젝트",
@@ -29,7 +30,7 @@ const ko: Dictionary = {
     name: "프로젝트 이름",
     description: "프로젝트 개요",
     members: "멤버",
-    addMember: "멤버 추가 (이메일)",
+    addMember: "멤버 추가 (아이디)",
     period: "기간",
     startDate: "시작일",
     endDate: "종료일",

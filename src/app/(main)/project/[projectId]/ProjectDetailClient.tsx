@@ -5,7 +5,7 @@ import { ArrowLeft, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addMemberByEmail, updateProjectPeriod } from "@/lib/data/projects";
+import { addMemberByUsername, updateProjectPeriod } from "@/lib/data/projects";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/TextInput";
@@ -15,7 +15,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
   const { t } = useI18n();
   const project = projects.find((p) => p.id === projectId) ?? null;
 
-  const [memberEmail, setMemberEmail] = useState("");
+  const [memberUsername, setMemberUsername] = useState("");
   const [memberError, setMemberError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -46,8 +46,8 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     e.preventDefault();
     setMemberError(null);
     try {
-      await addMemberByEmail(projectId, memberEmail.trim());
-      setMemberEmail("");
+      await addMemberByUsername(projectId, memberUsername.trim());
+      setMemberUsername("");
     } catch {
       setMemberError("USER_NOT_FOUND");
     }
@@ -86,10 +86,11 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         </p>
         <form onSubmit={onAddMember} className="flex gap-2">
           <TextInput
-            type="email"
+            type="text"
             placeholder={t.project.addMember}
-            value={memberEmail}
-            onChange={(e) => setMemberEmail(e.target.value)}
+            value={memberUsername}
+            onChange={(e) => setMemberUsername(e.target.value)}
+            autoCapitalize="none"
           />
           <button
             type="submit"

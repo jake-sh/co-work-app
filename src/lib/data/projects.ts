@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { arrayUnion } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
-import { findUserByEmail } from "@/lib/data/users";
+import { findUserByUsername } from "@/lib/data/users";
 import type { Project } from "@/types";
 
 const projectsCol = collection(db, "projects");
@@ -41,8 +41,8 @@ export async function createProject(
   return ref.id;
 }
 
-export async function addMemberByEmail(projectId: string, email: string) {
-  const member = await findUserByEmail(email);
+export async function addMemberByUsername(projectId: string, username: string) {
+  const member = await findUserByUsername(username.trim().toLowerCase());
   if (!member) throw new Error("USER_NOT_FOUND");
   await updateDoc(doc(db, "projects", projectId), {
     memberIds: arrayUnion(member.uid),

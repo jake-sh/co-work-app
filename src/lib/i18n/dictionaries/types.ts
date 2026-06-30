@@ -10,7 +10,7 @@ export interface Dictionary {
   auth: {
     login: string;
     signup: string;
-    email: string;
+    username: string;
     password: string;
     displayName: string;
     loginButton: string;
@@ -20,6 +20,7 @@ export interface Dictionary {
     logout: string;
     colorAssigned: string;
     genericError: string;
+    usernameTaken: string;
   };
   project: {
     title: string;
