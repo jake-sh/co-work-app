@@ -67,6 +67,8 @@ export interface Dictionary {
     time: string;
     save: string;
     empty: string;
+    fromMemo: string;
+    fromTodo: string;
   };
   chat: {
     title: string;

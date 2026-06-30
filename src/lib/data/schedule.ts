@@ -19,7 +19,8 @@ export async function addEvent(
   date: string,
   time: string | null,
   authorId: string,
-  authorColor: string
+  authorColor: string,
+  source?: { type: "memo" | "todo"; id: string }
 ) {
   await addDoc(eventsCol(projectId), {
     title,
@@ -28,5 +29,6 @@ export async function addEvent(
     authorId,
     authorColor,
     createdAt: Date.now(),
+    ...(source ? { source } : {}),
   });
 }

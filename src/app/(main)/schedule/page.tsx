@@ -12,7 +12,7 @@ import {
   startOfWeek,
   subMonths,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Sparkles } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
@@ -148,7 +148,15 @@ export default function SchedulePage() {
                   className="h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: ev.authorColor }}
                 />
-                <span className="flex-1 text-sm">{ev.title}</span>
+                <div className="flex flex-1 flex-col">
+                  <span className="text-sm">{ev.title}</span>
+                  {ev.source && (
+                    <span className="mt-0.5 flex items-center gap-1 text-[10px] text-text-secondary">
+                      <Sparkles size={10} />
+                      {ev.source.type === "memo" ? t.schedule.fromMemo : t.schedule.fromTodo}
+                    </span>
+                  )}
+                </div>
                 {ev.time && <span className="text-xs text-text-secondary">{ev.time}</span>}
               </li>
             ))

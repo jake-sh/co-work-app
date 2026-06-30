@@ -1,5 +1,7 @@
 import { addDoc, arrayUnion, collection, doc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
+import { addEvent } from "@/lib/data/schedule";
+import { parseScheduleFromText } from "@/lib/scheduleParse";
 import type { Memo } from "@/types";
 
 function memosCol(projectId: string) {
@@ -28,8 +30,9 @@ export async function addMemo(
   authorName: string,
   authorColor: string
 ) {
-  await addDoc(memosCol(projectId), {
-    title: deriveTitle(title, body),
+  const finalTitle = deriveTitle(title, body);
+  const ref = await addDoc(memosCol(projectId), {
+    title: finalTitle,
     body,
     authorId,
     authorName,
@@ -37,6 +40,14 @@ export async function addMemo(
     createdAt: Date.now(),
     sharedWith: [],
   });
+
+  const parsed = parseScheduleFromText(`${title} ${body}`);
+  if (parsed) {
+    await addEvent(projectId, finalTitle, parsed.date, parsed.time, authorId, authorColor, {
+      type: "memo",
+      id: ref.id,
+    });
+  }
 }
 
 export async function shareMemoWithMembers(projectId: string, memoId: string, memberIds: string[]) {

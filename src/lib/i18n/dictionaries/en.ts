@@ -69,6 +69,8 @@ const en: Dictionary = {
     time: "Time (optional)",
     save: "Save",
     empty: "No events yet",
+    fromMemo: "Auto-added from memo",
+    fromTodo: "Auto-added from to-do",
   },
   chat: {
     title: "Chat",

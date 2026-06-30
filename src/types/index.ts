@@ -52,6 +52,7 @@ export interface ScheduleEvent {
   authorId: string;
   authorColor: string;
   createdAt: number;
+  source?: { type: "memo" | "todo"; id: string };
 }
 
 export interface ChatMessage {
