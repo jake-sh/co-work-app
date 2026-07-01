@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { sendMessage, subscribeMessages } from "@/lib/data/chat";
-import { TextInput } from "@/components/ui/TextInput";
+import { TextArea } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ColorDot } from "@/components/ui/ColorDot";
 import type { ChatMessage } from "@/types";
@@ -18,6 +18,7 @@ export default function ChatPage() {
   const { t } = useI18n();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
+  const [inputKey, setInputKey] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,11 +34,18 @@ export default function ChatPage() {
     return <EmptyState message={t.todo.selectProjectFirst} />;
   }
 
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setText(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+  };
+
   const onSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile || !text.trim()) return;
     await sendMessage(currentProject.id, text.trim(), profile.uid, profile.displayName, profile.colorCode);
     setText("");
+    setInputKey((k) => k + 1);
   };
 
   return (
@@ -66,8 +74,10 @@ export default function ChatPage() {
                   )}
                   <div
                     className={clsx(
-                      "max-w-[75%] rounded-2xl px-3.5 py-2 text-sm",
-                      isMine ? "bg-white text-black" : "bg-surface-card text-text-primary"
+                      "max-w-[75%] px-3.5 py-2 text-sm whitespace-pre-wrap break-words",
+                      isMine
+                        ? "rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl bg-white text-black"
+                        : "rounded-2xl bg-surface-card text-text-primary"
                     )}
                   >
                     {msg.text}
@@ -80,15 +90,19 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={onSend} className="flex gap-2 px-5 py-3">
-        <TextInput
+      <form onSubmit={onSend} className="flex items-end gap-2 px-5 py-3">
+        <TextArea
+          key={inputKey}
           placeholder={t.chat.inputPlaceholder}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={handleTextChange}
+          rows={1}
+          enterKeyHint="enter"
+          className="min-h-[44px] max-h-[120px] overflow-y-auto"
         />
         <button
           type="submit"
-          className="flex shrink-0 items-center justify-center rounded-xl bg-surface-pill px-3"
+          className="flex shrink-0 items-center justify-center rounded-xl bg-surface-pill px-3 py-3"
         >
           <Send size={18} />
         </button>
