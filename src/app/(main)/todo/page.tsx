@@ -67,7 +67,7 @@ export default function TodoPage() {
 
   return (
     <div className="px-5 pt-8">
-      <h1 className="mb-4 text-3xl font-bold">{currentProject.name}</h1>
+      <h1 className="mb-4 text-3xl font-bold">{t.todo.title}</h1>
       <form onSubmit={onAdd} className="mb-6 flex gap-2">
         <TextInput
           placeholder={t.todo.inputPlaceholder}
