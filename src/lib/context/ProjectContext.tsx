@@ -20,7 +20,10 @@ const STORAGE_KEY = "cowork.currentProjectId";
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [currentProjectId, setCurrentProjectIdState] = useState<string | null>(null);
+  const [currentProjectId, setCurrentProjectIdState] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem(STORAGE_KEY);
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,13 +43,6 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [user]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (stored) setCurrentProjectIdState(stored);
-  }, []);
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
