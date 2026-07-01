@@ -152,7 +152,14 @@ export default function SchedulePage() {
                     key === selectedDate ? "text-black" : "text-text-secondary"
                   )}
                 >
-                  {eventsByDate[key][0].title.replace(/^(\d+월\s*\d+일|\d+\/\d+|\d+\.\d+)\s*/, "").trim().slice(0, 5) || eventsByDate[key][0].title.slice(0, 5)}
+                  {(() => {
+                    const raw = eventsByDate[key][0].title;
+                    const stripped = raw
+                      .replace(/^(\d+월\s*\d+일|\d+\/\d+|\d+\.\d+)\s*/, "")
+                      .replace(/^((오전|오후)\d+시(\d+분)?|\d{1,2}:\d{2})\s*/, "")
+                      .trim();
+                    return (stripped || raw).slice(0, 5);
+                  })()}
                   {eventsByDate[key].length > 1 && `+${eventsByDate[key].length - 1}`}
                 </span>
               )}
