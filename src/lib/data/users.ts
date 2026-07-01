@@ -30,6 +30,10 @@ export async function updateUserLocale(uid: string, locale: Locale) {
   await updateDoc(doc(db, "users", uid), { locale });
 }
 
+export async function updateUserColor(uid: string, colorCode: string) {
+  await updateDoc(doc(db, "users", uid), { colorCode });
+}
+
 export async function findUserByUsername(username: string): Promise<UserProfile | null> {
   const { collection, query, where, getDocs, limit } = await import("firebase/firestore");
   const q = query(collection(db, "users"), where("username", "==", username), limit(1));
