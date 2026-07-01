@@ -1,18 +1,26 @@
 "use client";
 
-import { User as UserIcon, LogOut, Globe } from "lucide-react";
+import { useState } from "react";
+import { Check, Globe, LogOut, User as UserIcon } from "lucide-react";
 import { useAuth, persistLocale } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
+import { MEMBER_COLOR_PALETTE } from "@/lib/colors";
 import { Card } from "@/components/ui/Card";
 import { clsx } from "clsx";
 
 export default function SettingsPage() {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, updateColorCode } = useAuth();
   const { t, locale, setLocale } = useI18n();
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
 
   const onChangeLocale = (next: "ko" | "en") => {
     setLocale(next);
     if (profile) persistLocale(profile.uid, next);
+  };
+
+  const onSelectColor = async (color: string) => {
+    await updateColorCode(color);
+    setColorPickerOpen(false);
   };
 
   return (
@@ -27,12 +35,33 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <Card className="mb-4 flex items-center justify-between">
-        <span className="text-sm text-text-secondary">{t.settings.colorCode}</span>
-        <span
-          className="h-5 w-5 rounded-full"
-          style={{ backgroundColor: profile?.colorCode ?? "#2A2A2A" }}
-        />
+      <Card className="mb-4">
+        <button
+          onClick={() => setColorPickerOpen((v) => !v)}
+          className="flex w-full items-center justify-between"
+        >
+          <span className="text-sm text-text-secondary">{t.settings.colorCode}</span>
+          <span
+            className="h-5 w-5 rounded-full"
+            style={{ backgroundColor: profile?.colorCode ?? "#2A2A2A" }}
+          />
+        </button>
+        {colorPickerOpen && (
+          <div className="mt-3 grid grid-cols-6 gap-3 border-t border-border-divider pt-3">
+            {MEMBER_COLOR_PALETTE.map((color) => (
+              <button
+                key={color}
+                onClick={() => onSelectColor(color)}
+                className="relative flex aspect-square items-center justify-center rounded-full"
+                style={{ backgroundColor: color }}
+              >
+                {profile?.colorCode === color && (
+                  <Check size={14} color="#000" strokeWidth={3} />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </Card>
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.language}</p>

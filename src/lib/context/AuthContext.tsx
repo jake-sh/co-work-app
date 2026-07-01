@@ -13,7 +13,7 @@ import {
   type User,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
-import { createUserProfile, getUserProfile, updateUserLocale } from "@/lib/data/users";
+import { createUserProfile, getUserProfile, updateUserColor, updateUserLocale } from "@/lib/data/users";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import type { UserProfile } from "@/types";
 
@@ -30,6 +30,7 @@ interface AuthContextValue {
   signUp: (displayName: string, username: string, password: string) => Promise<void>;
   signIn: (username: string, password: string, rememberMe?: boolean) => Promise<void>;
   signOut: () => Promise<void>;
+  updateColorCode: (color: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -82,8 +83,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await firebaseSignOut(auth);
   };
 
+  const updateColorCode = async (color: string) => {
+    if (!user) return;
+    await updateUserColor(user.uid, color);
+    setProfile((prev) => (prev ? { ...prev, colorCode: color } : prev));
+  };
+
   const value = useMemo<AuthContextValue>(
-    () => ({ user, profile, loading, signUp, signIn, signOut }),
+    () => ({ user, profile, loading, signUp, signIn, signOut, updateColorCode }),
     // signUp/signIn/signOut are stable in behavior; only re-derive when auth state changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [user, profile, loading]
