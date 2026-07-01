@@ -1,4 +1,4 @@
-import { addDoc, arrayUnion, collection, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
+import { addDoc, arrayUnion, collection, deleteDoc, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { addEvent } from "@/lib/data/schedule";
 import { parseScheduleFromText } from "@/lib/scheduleParse";
@@ -55,6 +55,18 @@ export async function addMemo(
       id: ref.id,
     }).catch(() => {});
   }
+}
+
+export async function updateMemo(projectId: string, memoId: string, title: string, body: string) {
+  const finalTitle = deriveTitle(title, body);
+  await updateDoc(doc(db, "projects", projectId, "memos", memoId), {
+    title: finalTitle,
+    body,
+  });
+}
+
+export async function deleteMemo(projectId: string, memoId: string) {
+  await deleteDoc(doc(db, "projects", projectId, "memos", memoId));
 }
 
 export async function shareMemoWithMembers(projectId: string, memoId: string, memberIds: string[]) {

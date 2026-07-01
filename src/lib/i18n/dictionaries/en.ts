@@ -60,12 +60,15 @@ const en: Dictionary = {
   memo: {
     title: "Memo",
     newButton: "+ New",
-    titlePlaceholder: "Title (optional)",
-    bodyPlaceholder: "Write something...",
+    newMemo: "New Memo",
+    editMemo: "Edit Memo",
+    titlePlaceholder: "Title",
+    bodyPlaceholder: "Enter content...",
     save: "Save",
     cancel: "Cancel",
     share: "Share",
     shared: "Shared",
+    delete: "Delete",
     empty: "No memos yet",
   },
   schedule: {

@@ -60,12 +60,15 @@ const ko: Dictionary = {
   memo: {
     title: "메모",
     newButton: "+ 새 메모",
-    titlePlaceholder: "제목 (선택)",
+    newMemo: "새 메모",
+    editMemo: "메모 수정",
+    titlePlaceholder: "제목",
     bodyPlaceholder: "내용을 입력하세요",
     save: "저장",
     cancel: "취소",
     share: "공유",
     shared: "공유됨",
+    delete: "삭제",
     empty: "메모가 없습니다",
   },
   schedule: {
