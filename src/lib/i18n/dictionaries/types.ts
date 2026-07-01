@@ -58,12 +58,15 @@ export interface Dictionary {
   memo: {
     title: string;
     newButton: string;
+    newMemo: string;
+    editMemo: string;
     titlePlaceholder: string;
     bodyPlaceholder: string;
     save: string;
     cancel: string;
     share: string;
     shared: string;
+    delete: string;
     empty: string;
   };
   schedule: {
