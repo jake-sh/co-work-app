@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   addMonths,
   eachDayOfInterval,
@@ -91,6 +91,13 @@ export default function SchedulePage() {
 
   const selectedEvents = eventsByDate[selectedDate] ?? [];
 
+  const swipeStartX = useRef(0);
+  const onTouchStart = (e: React.TouchEvent) => { swipeStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - swipeStartX.current;
+    if (Math.abs(dx) > 50) setMonth((m) => dx < 0 ? addMonths(m, 1) : subMonths(m, 1));
+  };
+
   return (
     <div className="px-5 pt-8 pb-10">
       <h1 className="mb-4 text-3xl font-bold">{t.schedule.title}</h1>
@@ -105,7 +112,11 @@ export default function SchedulePage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-[11px]">
+      <div
+        className="grid grid-cols-7 gap-1 text-center text-[11px]"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         {days.map((day) => {
           const key = format(day, "yyyy-MM-dd");
           const hasEvents = !!eventsByDate[key]?.length;
