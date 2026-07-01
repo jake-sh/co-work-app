@@ -49,8 +49,8 @@ export default function SignupPage() {
           placeholder={t.auth.username}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          pattern="[a-zA-Z0-9_]{4,20}"
-          title="4-20 characters: letters, numbers, underscore"
+          pattern="[a-zA-Z0-9_.]{4,20}"
+          title="4-20 characters: letters, numbers, underscore, dot"
           autoCapitalize="none"
           required
         />
