@@ -21,6 +21,7 @@ export interface Dictionary {
     colorAssigned: string;
     genericError: string;
     usernameTaken: string;
+    autoLogin: string;
   };
   project: {
     title: string;

@@ -22,10 +22,12 @@ export default function ProjectListPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
-  const onCreate = async (e: React.FormEvent) => {
+  const onCreate = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     if (!profile || !name.trim()) return;
+    setCreateError(null);
     setSubmitting(true);
     try {
       const id = await createProject(
@@ -41,6 +43,8 @@ export default function ProjectListPage() {
       setStartDate("");
       setEndDate("");
       setCreating(false);
+    } catch {
+      setCreateError(t.auth.genericError);
     } finally {
       setSubmitting(false);
     }
@@ -82,6 +86,7 @@ export default function ProjectListPage() {
               <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
+          {createError && <p className="text-xs text-red-400">{createError}</p>}
           <Button onClick={onCreate} disabled={submitting || !name.trim()}>
             {t.project.save}
           </Button>

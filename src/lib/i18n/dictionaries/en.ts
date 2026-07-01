@@ -23,6 +23,7 @@ const en: Dictionary = {
     colorAssigned: "You'll be assigned your own color on signup",
     genericError: "Something went wrong. Please try again.",
     usernameTaken: "This ID is already taken.",
+    autoLogin: "Keep me logged in",
   },
   project: {
     title: "Project",

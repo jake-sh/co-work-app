@@ -3,7 +3,6 @@ import {
   collection,
   doc,
   onSnapshot,
-  orderBy,
   query,
   updateDoc,
   where,
@@ -16,10 +15,17 @@ import type { Project } from "@/types";
 const projectsCol = collection(db, "projects");
 
 export function subscribeUserProjects(uid: string, cb: (projects: Project[]) => void) {
-  const q = query(projectsCol, where("memberIds", "array-contains", uid), orderBy("createdAt", "desc"));
-  return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => ({ ...(d.data() as Omit<Project, "id">), id: d.id })));
-  });
+  const q = query(projectsCol, where("memberIds", "array-contains", uid));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const sorted = snap.docs
+        .map((d) => ({ ...(d.data() as Omit<Project, "id">), id: d.id }))
+        .sort((a, b) => b.createdAt - a.createdAt);
+      cb(sorted);
+    },
+    () => cb([])
+  );
 }
 
 export async function createProject(

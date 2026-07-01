@@ -2,8 +2,11 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
+  browserLocalPersistence,
+  browserSessionPersistence,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  setPersistence,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
@@ -25,7 +28,7 @@ interface AuthContextValue {
   profile: UserProfile | null;
   loading: boolean;
   signUp: (displayName: string, username: string, password: string) => Promise<void>;
-  signIn: (username: string, password: string) => Promise<void>;
+  signIn: (username: string, password: string, rememberMe?: boolean) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -70,7 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(newProfile);
   };
 
-  const signIn = async (username: string, password: string) => {
+  const signIn = async (username: string, password: string, rememberMe = true) => {
+    await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
     await signInWithEmailAndPassword(auth, usernameToAuthEmail(username), password);
   };
 
