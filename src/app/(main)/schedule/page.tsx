@@ -58,6 +58,9 @@ export default function SchedulePage() {
     return map;
   }, [events]);
 
+  const today = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
+  const swipeStartX = useRef(0);
+
   if (!currentProject) {
     return <EmptyState message={t.todo.selectProjectFirst} />;
   }
@@ -91,10 +94,8 @@ export default function SchedulePage() {
 
   const selectedEvents = eventsByDate[selectedDate] ?? [];
 
-  const today = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
   const goToToday = () => { setMonth(new Date()); setSelectedDate(today); };
 
-  const swipeStartX = useRef(0);
   const onTouchStart = (e: React.TouchEvent) => { swipeStartX.current = e.touches[0].clientX; };
   const onTouchEnd = (e: React.TouchEvent) => {
     const dx = e.changedTouches[0].clientX - swipeStartX.current;
