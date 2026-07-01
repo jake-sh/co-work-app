@@ -143,9 +143,10 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
 
       <Card className="mt-4">
         <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.period}</p>
-        <div className="flex gap-2">
-          <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+        <div className="flex items-center gap-2">
+          <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="no-date-arrow" />
+          <span className="shrink-0 text-sm text-text-secondary">~</span>
+          <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="no-date-arrow" />
         </div>
       </Card>
 
