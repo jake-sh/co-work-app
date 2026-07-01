@@ -80,6 +80,7 @@ export interface Dictionary {
     empty: string;
     fromMemo: string;
     fromTodo: string;
+    today: string;
   };
   chat: {
     title: string;

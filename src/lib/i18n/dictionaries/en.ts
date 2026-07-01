@@ -82,6 +82,7 @@ const en: Dictionary = {
     empty: "No events yet",
     fromMemo: "Auto-added from memo",
     fromTodo: "Auto-added from to-do",
+    today: "Today",
   },
   chat: {
     title: "Chat",
