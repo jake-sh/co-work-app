@@ -152,7 +152,7 @@ export default function SchedulePage() {
                     key === selectedDate ? "text-black" : "text-text-secondary"
                   )}
                 >
-                  {eventsByDate[key][0].title.slice(0, 5)}
+                  {eventsByDate[key][0].title.replace(/^(\d+월\s*\d+일|\d+\/\d+|\d+\.\d+)\s*/, "").trim().slice(0, 5) || eventsByDate[key][0].title.slice(0, 5)}
                   {eventsByDate[key].length > 1 && `+${eventsByDate[key].length - 1}`}
                 </span>
               )}
