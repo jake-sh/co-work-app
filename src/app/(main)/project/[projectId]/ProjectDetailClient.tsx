@@ -126,7 +126,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
       <TextInput
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder={t.project.namePlaceholder ?? t.project.name}
+        placeholder={t.project.name}
         className="mb-4 text-xl font-bold"
       />
 
@@ -135,7 +135,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         <TextArea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder={t.project.descriptionPlaceholder ?? t.project.overview}
+          placeholder={t.project.overview}
           rows={3}
           className="w-full"
         />
