@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { ArrowLeft, CheckCircle, RotateCcw, Trash2, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addMemberByUsername, updateProjectPeriod } from "@/lib/data/projects";
+import { addMemberByUsername, deleteProject, setProjectStatus, updateProjectPeriod } from "@/lib/data/projects";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/TextInput";
@@ -13,12 +14,14 @@ import { TextInput } from "@/components/ui/TextInput";
 export function ProjectDetailClient({ projectId }: { projectId: string }) {
   const { projects, setCurrentProjectId } = useProjects();
   const { t } = useI18n();
+  const router = useRouter();
   const project = projects.find((p) => p.id === projectId) ?? null;
 
   const [memberUsername, setMemberUsername] = useState("");
   const [memberError, setMemberError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     setCurrentProjectId(projectId);
@@ -42,6 +45,8 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     );
   }
 
+  const isCompleted = project.status === "completed";
+
   const onAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     setMemberError(null);
@@ -57,12 +62,47 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     await updateProjectPeriod(projectId, startDate || null, endDate || null);
   };
 
+  const onToggleComplete = async () => {
+    await setProjectStatus(projectId, isCompleted ? "active" : "completed");
+  };
+
+  const onDelete = async () => {
+    if (!confirmDelete) { setConfirmDelete(true); return; }
+    await deleteProject(projectId);
+    setCurrentProjectId(null);
+    router.replace("/project");
+  };
+
   return (
-    <div className="px-5 pt-8">
-      <Link href="/project" className="mb-4 inline-flex text-text-secondary">
-        <ArrowLeft size={20} />
-      </Link>
+    <div className="px-5 pt-8 pb-10">
+      <div className="mb-4 flex items-center justify-between">
+        <Link href="/project" className="text-text-secondary">
+          <ArrowLeft size={20} />
+        </Link>
+        <div className="flex gap-2">
+          <button
+            onClick={onToggleComplete}
+            className="flex items-center gap-1.5 rounded-pill bg-surface-pill px-3 py-1.5 text-xs font-semibold"
+          >
+            {isCompleted ? <RotateCcw size={13} /> : <CheckCircle size={13} />}
+            {isCompleted ? t.project.reopen : t.project.complete}
+          </button>
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-1.5 rounded-pill bg-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-400"
+          >
+            <Trash2 size={13} />
+            {confirmDelete ? t.project.deleteConfirm : t.project.delete}
+          </button>
+        </div>
+      </div>
+
       <h1 className="mb-1 text-2xl font-bold">{project.name}</h1>
+      {isCompleted && (
+        <span className="mb-3 inline-block rounded-pill bg-emerald-500/20 px-2.5 py-0.5 text-xs text-emerald-400">
+          {t.project.completed}
+        </span>
+      )}
 
       <Card className="mt-4">
         <p className="mb-1 text-xs font-semibold text-text-secondary">{t.project.overview}</p>

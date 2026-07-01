@@ -1,4 +1,4 @@
-import { addDoc, collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { addDoc, collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import type { ChatMessage } from "@/types";
 
@@ -7,10 +7,17 @@ function messagesCol(projectId: string) {
 }
 
 export function subscribeMessages(projectId: string, cb: (messages: ChatMessage[]) => void) {
-  const q = query(messagesCol(projectId), orderBy("createdAt", "asc"));
-  return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => ({ ...(d.data() as Omit<ChatMessage, "id">), id: d.id })));
-  });
+  const q = query(messagesCol(projectId));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const sorted = snap.docs
+        .map((d) => ({ ...(d.data() as Omit<ChatMessage, "id">), id: d.id }))
+        .sort((a, b) => a.createdAt - b.createdAt);
+      cb(sorted);
+    },
+    () => cb([])
+  );
 }
 
 export async function sendMessage(

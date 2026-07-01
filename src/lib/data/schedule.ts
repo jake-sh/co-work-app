@@ -1,4 +1,4 @@
-import { addDoc, collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { addDoc, collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import type { ScheduleEvent } from "@/types";
 
@@ -7,10 +7,17 @@ function eventsCol(projectId: string) {
 }
 
 export function subscribeEvents(projectId: string, cb: (events: ScheduleEvent[]) => void) {
-  const q = query(eventsCol(projectId), orderBy("date", "asc"));
-  return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => ({ ...(d.data() as Omit<ScheduleEvent, "id">), id: d.id })));
-  });
+  const q = query(eventsCol(projectId));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const sorted = snap.docs
+        .map((d) => ({ ...(d.data() as Omit<ScheduleEvent, "id">), id: d.id }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      cb(sorted);
+    },
+    () => cb([])
+  );
 }
 
 export async function addEvent(

@@ -41,6 +41,11 @@ const en: Dictionary = {
     selectProject: "Select a project",
     overview: "Overview",
     open: "Open",
+    complete: "Complete",
+    reopen: "Reopen",
+    delete: "Delete",
+    deleteConfirm: "Delete this project?",
+    completed: "Completed",
   },
   todo: {
     title: "To-Do",
@@ -49,7 +54,7 @@ const en: Dictionary = {
     statusNew: "New",
     statusInProgress: "In Progress",
     statusDone: "Done",
-    empty: "No tasks yet",
+    empty: "No to-dos yet",
     selectProjectFirst: "Select a project first",
   },
   memo: {

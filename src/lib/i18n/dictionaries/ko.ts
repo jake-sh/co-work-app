@@ -41,6 +41,11 @@ const ko: Dictionary = {
     selectProject: "프로젝트를 선택하세요",
     overview: "개요",
     open: "열기",
+    complete: "완료",
+    reopen: "재개",
+    delete: "삭제",
+    deleteConfirm: "정말 삭제하시겠습니까?",
+    completed: "완료됨",
   },
   todo: {
     title: "할일",
@@ -49,7 +54,7 @@ const ko: Dictionary = {
     statusNew: "신규",
     statusInProgress: "진행중",
     statusDone: "완료",
-    empty: "할일이 없습니다",
+    empty: "등록된 할 일이 없어요",
     selectProjectFirst: "먼저 프로젝트를 선택하세요",
   },
   memo: {
