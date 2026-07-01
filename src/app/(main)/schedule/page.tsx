@@ -91,6 +91,9 @@ export default function SchedulePage() {
 
   const selectedEvents = eventsByDate[selectedDate] ?? [];
 
+  const today = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
+  const goToToday = () => { setMonth(new Date()); setSelectedDate(today); };
+
   const swipeStartX = useRef(0);
   const onTouchStart = (e: React.TouchEvent) => { swipeStartX.current = e.touches[0].clientX; };
   const onTouchEnd = (e: React.TouchEvent) => {
@@ -106,7 +109,15 @@ export default function SchedulePage() {
         <button onClick={() => setMonth((m) => subMonths(m, 1))} className="text-text-secondary">
           <ChevronLeft size={20} />
         </button>
-        <p className="text-sm font-semibold">{format(month, "yyyy.MM")}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold">{format(month, "yyyy.MM")}</p>
+          <button
+            onClick={goToToday}
+            className="rounded-pill bg-surface-pill px-2 py-0.5 text-[11px] text-text-secondary"
+          >
+            {t.schedule.today}
+          </button>
+        </div>
         <button onClick={() => setMonth((m) => addMonths(m, 1))} className="text-text-secondary">
           <ChevronRight size={20} />
         </button>
@@ -127,6 +138,7 @@ export default function SchedulePage() {
               className={clsx(
                 "flex aspect-square flex-col items-center justify-center rounded-lg",
                 key === selectedDate && "bg-white text-black",
+                key !== selectedDate && key === today && "border border-white/50",
                 key !== selectedDate && isSameMonth(day, month) && "text-text-primary",
                 key !== selectedDate && !isSameMonth(day, month) && "text-text-disabled"
               )}
