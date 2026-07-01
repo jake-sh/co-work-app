@@ -48,6 +48,10 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+.no-date-arrow::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
 .hide-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
