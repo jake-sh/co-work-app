@@ -156,7 +156,7 @@ export default function MemoPage() {
                   <div className="flex items-center gap-3">
                     <button
                       onClick={(e) => onShare(e, memo)}
-                      className="flex items-center gap-1 text-[11px] text-text-secondary"
+                      className={`flex items-center gap-1 text-[11px] ${memo.sharedWith.length > 0 ? "text-red-400" : "text-text-secondary"}`}
                     >
                       <Share2 size={13} />
                       {memo.sharedWith.length > 0 ? t.memo.shared : t.memo.share}
