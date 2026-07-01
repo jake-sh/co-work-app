@@ -72,3 +72,13 @@ export async function updateProjectPeriod(
 ) {
   await updateDoc(doc(db, "projects", projectId), { startDate, endDate });
 }
+
+export async function updateProject(
+  projectId: string,
+  name: string,
+  description: string,
+  startDate: string | null,
+  endDate: string | null
+) {
+  await updateDoc(doc(db, "projects", projectId), { name, description, startDate, endDate });
+}
