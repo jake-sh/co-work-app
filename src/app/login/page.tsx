@@ -14,6 +14,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -22,7 +23,7 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await signIn(username, password);
+      await signIn(username, password, rememberMe);
       router.replace("/project");
     } catch {
       setError(t.auth.genericError);
@@ -50,6 +51,15 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        <label className="flex items-center gap-2 text-sm text-text-secondary">
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="h-4 w-4 rounded accent-white"
+          />
+          {t.auth.autoLogin}
+        </label>
         {error && <p className="text-sm text-red-400">{error}</p>}
         <Button type="submit" disabled={submitting} className="mt-2">
           {t.auth.loginButton}
