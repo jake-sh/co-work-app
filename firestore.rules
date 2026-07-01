@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // User profiles: readable by any authenticated user (needed for member lookup),
+    // writable only by the owner.
+    match /users/{uid} {
+      allow read: if isAuth();
+      allow write: if isAuth() && request.auth.uid == uid;
+    }
+
+    // Projects: members can read; any auth'd user can create;
+    // only members can update/delete.
+    match /projects/{projectId} {
+      allow read: if isAuth() && request.auth.uid in resource.data.memberIds;
+      allow create: if isAuth();
+      allow update, delete: if isAuth() && request.auth.uid in resource.data.memberIds;
+
+      // Subcollections: accessible to project members only.
+      match /{sub=**} {
+        allow read, write: if isAuth()
+          && request.auth.uid in get(/databases/$(database)/documents/projects/$(projectId)).data.memberIds;
+      }
+    }
+  }
+}

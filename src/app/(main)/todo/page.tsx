@@ -25,6 +25,7 @@ export default function TodoPage() {
   const { t } = useI18n();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [text, setText] = useState("");
+  const [addError, setAddError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!currentProject) return;
@@ -38,8 +39,13 @@ export default function TodoPage() {
   const onAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile || !text.trim()) return;
-    await addTodo(currentProject.id, text.trim(), profile.uid, profile.displayName, profile.colorCode);
-    setText("");
+    setAddError(null);
+    try {
+      await addTodo(currentProject.id, text.trim(), profile.uid, profile.displayName, profile.colorCode);
+      setText("");
+    } catch {
+      setAddError(t.auth.genericError);
+    }
   };
 
   const cycleStatus = (todo: Todo) => {
@@ -75,6 +81,7 @@ export default function TodoPage() {
           <Plus size={18} />
         </button>
       </form>
+      {addError && <p className="mb-4 text-xs text-red-400">{addError}</p>}
 
       {todos.length === 0 ? (
         <EmptyState message={t.todo.empty} />

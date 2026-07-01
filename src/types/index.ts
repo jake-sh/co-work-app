@@ -20,6 +20,7 @@ export interface Project {
   ownerId: string;
   memberIds: string[];
   createdAt: number;
+  status?: "active" | "completed";
 }
 
 export interface Todo {

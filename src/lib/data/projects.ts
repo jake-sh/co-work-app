@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   query,
@@ -54,6 +55,14 @@ export async function addMemberByUsername(projectId: string, username: string) {
     memberIds: arrayUnion(member.uid),
   });
   return member;
+}
+
+export async function setProjectStatus(projectId: string, status: "active" | "completed") {
+  await updateDoc(doc(db, "projects", projectId), { status });
+}
+
+export async function deleteProject(projectId: string) {
+  await deleteDoc(doc(db, "projects", projectId));
 }
 
 export async function updateProjectPeriod(

@@ -39,6 +39,11 @@ export interface Dictionary {
     selectProject: string;
     overview: string;
     open: string;
+    complete: string;
+    reopen: string;
+    delete: string;
+    deleteConfirm: string;
+    completed: string;
   };
   todo: {
     title: string;
