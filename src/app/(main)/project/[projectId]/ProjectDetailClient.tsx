@@ -6,11 +6,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addMemberByUsername, deleteProject, setProjectStatus, updateProjectPeriod } from "@/lib/data/projects";
+import { addMemberByUsername, deleteProject, setProjectStatus, updateProject } from "@/lib/data/projects";
 import { getUserProfile } from "@/lib/data/users";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { TextInput } from "@/components/ui/TextInput";
+import { TextInput, TextArea } from "@/components/ui/TextInput";
 import { ColorDot } from "@/components/ui/ColorDot";
 import type { UserProfile } from "@/types";
 
@@ -20,6 +20,8 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
   const router = useRouter();
   const project = projects.find((p) => p.id === projectId) ?? null;
 
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [memberUsername, setMemberUsername] = useState("");
   const [memberError, setMemberError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState("");
@@ -32,12 +34,11 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
   }, [projectId, setCurrentProjectId]);
 
   useEffect(() => {
-    // project arrives asynchronously from the Firestore listener after first render.
-    /* eslint-disable react-hooks/set-state-in-effect */
+    setName(project?.name ?? "");
+    setDescription(project?.description ?? "");
     setStartDate(project?.startDate ?? "");
     setEndDate(project?.endDate ?? "");
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, [project?.startDate, project?.endDate]);
+  }, [project?.name, project?.description, project?.startDate, project?.endDate]);
 
   const memberIdStr = project?.memberIds.join(",") ?? "";
   useEffect(() => {
@@ -71,8 +72,14 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     }
   };
 
-  const onSavePeriod = async () => {
-    await updateProjectPeriod(projectId, startDate || null, endDate || null);
+  const onSave = async () => {
+    await updateProject(
+      projectId,
+      name.trim() || project.name,
+      description.trim(),
+      startDate || null,
+      endDate || null
+    );
   };
 
   const onToggleComplete = async () => {
@@ -87,7 +94,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
   };
 
   return (
-    <div className="px-5 pt-8 pb-10">
+    <div className="flex flex-col px-5 pt-8 pb-10 min-h-full">
       <div className="mb-4 flex items-center justify-between">
         <Link href="/project" className="text-text-secondary">
           <ArrowLeft size={20} />
@@ -110,16 +117,28 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         </div>
       </div>
 
-      <h1 className="mb-1 text-2xl font-bold">{project.name}</h1>
       {isCompleted && (
         <span className="mb-3 inline-block rounded-pill bg-emerald-500/20 px-2.5 py-0.5 text-xs text-emerald-400">
           {t.project.completed}
         </span>
       )}
 
-      <Card className="mt-4">
-        <p className="mb-1 text-xs font-semibold text-text-secondary">{t.project.overview}</p>
-        <p className="text-sm text-text-primary">{project.description || "-"}</p>
+      <TextInput
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={t.project.namePlaceholder ?? t.project.name}
+        className="mb-4 text-xl font-bold"
+      />
+
+      <Card className="mt-0">
+        <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.overview}</p>
+        <TextArea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder={t.project.descriptionPlaceholder ?? t.project.overview}
+          rows={3}
+          className="w-full"
+        />
       </Card>
 
       <Card className="mt-4">
@@ -128,9 +147,6 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </div>
-        <Button variant="secondary" className="mt-3" onClick={onSavePeriod}>
-          {t.project.save}
-        </Button>
       </Card>
 
       <Card className="mt-4">
@@ -170,6 +186,12 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           </ul>
         )}
       </Card>
+
+      <div className="mt-auto pt-6">
+        <Button onClick={onSave} className="w-full">
+          {t.project.save}
+        </Button>
+      </div>
     </div>
   );
 }
