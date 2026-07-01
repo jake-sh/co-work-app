@@ -124,10 +124,13 @@ export default function SchedulePage() {
               {hasEvents && (
                 <span
                   className={clsx(
-                    "mt-0.5 h-1 w-1 rounded-full",
-                    key === selectedDate ? "bg-black" : "bg-text-secondary"
+                    "mt-0.5 w-full truncate px-0.5 text-center text-[8px] leading-none",
+                    key === selectedDate ? "text-black" : "text-text-secondary"
                   )}
-                />
+                >
+                  {eventsByDate[key][0].title.slice(0, 5)}
+                  {eventsByDate[key].length > 1 && `+${eventsByDate[key].length - 1}`}
+                </span>
               )}
             </button>
           );
