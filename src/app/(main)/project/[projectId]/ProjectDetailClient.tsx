@@ -7,9 +7,12 @@ import { useRouter } from "next/navigation";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { addMemberByUsername, deleteProject, setProjectStatus, updateProjectPeriod } from "@/lib/data/projects";
+import { getUserProfile } from "@/lib/data/users";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/TextInput";
+import { ColorDot } from "@/components/ui/ColorDot";
+import type { UserProfile } from "@/types";
 
 export function ProjectDetailClient({ projectId }: { projectId: string }) {
   const { projects, setCurrentProjectId } = useProjects();
@@ -22,6 +25,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [members, setMembers] = useState<UserProfile[]>([]);
 
   useEffect(() => {
     setCurrentProjectId(projectId);
@@ -34,6 +38,15 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     setEndDate(project?.endDate ?? "");
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [project?.startDate, project?.endDate]);
+
+  const memberIdStr = project?.memberIds.join(",") ?? "";
+  useEffect(() => {
+    if (!project) return;
+    Promise.all(project.memberIds.map((uid) => getUserProfile(uid))).then((profiles) => {
+      setMembers(profiles.filter(Boolean) as UserProfile[]);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memberIdStr]);
 
   if (!project) {
     return (
@@ -141,6 +154,20 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         </form>
         {memberError && (
           <p className="mt-2 text-xs text-red-400">{t.auth.genericError}</p>
+        )}
+        {members.length > 0 && (
+          <ul className="mt-3 flex flex-col gap-2 border-t border-border-divider pt-3">
+            {members.map((m) => (
+              <li key={m.uid} className="flex items-center gap-2">
+                <ColorDot color={m.colorCode} size={8} />
+                <span className="text-sm text-text-primary">{m.displayName}</span>
+                <span className="text-xs text-text-secondary">@{m.username}</span>
+                {m.uid === project.ownerId && (
+                  <span className="ml-auto text-[10px] text-text-disabled">Owner</span>
+                )}
+              </li>
+            ))}
+          </ul>
         )}
       </Card>
     </div>
