@@ -19,7 +19,23 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [inputKey, setInputKey] = useState(0);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const kh = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
+      setKeyboardHeight(kh);
+    };
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
 
   useEffect(() => {
     if (!currentProject) return;
@@ -49,7 +65,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-full flex-col" style={{ paddingBottom: "env(keyboard-inset-height, 0px)" }}>
+    <div className="flex h-full flex-col" style={{ paddingBottom: keyboardHeight }}>
       <div className="px-5 pt-8">
         <h1 className="mb-4 text-3xl font-bold">{currentProject.name}</h1>
       </div>
