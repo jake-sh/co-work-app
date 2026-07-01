@@ -73,6 +73,7 @@ export interface Dictionary {
     date: string;
     time: string;
     save: string;
+    cancel: string;
     empty: string;
     fromMemo: string;
     fromTodo: string;

@@ -1,4 +1,4 @@
-import { addDoc, collection, onSnapshot, query } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import type { ScheduleEvent } from "@/types";
 
@@ -18,6 +18,20 @@ export function subscribeEvents(projectId: string, cb: (events: ScheduleEvent[])
     },
     () => cb([])
   );
+}
+
+export async function updateEvent(
+  projectId: string,
+  eventId: string,
+  title: string,
+  date: string,
+  time: string | null
+) {
+  await updateDoc(doc(db, "projects", projectId, "schedule", eventId), { title, date, time });
+}
+
+export async function deleteEvent(projectId: string, eventId: string) {
+  await deleteDoc(doc(db, "projects", projectId, "schedule", eventId));
 }
 
 export async function addEvent(
