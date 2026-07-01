@@ -75,6 +75,7 @@ const ko: Dictionary = {
     date: "날짜",
     time: "시간 (선택)",
     save: "저장",
+    cancel: "취소",
     empty: "등록된 일정이 없습니다",
     fromMemo: "메모에서 자동 추가됨",
     fromTodo: "할일에서 자동 추가됨",

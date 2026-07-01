@@ -12,12 +12,12 @@ import {
   startOfWeek,
   subMonths,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Plus, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addEvent, subscribeEvents } from "@/lib/data/schedule";
+import { addEvent, deleteEvent, subscribeEvents, updateEvent } from "@/lib/data/schedule";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/TextInput";
@@ -34,6 +34,10 @@ export default function SchedulePage() {
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
   const [time, setTime] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
 
   useEffect(() => {
     if (!currentProject) return;
@@ -66,10 +70,29 @@ export default function SchedulePage() {
     setAdding(false);
   };
 
+  const startEdit = (ev: ScheduleEvent) => {
+    setEditingId(ev.id);
+    setEditTitle(ev.title);
+    setEditDate(ev.date);
+    setEditTime(ev.time ?? "");
+    setAdding(false);
+  };
+
+  const saveEdit = async () => {
+    if (!editingId || !editTitle.trim()) return;
+    await updateEvent(currentProject.id, editingId, editTitle.trim(), editDate, editTime || null);
+    setEditingId(null);
+  };
+
+  const onDeleteEvent = async (eventId: string) => {
+    await deleteEvent(currentProject.id, eventId);
+    setEditingId(null);
+  };
+
   const selectedEvents = eventsByDate[selectedDate] ?? [];
 
   return (
-    <div className="px-5 pt-8">
+    <div className="px-5 pt-8 pb-10">
       <h1 className="mb-4 text-3xl font-bold">{t.schedule.title}</h1>
 
       <div className="mb-3 flex items-center justify-between">
@@ -114,7 +137,7 @@ export default function SchedulePage() {
       <div className="mt-6 flex items-center justify-between">
         <p className="text-sm font-semibold">{selectedDate}</p>
         <button
-          onClick={() => setAdding((v) => !v)}
+          onClick={() => { setAdding((v) => !v); setEditingId(null); }}
           className="flex items-center gap-1 rounded-pill bg-surface-pill px-3 py-1.5 text-xs font-semibold"
         >
           <Plus size={14} />
@@ -142,24 +165,69 @@ export default function SchedulePage() {
         ) : (
           selectedEvents
             .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
-            .map((ev) => (
-              <li key={ev.id} className="flex items-center gap-3 rounded-card bg-surface-card px-4 py-3">
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: ev.authorColor }}
-                />
-                <div className="flex flex-1 flex-col">
-                  <span className="text-sm">{ev.title}</span>
-                  {ev.source && (
-                    <span className="mt-0.5 flex items-center gap-1 text-[10px] text-text-secondary">
-                      <Sparkles size={10} />
-                      {ev.source.type === "memo" ? t.schedule.fromMemo : t.schedule.fromTodo}
-                    </span>
-                  )}
-                </div>
-                {ev.time && <span className="text-xs text-text-secondary">{ev.time}</span>}
-              </li>
-            ))
+            .map((ev) =>
+              editingId === ev.id ? (
+                <li key={ev.id} className="rounded-card bg-surface-card px-4 py-3">
+                  <div className="flex flex-col gap-2">
+                    <TextInput
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      placeholder={t.schedule.eventTitle}
+                    />
+                    <TextInput
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                    />
+                    <TextInput
+                      type="time"
+                      value={editTime}
+                      onChange={(e) => setEditTime(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={saveEdit} disabled={!editTitle.trim()} className="flex-1">
+                        {t.schedule.save}
+                      </Button>
+                      <Button variant="secondary" onClick={() => setEditingId(null)} className="flex-1">
+                        {t.schedule.cancel}
+                      </Button>
+                      <button
+                        onClick={() => onDeleteEvent(ev.id)}
+                        className="flex items-center justify-center rounded-xl bg-red-500/20 px-3 text-red-400"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ) : (
+                <li
+                  key={ev.id}
+                  className="flex items-center gap-3 rounded-card bg-surface-card px-4 py-3"
+                >
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: ev.authorColor }}
+                  />
+                  <div className="flex flex-1 flex-col">
+                    <span className="text-sm">{ev.title}</span>
+                    {ev.source && (
+                      <span className="mt-0.5 flex items-center gap-1 text-[10px] text-text-secondary">
+                        <Sparkles size={10} />
+                        {ev.source.type === "memo" ? t.schedule.fromMemo : t.schedule.fromTodo}
+                      </span>
+                    )}
+                  </div>
+                  {ev.time && <span className="text-xs text-text-secondary">{ev.time}</span>}
+                  <button
+                    onClick={() => startEdit(ev)}
+                    className="shrink-0 text-text-secondary"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                </li>
+              )
+            )
         )}
       </ul>
     </div>

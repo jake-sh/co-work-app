@@ -75,6 +75,7 @@ const en: Dictionary = {
     date: "Date",
     time: "Time (optional)",
     save: "Save",
+    cancel: "Cancel",
     empty: "No events yet",
     fromMemo: "Auto-added from memo",
     fromTodo: "Auto-added from to-do",
