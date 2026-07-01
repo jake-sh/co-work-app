@@ -5,7 +5,7 @@ export type TodoStatus = "new" | "in_progress" | "done";
 export interface UserProfile {
   uid: string;
   displayName: string;
-  email: string;
+  username: string;
   colorCode: string;
   locale: Locale;
   createdAt: number;

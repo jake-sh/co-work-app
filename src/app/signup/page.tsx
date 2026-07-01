@@ -13,7 +13,7 @@ export default function SignupPage() {
   const { t } = useI18n();
   const router = useRouter();
   const [displayName, setDisplayName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -23,10 +23,11 @@ export default function SignupPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await signUp(displayName, email, password);
+      await signUp(displayName, username, password);
       router.replace("/project");
-    } catch {
-      setError(t.auth.genericError);
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      setError(code === "auth/email-already-in-use" ? t.auth.usernameTaken : t.auth.genericError);
     } finally {
       setSubmitting(false);
     }
@@ -44,10 +45,13 @@ export default function SignupPage() {
           required
         />
         <TextInput
-          type="email"
-          placeholder={t.auth.email}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          placeholder={t.auth.username}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          pattern="[a-zA-Z0-9_]{4,20}"
+          title="4-20 characters: letters, numbers, underscore"
+          autoCapitalize="none"
           required
         />
         <TextInput

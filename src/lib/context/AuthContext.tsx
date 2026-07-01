@@ -14,12 +14,18 @@ import { createUserProfile, getUserProfile, updateUserLocale } from "@/lib/data/
 import { useI18n } from "@/lib/i18n/I18nContext";
 import type { UserProfile } from "@/types";
 
+// Firebase Auth requires an email-shaped identifier; IDs are mapped to a
+// synthetic address in a reserved, non-routable domain under the hood.
+function usernameToAuthEmail(username: string): string {
+  return `${username.trim().toLowerCase()}@id.co-work.local`;
+}
+
 interface AuthContextValue {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
-  signUp: (displayName: string, email: string, password: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (displayName: string, username: string, password: string) => Promise<void>;
+  signIn: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -47,15 +53,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const signUp = async (displayName: string, email: string, password: string) => {
-    const credential = await createUserWithEmailAndPassword(auth, email, password);
+  const signUp = async (displayName: string, username: string, password: string) => {
+    const normalizedUsername = username.trim().toLowerCase();
+    const credential = await createUserWithEmailAndPassword(
+      auth,
+      usernameToAuthEmail(normalizedUsername),
+      password
+    );
     await updateProfile(credential.user, { displayName });
-    const newProfile = await createUserProfile(credential.user.uid, displayName, email, locale);
+    const newProfile = await createUserProfile(
+      credential.user.uid,
+      displayName,
+      normalizedUsername,
+      locale
+    );
     setProfile(newProfile);
   };
 
-  const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+  const signIn = async (username: string, password: string) => {
+    await signInWithEmailAndPassword(auth, usernameToAuthEmail(username), password);
   };
 
   const signOut = async () => {

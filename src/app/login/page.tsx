@@ -12,7 +12,7 @@ export default function LoginPage() {
   const { signIn } = useAuth();
   const { t } = useI18n();
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -22,7 +22,7 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await signIn(email, password);
+      await signIn(username, password);
       router.replace("/project");
     } catch {
       setError(t.auth.genericError);
@@ -36,10 +36,11 @@ export default function LoginPage() {
       <h1 className="mb-8 text-3xl font-bold">{t.auth.login}</h1>
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <TextInput
-          type="email"
-          placeholder={t.auth.email}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          placeholder={t.auth.username}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          autoCapitalize="none"
           required
         />
         <TextInput

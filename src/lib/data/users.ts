@@ -6,13 +6,13 @@ import type { Locale, UserProfile } from "@/types";
 export async function createUserProfile(
   uid: string,
   displayName: string,
-  email: string,
+  username: string,
   locale: Locale
 ): Promise<UserProfile> {
   const profile: UserProfile = {
     uid,
     displayName,
-    email,
+    username,
     colorCode: assignMemberColor([]),
     locale,
     createdAt: Date.now(),
@@ -30,9 +30,9 @@ export async function updateUserLocale(uid: string, locale: Locale) {
   await updateDoc(doc(db, "users", uid), { locale });
 }
 
-export async function findUserByEmail(email: string): Promise<UserProfile | null> {
+export async function findUserByUsername(username: string): Promise<UserProfile | null> {
   const { collection, query, where, getDocs, limit } = await import("firebase/firestore");
-  const q = query(collection(db, "users"), where("email", "==", email), limit(1));
+  const q = query(collection(db, "users"), where("username", "==", username), limit(1));
   const snap = await getDocs(q);
   if (snap.empty) return null;
   return snap.docs[0].data() as UserProfile;
