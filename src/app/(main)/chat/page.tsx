@@ -51,7 +51,7 @@ export default function ChatPage() {
   return (
     <div className="flex h-full flex-col" style={{ paddingBottom: "env(keyboard-inset-height, 0px)" }}>
       <div className="px-5 pt-8">
-        <h1 className="mb-4 text-2xl font-bold">{currentProject.name}</h1>
+        <h1 className="mb-4 text-3xl font-bold">{currentProject.name}</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto px-5">
