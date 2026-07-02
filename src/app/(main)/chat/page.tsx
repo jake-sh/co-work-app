@@ -96,20 +96,22 @@ export default function ChatPage() {
 
   const onSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile || !text.trim()) return;
-    await sendMessage(
-      currentProject.id,
-      text.trim(),
-      profile.uid,
-      profile.nickname ?? profile.displayName,
-      profile.colorCode,
-    );
+    const trimmed = text.trim();
+    if (!profile || !trimmed) return;
+    // Reset and refocus before await so keyboard never dismisses
     setText("");
     const el = textareaRef.current;
     if (el) {
       el.style.height = "auto";
       el.focus();
     }
+    await sendMessage(
+      currentProject.id,
+      trimmed,
+      profile.uid,
+      profile.nickname ?? profile.displayName,
+      profile.colorCode,
+    );
   };
 
   const keyboardOpen = keyboardHeight > 50;
