@@ -26,30 +26,38 @@ export function ProjectTabBar() {
   };
 
   return (
-    <div className="sticky top-0 z-10 hide-scrollbar flex overflow-x-auto border-b border-border-divider bg-bg-base">
-      {projects.map((p) => {
-        const isActive = p.id === currentProjectId;
-        return (
-          <button
-            key={p.id}
-            ref={isActive ? activeRef : undefined}
-            onClick={() => onTabClick(p.id)}
-            className={clsx(
-              "relative flex shrink-0 items-center gap-2 border-r border-border-divider px-4 py-2.5 text-xs font-medium whitespace-nowrap transition-colors",
-              isActive
-                ? "bg-surface-card text-text-primary"
-                : "bg-bg-base text-text-secondary"
-            )}
-          >
-            {isActive && (
-              <span className="absolute inset-x-0 top-0 h-[2px] rounded-b-sm" style={{ backgroundColor: p.color ?? "#9900CC" }} />
-            )}
-            <span className={clsx("max-w-[100px] truncate", p.status === "completed" && "opacity-50")}>
-              {p.name}
-            </span>
-          </button>
-        );
-      })}
+    <div className="sticky top-0 z-10 relative flex border-b border-border-divider bg-bg-base overflow-hidden">
+      {/* Scrollable tabs — scroll over the cowork label when tabs overflow */}
+      <div className="hide-scrollbar flex overflow-x-auto relative z-[1]">
+        {projects.map((p) => {
+          const isActive = p.id === currentProjectId;
+          return (
+            <button
+              key={p.id}
+              ref={isActive ? activeRef : undefined}
+              onClick={() => onTabClick(p.id)}
+              className={clsx(
+                "relative flex shrink-0 items-center gap-2 border-r border-border-divider px-4 py-2.5 text-xs font-medium whitespace-nowrap transition-colors",
+                isActive
+                  ? "bg-surface-card text-text-primary"
+                  : "bg-bg-base text-text-secondary"
+              )}
+            >
+              {isActive && (
+                <span className="absolute inset-x-0 top-0 h-[2px] rounded-b-sm" style={{ backgroundColor: p.color ?? "#9900CC" }} />
+              )}
+              <span className={clsx("max-w-[100px] truncate", p.status === "completed" && "opacity-50")}>
+                {p.name}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* "cowork" branding — right-aligned, hidden behind tabs when they overflow */}
+      <div className="absolute inset-y-0 right-0 flex items-center border-l border-border-divider bg-bg-base px-3 text-xs font-bold tracking-tight text-text-secondary pointer-events-none select-none">
+        <span>co</span><span style={{ color: "#9900CC" }}>w</span><span>ork</span>
+      </div>
     </div>
   );
 }
