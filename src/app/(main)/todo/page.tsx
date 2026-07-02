@@ -213,7 +213,7 @@ export default function TodoPage() {
         {todos.length === 0 ? (
           <EmptyState message={t.todo.empty} />
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul key={currentProject.id} className="flex flex-col gap-2">
             <AnimatePresence initial={false} mode="popLayout">
               {sortedTodos.map((todo) => (
                 <TodoRow
