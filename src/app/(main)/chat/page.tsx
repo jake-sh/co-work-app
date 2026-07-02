@@ -27,11 +27,6 @@ export default function ChatPage() {
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    // Android Chrome: opt in to Virtual Keyboard API so keyboard overlays content
-    if ("virtualKeyboard" in navigator) {
-      (navigator as { virtualKeyboard: { overlaysContent: boolean } }).virtualKeyboard.overlaysContent = true;
-    }
-
     const update = () => {
       const vv = window.visualViewport;
       if (!vv) return;
