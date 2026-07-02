@@ -17,12 +17,14 @@ import { clsx } from "clsx";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addEvent, deleteEvent, subscribeEvents, updateEvent } from "@/lib/data/schedule";
+import { addEvent, deleteEvent, subscribeEvents, updateEvent, updateEventColor } from "@/lib/data/schedule";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import type { ScheduleEvent } from "@/types";
+
+const LABEL_COLORS = ["#9b9b9b", "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#a855f7", "#ec4899"];
 
 export default function SchedulePage() {
   const { profile } = useAuth();
@@ -38,6 +40,7 @@ export default function SchedulePage() {
   const [editTitle, setEditTitle] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
+  const [colorPickerId, setColorPickerId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!currentProject) return;
@@ -148,7 +151,7 @@ export default function SchedulePage() {
               {hasEvents && (
                 <span
                   className="mt-0.5 w-full truncate px-0.5 text-center text-[8px] leading-none"
-                  style={key !== selectedDate ? { color: eventsByDate[key][0].authorColor } : { color: "#000" }}
+                  style={key !== selectedDate ? { color: eventsByDate[key][0].labelColor ?? "#9b9b9b" } : { color: "#000" }}
                 >
                   {(() => {
                     const raw = eventsByDate[key][0].title;
@@ -235,11 +238,13 @@ export default function SchedulePage() {
               ) : (
                 <li
                   key={ev.id}
-                  className="flex items-center gap-3 rounded-card bg-surface-card px-4 py-3"
+                  className="flex flex-col rounded-card bg-surface-card px-4 py-3"
                 >
-                  <span
+                  <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setColorPickerId((id) => id === ev.id ? null : ev.id)}
                     className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: ev.authorColor }}
+                    style={{ backgroundColor: ev.labelColor ?? "#9b9b9b" }}
                   />
                   <div className="flex flex-1 flex-col">
                     <span className="text-sm">{ev.title}</span>
@@ -257,6 +262,22 @@ export default function SchedulePage() {
                   >
                     <Pencil size={14} />
                   </button>
+                  </div>
+                  {colorPickerId === ev.id && (
+                    <div className="mt-2 flex gap-2 pl-5">
+                      {LABEL_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => {
+                            updateEventColor(currentProject.id, ev.id, color);
+                            setColorPickerId(null);
+                          }}
+                          className="h-4 w-4 rounded-full"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </li>
               )
             )

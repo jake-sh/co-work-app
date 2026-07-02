@@ -34,6 +34,10 @@ export async function deleteEvent(projectId: string, eventId: string) {
   await deleteDoc(doc(db, "projects", projectId, "schedule", eventId));
 }
 
+export async function updateEventColor(projectId: string, eventId: string, labelColor: string) {
+  await updateDoc(doc(db, "projects", projectId, "schedule", eventId), { labelColor });
+}
+
 export async function addEvent(
   projectId: string,
   title: string,
