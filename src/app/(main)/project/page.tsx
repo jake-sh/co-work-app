@@ -185,6 +185,7 @@ function ProjectRow({
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressStart = useRef<{ x: number; y: number } | null>(null);
   const isLifting = useRef(false);
+  const rowRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const clearHoldTimer = () => {
@@ -194,15 +195,31 @@ function ProjectRow({
     }
   };
 
+  // Framer's own pan-gesture listeners are passive (can't call
+  // preventDefault), and dragListener={false} disables the touch-action
+  // CSS it would otherwise apply automatically. So once a drag is lifted,
+  // forcibly block the browser's native scroll ourselves via a non-passive
+  // listener — a reactive touch-action class alone isn't reliably honored
+  // for a touch sequence that's already in progress.
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el) return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (isLifting.current) e.preventDefault();
+    };
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => el.removeEventListener("touchmove", onTouchMove);
+  }, []);
+
   const onPointerDown = (e: React.PointerEvent) => {
     isLifting.current = false;
     pressStart.current = { x: e.clientX, y: e.clientY };
     clearHoldTimer();
     holdTimer.current = setTimeout(() => {
       isLifting.current = true;
-      // Lock touch-action before any movement happens, otherwise the
-      // browser can still decide this vertical gesture is a page scroll
-      // and hijack it away from the drag once the finger actually moves.
+      // Give immediate visual feedback the instant the long-press is
+      // recognized, rather than waiting for framer's whileDrag (which only
+      // applies once the pointer has moved a few pixels).
       setIsDragging(true);
       controls.start(e);
     }, LONG_PRESS_MS);
@@ -235,11 +252,11 @@ function ProjectRow({
       dragControls={controls}
       dragListener={false}
       initial={false}
-      whileDrag={{ scale: 1.03, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
       onDragEnd={() => setIsDragging(false)}
       className="rounded-lg"
     >
       <div
+        ref={rowRef}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -247,8 +264,8 @@ function ProjectRow({
         onPointerCancel={onPointerLeave}
         onContextMenu={(e) => e.preventDefault()}
         className={clsx(
-          "flex overflow-hidden rounded-lg bg-surface-card select-none active:bg-zinc-800 transition-colors",
-          isDragging && "touch-none"
+          "flex overflow-hidden rounded-lg bg-surface-card select-none transition-[transform,box-shadow,background-color]",
+          isDragging ? "scale-[1.03] shadow-2xl touch-none" : "active:bg-zinc-800"
         )}
       >
         <div className="w-1 shrink-0" style={{ backgroundColor: project.color ?? "#9900CC" }} />
