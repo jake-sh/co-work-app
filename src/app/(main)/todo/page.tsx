@@ -17,7 +17,7 @@ import { clsx } from "clsx";
 const NEXT_STATUS: Record<TodoStatus, TodoStatus> = {
   new: "in_progress",
   in_progress: "done",
-  done: "new",
+  done: "in_progress",
 };
 
 export default function TodoPage() {
