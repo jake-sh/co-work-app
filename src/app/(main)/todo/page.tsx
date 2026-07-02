@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addTodo, deleteTodo, setTodoStatus } from "@/lib/data/todos";
+import { addTodo, deleteTodo, setTodoStatus, updateTodoText } from "@/lib/data/todos";
 import { useData } from "@/lib/context/DataContext";
 import { TextInput } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -86,7 +86,8 @@ export default function TodoPage() {
   const { todos } = useData();
   const [text, setText] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<Todo | null>(null);
+  const [actionMenuTodo, setActionMenuTodo] = useState<Todo | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   if (!currentProject) {
     return <EmptyState message={t.todo.selectProjectFirst} />;
@@ -116,10 +117,24 @@ export default function TodoPage() {
     setTodoStatus(currentProject.id, todo.id, prev);
   };
 
-  const onConfirmDelete = async () => {
-    if (!confirmDelete) return;
-    await deleteTodo(currentProject.id, confirmDelete.id);
-    setConfirmDelete(null);
+  const onSelectEdit = () => {
+    if (!actionMenuTodo) return;
+    setEditingId(actionMenuTodo.id);
+    setActionMenuTodo(null);
+  };
+
+  const onSelectDelete = async () => {
+    if (!actionMenuTodo) return;
+    await deleteTodo(currentProject.id, actionMenuTodo.id);
+    setActionMenuTodo(null);
+  };
+
+  const onSaveEdit = (todo: Todo, nextText: string) => {
+    setEditingId(null);
+    const trimmed = nextText.trim();
+    if (trimmed && trimmed !== todo.text) {
+      updateTodoText(currentProject.id, todo.id, trimmed);
+    }
   };
 
   const active = todos
@@ -137,30 +152,36 @@ export default function TodoPage() {
 
   return (
     <>
-      {confirmDelete && (
+      {actionMenuTodo && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-          onClick={() => setConfirmDelete(null)}
+          onClick={() => setActionMenuTodo(null)}
         >
           <div
-            className="mx-6 w-full max-w-xs rounded-2xl bg-surface-card p-6"
+            className="mx-6 w-full max-w-xs overflow-hidden rounded-2xl bg-surface-card"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="mb-5 text-center text-sm font-semibold">{t.todo.deleteConfirm}</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmDelete(null)}
-                className="flex-1 rounded-xl bg-surface-pill py-2.5 text-sm font-semibold"
-              >
-                {t.project.cancel}
-              </button>
-              <button
-                onClick={onConfirmDelete}
-                className="flex-1 rounded-xl bg-red-500/20 py-2.5 text-sm font-semibold text-red-400"
-              >
-                {t.todo.delete}
-              </button>
-            </div>
+            <p className="px-6 py-4 text-center text-sm font-semibold text-text-secondary">
+              {actionMenuTodo.text}
+            </p>
+            <button
+              onClick={onSelectEdit}
+              className="w-full border-t border-border-divider py-3 text-sm font-semibold"
+            >
+              {t.todo.edit}
+            </button>
+            <button
+              onClick={onSelectDelete}
+              className="w-full border-t border-border-divider py-3 text-sm font-semibold text-red-400"
+            >
+              {t.todo.delete}
+            </button>
+            <button
+              onClick={() => setActionMenuTodo(null)}
+              className="w-full border-t border-border-divider py-3 text-sm font-semibold text-text-secondary"
+            >
+              {t.project.cancel}
+            </button>
           </div>
         </div>
       )}
@@ -198,9 +219,11 @@ export default function TodoPage() {
                   key={todo.id}
                   todo={todo}
                   statusLabel={statusLabel[todo.status]}
+                  isEditing={editingId === todo.id}
                   onAdvance={() => advanceStatus(todo)}
                   onRevert={() => revertStatus(todo)}
-                  onDelete={() => setConfirmDelete(todo)}
+                  onOpenMenu={() => setActionMenuTodo(todo)}
+                  onSaveEdit={(nextText) => onSaveEdit(todo, nextText)}
                 />
               ))}
             </AnimatePresence>
@@ -216,9 +239,11 @@ export default function TodoPage() {
                   key={todo.id}
                   todo={todo}
                   statusLabel={statusLabel[todo.status]}
+                  isEditing={editingId === todo.id}
                   onAdvance={() => advanceStatus(todo)}
                   onRevert={() => revertStatus(todo)}
-                  onDelete={() => setConfirmDelete(todo)}
+                  onOpenMenu={() => setActionMenuTodo(todo)}
+                  onSaveEdit={(nextText) => onSaveEdit(todo, nextText)}
                 />
               ))}
             </AnimatePresence>
@@ -232,18 +257,35 @@ export default function TodoPage() {
 function TodoRow({
   todo,
   statusLabel,
+  isEditing,
   onAdvance,
   onRevert,
-  onDelete,
+  onOpenMenu,
+  onSaveEdit,
 }: {
   todo: Todo;
   statusLabel: string;
+  isEditing: boolean;
   onAdvance: () => void;
   onRevert: () => void;
-  onDelete: () => void;
+  onOpenMenu: () => void;
+  onSaveEdit: (text: string) => void;
 }) {
-  const textHandlers = useTapAndHold(() => {}, onDelete);
+  const [editText, setEditText] = useState(todo.text);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const textHandlers = useTapAndHold(() => {}, onOpenMenu);
   const pillHandlers = useTapAndHold(onAdvance, onRevert);
+
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (isEditing) {
+      setEditText(todo.text);
+      const input = inputRef.current;
+      input?.focus();
+      input?.setSelectionRange(input.value.length, input.value.length);
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [isEditing, todo.text]);
 
   return (
     <motion.li
@@ -256,15 +298,31 @@ function TodoRow({
       className="flex items-center gap-2.5 rounded-card bg-surface-card px-3 py-3"
     >
       <ColorDot color={todo.authorColor} />
-      <span
-        {...textHandlers}
-        className={clsx(
-          "flex-1 select-none text-sm",
-          todo.status === "done" ? "text-text-disabled line-through" : "text-text-primary"
-        )}
-      >
-        {todo.text}
-      </span>
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onBlur={() => onSaveEdit(editText)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              inputRef.current?.blur();
+            }
+          }}
+          className="flex-1 bg-transparent text-sm text-text-primary outline-none"
+        />
+      ) : (
+        <span
+          {...textHandlers}
+          className={clsx(
+            "flex-1 select-none text-sm",
+            todo.status === "done" ? "text-text-disabled line-through" : "text-text-primary"
+          )}
+        >
+          {todo.text}
+        </span>
+      )}
       <button
         {...pillHandlers}
         className={clsx(
