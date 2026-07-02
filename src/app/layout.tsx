@@ -5,8 +5,6 @@ import { AuthProvider } from "@/lib/context/AuthContext";
 import { ProjectProvider } from "@/lib/context/ProjectContext";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
   title: "co-work",
   description: "Project / To-Do / Memo / Schedule / Chat for teams",
