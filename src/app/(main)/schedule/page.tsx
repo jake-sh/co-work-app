@@ -158,7 +158,7 @@ export default function SchedulePage() {
               {hasEvents && (
                 <span
                   className="mt-0.5 w-full truncate px-0.5 text-center text-[8px] leading-none"
-                  style={key !== selectedDate ? { color: resolveColor(eventsByDate[key][0]) } : { color: "#000" }}
+                  style={{ color: resolveColor(eventsByDate[key][0]) }}
                 >
                   {(() => {
                     const raw = eventsByDate[key][0].title;
