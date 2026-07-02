@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { subscribeUserProjects } from "@/lib/data/projects";
 import type { Project } from "@/types";
@@ -25,36 +25,35 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     return window.localStorage.getItem(STORAGE_KEY);
   });
   const [loading, setLoading] = useState(true);
+  // Tracks whether the first real Firestore snapshot has been validated.
+  // Prevents fallback from running on the transient user=null state.
+  const validatedRef = useRef(false);
 
   useEffect(() => {
-    // External-store subscription: Firestore pushes updates asynchronously via
-    // the onSnapshot callback, so these setState calls are not synchronous re-renders.
     /* eslint-disable react-hooks/set-state-in-effect */
     if (!user) {
       setProjects([]);
       setLoading(false);
+      validatedRef.current = false;
       return;
     }
     setLoading(true);
+    validatedRef.current = false;
     const unsubscribe = subscribeUserProjects(user.uid, (next) => {
       setProjects(next);
       setLoading(false);
+      if (!validatedRef.current) {
+        validatedRef.current = true;
+        // On first real snapshot: keep stored ID if valid, otherwise fall back.
+        setCurrentProjectIdState((prev) => {
+          if (prev && next.some((p) => p.id === prev)) return prev;
+          return next[0]?.id ?? null;
+        });
+      }
     });
     return unsubscribe;
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [user]);
-
-  useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
-    if (loading || !user) return;
-    if (currentProjectId && !projects.some((p) => p.id === currentProjectId)) {
-      setCurrentProjectIdState(projects[0]?.id ?? null);
-    } else if (!currentProjectId && projects.length > 0) {
-      setCurrentProjectIdState(projects[0].id);
-    }
-    /* eslint-enable react-hooks/set-state-in-effect */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projects, loading, user]);
 
   const setCurrentProjectId = (id: string | null) => {
     setCurrentProjectIdState(id);
