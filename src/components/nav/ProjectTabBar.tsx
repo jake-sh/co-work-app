@@ -26,7 +26,7 @@ export function ProjectTabBar() {
   };
 
   return (
-    <div className="hide-scrollbar flex overflow-x-auto border-b border-border-divider bg-bg-base">
+    <div className="sticky top-0 z-10 hide-scrollbar flex overflow-x-auto border-b border-border-divider bg-bg-base">
       {projects.map((p) => {
         const isActive = p.id === currentProjectId;
         return (
