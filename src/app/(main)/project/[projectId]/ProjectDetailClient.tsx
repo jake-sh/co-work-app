@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addMemberByUsername, deleteProject, setProjectStatus, updateProject } from "@/lib/data/projects";
+import { addMemberByUsername, deleteProject, setProjectStatus, updateProject, updateProjectColor } from "@/lib/data/projects";
+import { PROJECT_COLOR_PALETTE } from "@/lib/colors";
 import { getUserProfile } from "@/lib/data/users";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -147,6 +148,24 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="no-date-arrow" />
           <span className="shrink-0 text-sm text-text-secondary">~</span>
           <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="no-date-arrow" />
+        </div>
+      </Card>
+
+      <Card className="mt-4">
+        <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.color}</p>
+        <div className="flex gap-2">
+          {PROJECT_COLOR_PALETTE.map((c) => (
+            <button
+              key={c}
+              onClick={() => updateProjectColor(projectId, c)}
+              className="h-6 w-6 rounded-full transition-transform"
+              style={{
+                backgroundColor: c,
+                outline: (project.color ?? PROJECT_COLOR_PALETTE[0]) === c ? `2px solid ${c}` : "none",
+                outlineOffset: "2px",
+              }}
+            />
+          ))}
         </div>
       </Card>
 

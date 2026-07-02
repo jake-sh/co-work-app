@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { createProject } from "@/lib/data/projects";
+import { PROJECT_COLOR_PALETTE } from "@/lib/colors";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextInput, TextArea } from "@/components/ui/TextInput";
@@ -21,6 +22,7 @@ export default function ProjectListPage() {
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [color, setColor] = useState(PROJECT_COLOR_PALETTE[0]);
   const [submitting, setSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -35,13 +37,15 @@ export default function ProjectListPage() {
         description.trim(),
         profile.uid,
         startDate || null,
-        endDate || null
+        endDate || null,
+        color
       );
       setCurrentProjectId(id);
       setName("");
       setDescription("");
       setStartDate("");
       setEndDate("");
+      setColor(PROJECT_COLOR_PALETTE[0]);
       setCreating(false);
     } catch {
       setCreateError(t.auth.genericError);
@@ -89,6 +93,23 @@ export default function ProjectListPage() {
                 <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
               </div>
             </div>
+            <div>
+              <label className="mb-2 block text-xs text-text-secondary">{t.project.color}</label>
+              <div className="flex gap-2">
+                {PROJECT_COLOR_PALETTE.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setColor(c)}
+                    className="h-6 w-6 rounded-full transition-transform"
+                    style={{
+                      backgroundColor: c,
+                      outline: color === c ? `2px solid ${c}` : "none",
+                      outlineOffset: "2px",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
             {createError && <p className="text-xs text-red-400">{createError}</p>}
             <Button onClick={onCreate} disabled={submitting || !name.trim()}>
               {t.project.save}
@@ -103,15 +124,18 @@ export default function ProjectListPage() {
             {projects.map((project) => (
               <li key={project.id}>
                 <Link href={`/project/${project.id}`} onClick={() => setCurrentProjectId(project.id)}>
-                  <Card className="hover:bg-zinc-800">
-                    <p className="text-base font-semibold">{project.name}</p>
-                    {project.description && (
-                      <p className="mt-1 line-clamp-2 text-sm text-text-secondary">{project.description}</p>
-                    )}
-                    <p className="mt-2 text-xs text-text-disabled">
-                      {project.memberIds.length} {t.project.members}
-                    </p>
-                  </Card>
+                  <div className="flex overflow-hidden rounded-card bg-surface-card hover:bg-zinc-800 transition-colors">
+                    <div className="w-1 shrink-0" style={{ backgroundColor: project.color ?? "#9900CC" }} />
+                    <div className="flex-1 p-4">
+                      <p className="text-base font-semibold">{project.name}</p>
+                      {project.description && (
+                        <p className="mt-1 line-clamp-2 text-sm text-text-secondary">{project.description}</p>
+                      )}
+                      <p className="mt-2 text-xs text-text-disabled">
+                        {project.memberIds.length} {t.project.members}
+                      </p>
+                    </div>
+                  </div>
                 </Link>
               </li>
             ))}

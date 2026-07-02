@@ -42,7 +42,7 @@ export function ProjectTabBar() {
             )}
           >
             {isActive && (
-              <span className="absolute inset-x-0 top-0 h-[2px] rounded-b-sm" style={{ backgroundColor: "#9900CC" }} />
+              <span className="absolute inset-x-0 top-0 h-[2px] rounded-b-sm" style={{ backgroundColor: p.color ?? "#9900CC" }} />
             )}
             <span className={clsx("max-w-[100px] truncate", p.status === "completed" && "opacity-50")}>
               {p.name}

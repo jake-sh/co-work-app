@@ -23,6 +23,7 @@ export interface Project {
   memberIds: string[];
   createdAt: number;
   status?: "active" | "completed";
+  color?: string;
 }
 
 export interface Todo {
