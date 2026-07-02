@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Reorder, useDragControls } from "framer-motion";
+import { clsx } from "clsx";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
@@ -184,6 +185,7 @@ function ProjectRow({
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressStart = useRef<{ x: number; y: number } | null>(null);
   const isLifting = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const clearHoldTimer = () => {
     if (holdTimer.current) {
@@ -198,6 +200,10 @@ function ProjectRow({
     clearHoldTimer();
     holdTimer.current = setTimeout(() => {
       isLifting.current = true;
+      // Lock touch-action before any movement happens, otherwise the
+      // browser can still decide this vertical gesture is a page scroll
+      // and hijack it away from the drag once the finger actually moves.
+      setIsDragging(true);
       controls.start(e);
     }, LONG_PRESS_MS);
   };
@@ -230,6 +236,7 @@ function ProjectRow({
       dragListener={false}
       initial={false}
       whileDrag={{ scale: 1.03, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
+      onDragEnd={() => setIsDragging(false)}
       className="rounded-lg"
     >
       <div
@@ -239,7 +246,10 @@ function ProjectRow({
         onPointerLeave={onPointerLeave}
         onPointerCancel={onPointerLeave}
         onContextMenu={(e) => e.preventDefault()}
-        className="flex overflow-hidden rounded-lg bg-surface-card select-none active:bg-zinc-800 transition-colors"
+        className={clsx(
+          "flex overflow-hidden rounded-lg bg-surface-card select-none active:bg-zinc-800 transition-colors",
+          isDragging && "touch-none"
+        )}
       >
         <div className="w-1 shrink-0" style={{ backgroundColor: project.color ?? "#9900CC" }} />
         <div className="flex-1 p-4">
