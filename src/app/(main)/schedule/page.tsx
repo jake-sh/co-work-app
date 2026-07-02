@@ -26,6 +26,13 @@ import type { ScheduleEvent } from "@/types";
 
 const LABEL_COLORS = ["#9b9b9b", "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#a855f7", "#ec4899"];
 
+function resolveColor(ev: ScheduleEvent): string {
+  if (ev.labelColor) return ev.labelColor;
+  if (ev.title.includes("소장")) return "#f97316";
+  if (ev.title.includes("팀장")) return "#3b82f6";
+  return "#9b9b9b";
+}
+
 export default function SchedulePage() {
   const { profile } = useAuth();
   const { currentProject } = useProjects();
@@ -151,7 +158,7 @@ export default function SchedulePage() {
               {hasEvents && (
                 <span
                   className="mt-0.5 w-full truncate px-0.5 text-center text-[8px] leading-none"
-                  style={key !== selectedDate ? { color: eventsByDate[key][0].labelColor ?? "#9b9b9b" } : { color: "#000" }}
+                  style={key !== selectedDate ? { color: resolveColor(eventsByDate[key][0]) } : { color: "#000" }}
                 >
                   {(() => {
                     const raw = eventsByDate[key][0].title;
@@ -244,7 +251,7 @@ export default function SchedulePage() {
                   <button
                     onClick={() => setColorPickerId((id) => id === ev.id ? null : ev.id)}
                     className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: ev.labelColor ?? "#9b9b9b" }}
+                    style={{ backgroundColor: resolveColor(ev) }}
                   />
                   <div className="flex flex-1 flex-col">
                     <span className="text-sm">{ev.title}</span>
