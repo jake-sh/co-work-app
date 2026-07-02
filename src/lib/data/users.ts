@@ -38,6 +38,10 @@ export async function updateUserNickname(uid: string, nickname: string) {
   await updateDoc(doc(db, "users", uid), { nickname });
 }
 
+export async function updateMemoDefaultShared(uid: string, value: boolean) {
+  await updateDoc(doc(db, "users", uid), { memoDefaultShared: value });
+}
+
 export async function findUserByUsername(username: string): Promise<UserProfile | null> {
   const { collection, query, where, getDocs, limit } = await import("firebase/firestore");
   const q = query(collection(db, "users"), where("username", "==", username), limit(1));

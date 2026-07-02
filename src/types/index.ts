@@ -7,6 +7,7 @@ export interface UserProfile {
   displayName: string;
   username: string;
   nickname?: string;
+  memoDefaultShared?: boolean;
   colorCode: string;
   locale: Locale;
   createdAt: number;
