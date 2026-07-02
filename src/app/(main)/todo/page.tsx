@@ -228,12 +228,20 @@ export default function TodoPage() {
               ))}
             </AnimatePresence>
 
-            {done.length > 0 && (
-              <p className="mt-4 mb-1 text-xs font-semibold text-text-secondary">
-                {t.todo.statusDone}
-              </p>
-            )}
             <AnimatePresence initial={false} mode="popLayout">
+              {done.length > 0 && (
+                <motion.li
+                  key="done-label"
+                  layout="position"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                  className="mt-4 mb-1 text-xs font-semibold text-text-secondary"
+                >
+                  {t.todo.statusDone}
+                </motion.li>
+              )}
               {done.map((todo) => (
                 <TodoRow
                   key={todo.id}
@@ -290,6 +298,7 @@ function TodoRow({
   return (
     <motion.li
       layout="position"
+      layoutId={todo.id}
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
