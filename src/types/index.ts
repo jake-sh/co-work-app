@@ -52,6 +52,7 @@ export interface ScheduleEvent {
   time: string | null;
   authorId: string;
   authorColor: string;
+  labelColor?: string;
   createdAt: number;
   source?: { type: "memo" | "todo"; id: string };
 }
