@@ -24,17 +24,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
+  const projectId = currentProject?.id ?? null;
+
   useEffect(() => {
-    if (!currentProject) return;
-    const id = currentProject.id;
+    if (!projectId) return;
     const unsubs = [
-      subscribeTodos(id, setTodos),
-      subscribeMemos(id, setMemos),
-      subscribeEvents(id, setEvents),
-      subscribeMessages(id, setMessages),
+      subscribeTodos(projectId, setTodos),
+      subscribeMemos(projectId, setMemos),
+      subscribeEvents(projectId, setEvents),
+      subscribeMessages(projectId, setMessages),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [currentProject]);
+  }, [projectId]);
 
   const value = useMemo<DataContextValue>(
     () => ({ todos, memos, events, messages }),
