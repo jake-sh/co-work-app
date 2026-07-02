@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: "co-work",
   description: "Project / To-Do / Memo / Schedule / Chat for teams",
   manifest: "/manifest.webmanifest",
+  icons: {
+    apple: "/icon-192.png",
+  },
 };
 
 export const viewport: Viewport = {

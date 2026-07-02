@@ -1,8 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#0B0B0B"/>
-  <g stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <rect x="120" y="150" width="272" height="212" rx="24"/>
-    <path d="M196 150v-24a24 24 0 0 1 24-24h72a24 24 0 0 1 24 24v24"/>
-    <path d="M120 248h272"/>
-  </g>
+  <rect width="512" height="512" fill="#0B0B0B"/>
+  <text
+    x="256"
+    y="256"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial Black, Arial, sans-serif"
+    font-weight="900"
+    font-size="82"
+    letter-spacing="3"
+  ><tspan fill="#FFFFFF">CO</tspan><tspan fill="#9900CC">W</tspan><tspan fill="#FFFFFF">ORK</tspan></text>
 </svg>
