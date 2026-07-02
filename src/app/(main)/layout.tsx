@@ -31,7 +31,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     <DataProvider>
       <div className="h-full" style={{ display: "grid", gridTemplateRows: "auto 1fr" }}>
         <ProjectTabBar />
-        <div className="overflow-y-auto pb-20">{children}</div>
+        <div className="overflow-y-auto overscroll-y-contain pb-20">{children}</div>
         <BottomNav />
       </div>
     </DataProvider>
