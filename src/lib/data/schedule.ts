@@ -8,16 +8,12 @@ function eventsCol(projectId: string) {
 
 export function subscribeEvents(projectId: string, cb: (events: ScheduleEvent[]) => void) {
   const q = query(eventsCol(projectId));
-  return onSnapshot(
-    q,
-    (snap) => {
-      const sorted = snap.docs
-        .map((d) => ({ ...(d.data() as Omit<ScheduleEvent, "id">), id: d.id }))
-        .sort((a, b) => a.date.localeCompare(b.date));
-      cb(sorted);
-    },
-    () => cb([])
-  );
+  return onSnapshot(q, (snap) => {
+    const sorted = snap.docs
+      .map((d) => ({ ...(d.data() as Omit<ScheduleEvent, "id">), id: d.id }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+    cb(sorted);
+  });
 }
 
 export async function updateEvent(

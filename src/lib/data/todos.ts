@@ -10,16 +10,12 @@ function todosCol(projectId: string) {
 
 export function subscribeTodos(projectId: string, cb: (todos: Todo[]) => void) {
   const q = query(todosCol(projectId));
-  return onSnapshot(
-    q,
-    (snap) => {
-      const sorted = snap.docs
-        .map((d) => ({ ...(d.data() as Omit<Todo, "id">), id: d.id }))
-        .sort((a, b) => b.createdAt - a.createdAt);
-      cb(sorted);
-    },
-    () => cb([])
-  );
+  return onSnapshot(q, (snap) => {
+    const sorted = snap.docs
+      .map((d) => ({ ...(d.data() as Omit<Todo, "id">), id: d.id }))
+      .sort((a, b) => b.createdAt - a.createdAt);
+    cb(sorted);
+  });
 }
 
 export async function addTodo(

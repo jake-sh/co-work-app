@@ -17,16 +17,12 @@ export function deriveTitle(title: string, body: string): string {
 
 export function subscribeMemos(projectId: string, cb: (memos: Memo[]) => void) {
   const q = query(memosCol(projectId));
-  return onSnapshot(
-    q,
-    (snap) => {
-      const sorted = snap.docs
-        .map((d) => ({ ...(d.data() as Omit<Memo, "id">), id: d.id }))
-        .sort((a, b) => b.createdAt - a.createdAt);
-      cb(sorted);
-    },
-    () => cb([])
-  );
+  return onSnapshot(q, (snap) => {
+    const sorted = snap.docs
+      .map((d) => ({ ...(d.data() as Omit<Memo, "id">), id: d.id }))
+      .sort((a, b) => b.createdAt - a.createdAt);
+    cb(sorted);
+  });
 }
 
 export async function addMemo(
