@@ -109,183 +109,187 @@ export default function SchedulePage() {
   };
 
   return (
-    <div className="px-5 pt-8 pb-10">
-      <h1 className="mb-4 text-3xl font-bold">{t.schedule.title}</h1>
+    <>
+      <div className="sticky top-0 z-[1] bg-bg-base px-5 pt-8 pb-4">
+        <h1 className="mb-4 text-3xl font-bold">{t.schedule.title}</h1>
 
-      <div className="mb-3 flex items-center justify-between">
-        <button onClick={() => setMonth((m) => subMonths(m, 1))} className="text-text-secondary">
-          <ChevronLeft size={20} />
-        </button>
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold">{format(month, "yyyy.MM")}</p>
-          <button
-            onClick={goToToday}
-            className="rounded-pill bg-surface-pill px-2 py-0.5 text-[11px] text-text-secondary"
-          >
-            {t.schedule.today}
+        <div className="mb-3 flex items-center justify-between">
+          <button onClick={() => setMonth((m) => subMonths(m, 1))} className="text-text-secondary">
+            <ChevronLeft size={20} />
+          </button>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold">{format(month, "yyyy.MM")}</p>
+            <button
+              onClick={goToToday}
+              className="rounded-pill bg-surface-pill px-2 py-0.5 text-[11px] text-text-secondary"
+            >
+              {t.schedule.today}
+            </button>
+          </div>
+          <button onClick={() => setMonth((m) => addMonths(m, 1))} className="text-text-secondary">
+            <ChevronRight size={20} />
           </button>
         </div>
-        <button onClick={() => setMonth((m) => addMonths(m, 1))} className="text-text-secondary">
-          <ChevronRight size={20} />
-        </button>
-      </div>
 
-      <div
-        className="grid grid-cols-7 gap-1 text-center text-[11px]"
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-      >
-        {days.map((day) => {
-          const key = format(day, "yyyy-MM-dd");
-          const hasEvents = !!eventsByDate[key]?.length;
-          return (
-            <button
-              key={key}
-              onClick={() => setSelectedDate(key)}
-              className={clsx(
-                "flex aspect-square flex-col items-center justify-center rounded-lg",
-                key === selectedDate && "bg-white text-black",
-                key !== selectedDate && key === today && "border border-white/50",
-                key !== selectedDate && isSameMonth(day, month) && "text-text-primary",
-                key !== selectedDate && !isSameMonth(day, month) && "text-text-disabled"
-              )}
-            >
-              <span>{format(day, "d")}</span>
-              {hasEvents && (
-                <span
-                  className="mt-0.5 w-full truncate px-0.5 text-center text-[8px] leading-none"
-                  style={{ color: resolveColor(eventsByDate[key][0]) }}
-                >
-                  {(() => {
-                    const raw = eventsByDate[key][0].title;
-                    const stripped = raw
-                      .replace(/^(\d+월\s*\d+일|\d+\/\d+|\d+\.\d+)\s*/, "")
-                      .replace(/^((오전|오후)\d+시(\d+분)?|\d{1,2}:\d{2})\s*/, "")
-                      .trim();
-                    return (stripped || raw).slice(0, 5);
-                  })()}
-                  {eventsByDate[key].length > 1 && `+${eventsByDate[key].length - 1}`}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="mt-6 flex items-center justify-between">
-        <p className="text-sm font-semibold">{selectedDate}</p>
-        <button
-          onClick={() => { setAdding((v) => !v); setEditingId(null); }}
-          className="flex items-center gap-1 rounded-pill bg-surface-pill px-3 py-1.5 text-xs font-semibold"
+        <div
+          className="grid grid-cols-7 gap-1 text-center text-[11px]"
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
         >
-          <Plus size={14} />
-          {t.schedule.addEvent}
-        </button>
+          {days.map((day) => {
+            const key = format(day, "yyyy-MM-dd");
+            const hasEvents = !!eventsByDate[key]?.length;
+            return (
+              <button
+                key={key}
+                onClick={() => setSelectedDate(key)}
+                className={clsx(
+                  "flex aspect-square flex-col items-center justify-center rounded-lg",
+                  key === selectedDate && "bg-white text-black",
+                  key !== selectedDate && key === today && "border border-white/50",
+                  key !== selectedDate && isSameMonth(day, month) && "text-text-primary",
+                  key !== selectedDate && !isSameMonth(day, month) && "text-text-disabled"
+                )}
+              >
+                <span>{format(day, "d")}</span>
+                {hasEvents && (
+                  <span
+                    className="mt-0.5 w-full truncate px-0.5 text-center text-[8px] leading-none"
+                    style={{ color: resolveColor(eventsByDate[key][0]) }}
+                  >
+                    {(() => {
+                      const raw = eventsByDate[key][0].title;
+                      const stripped = raw
+                        .replace(/^(\d+월\s*\d+일|\d+\/\d+|\d+\.\d+)\s*/, "")
+                        .replace(/^((오전|오후)\d+시(\d+분)?|\d{1,2}:\d{2})\s*/, "")
+                        .trim();
+                      return (stripped || raw).slice(0, 5);
+                    })()}
+                    {eventsByDate[key].length > 1 && `+${eventsByDate[key].length - 1}`}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-6 flex items-center justify-between">
+          <p className="text-sm font-semibold">{selectedDate}</p>
+          <button
+            onClick={() => { setAdding((v) => !v); setEditingId(null); }}
+            className="flex items-center gap-1 rounded-pill bg-surface-pill px-3 py-1.5 text-xs font-semibold"
+          >
+            <Plus size={14} />
+            {t.schedule.addEvent}
+          </button>
+        </div>
       </div>
 
-      {adding && (
-        <Card className="mt-3 flex flex-col gap-2">
-          <TextInput
-            placeholder={t.schedule.eventTitle}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <TextInput type="time" value={time} onChange={(e) => setTime(e.target.value)} />
-          <Button onClick={onAdd} disabled={!title.trim()}>
-            {t.schedule.save}
-          </Button>
-        </Card>
-      )}
-
-      <ul className="mt-4 flex flex-col gap-2">
-        {selectedEvents.length === 0 && !adding ? (
-          <EmptyState message={t.schedule.empty} />
-        ) : (
-          selectedEvents
-            .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
-            .map((ev) =>
-              editingId === ev.id ? (
-                <li key={ev.id} className="rounded-card bg-surface-card px-4 py-3">
-                  <div className="flex flex-col gap-2">
-                    <TextInput
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      placeholder={t.schedule.eventTitle}
-                    />
-                    <TextInput
-                      type="date"
-                      value={editDate}
-                      onChange={(e) => setEditDate(e.target.value)}
-                    />
-                    <TextInput
-                      type="time"
-                      value={editTime}
-                      onChange={(e) => setEditTime(e.target.value)}
-                    />
-                    <div className="flex gap-2">
-                      <Button onClick={saveEdit} disabled={!editTitle.trim()} className="flex-1">
-                        {t.schedule.save}
-                      </Button>
-                      <Button variant="secondary" onClick={() => setEditingId(null)} className="flex-1">
-                        {t.schedule.cancel}
-                      </Button>
-                      <button
-                        onClick={() => onDeleteEvent(ev.id)}
-                        className="flex items-center justify-center rounded-xl bg-red-500/20 px-3 text-red-400"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              ) : (
-                <li
-                  key={ev.id}
-                  className="flex flex-col rounded-card bg-surface-card px-4 py-3"
-                >
-                  <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setColorPickerId((id) => id === ev.id ? null : ev.id)}
-                    className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: resolveColor(ev) }}
-                  />
-                  <div className="flex flex-1 flex-col">
-                    <span className="text-sm">{ev.title}</span>
-                    {ev.source && (
-                      <span className="mt-0.5 flex items-center gap-1 text-[10px] text-text-secondary">
-                        <Sparkles size={10} />
-                        {ev.source.type === "memo" ? t.schedule.fromMemo : t.schedule.fromTodo}
-                      </span>
-                    )}
-                  </div>
-                  {ev.time && <span className="text-xs text-text-secondary">{ev.time}</span>}
-                  <button
-                    onClick={() => startEdit(ev)}
-                    className="shrink-0 text-text-secondary"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                  </div>
-                  {colorPickerId === ev.id && (
-                    <div className="mt-2 flex gap-2 pl-5">
-                      {LABEL_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => {
-                            updateEventColor(currentProject.id, ev.id, color);
-                            setColorPickerId(null);
-                          }}
-                          className="h-4 w-4 rounded-full"
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </li>
-              )
-            )
+      <div className="px-5 pb-10">
+        {adding && (
+          <Card className="mt-3 flex flex-col gap-2">
+            <TextInput
+              placeholder={t.schedule.eventTitle}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <TextInput type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            <Button onClick={onAdd} disabled={!title.trim()}>
+              {t.schedule.save}
+            </Button>
+          </Card>
         )}
-      </ul>
-    </div>
+
+        <ul className="mt-4 flex flex-col gap-2">
+          {selectedEvents.length === 0 && !adding ? (
+            <EmptyState message={t.schedule.empty} />
+          ) : (
+            selectedEvents
+              .sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""))
+              .map((ev) =>
+                editingId === ev.id ? (
+                  <li key={ev.id} className="rounded-card bg-surface-card px-4 py-3">
+                    <div className="flex flex-col gap-2">
+                      <TextInput
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        placeholder={t.schedule.eventTitle}
+                      />
+                      <TextInput
+                        type="date"
+                        value={editDate}
+                        onChange={(e) => setEditDate(e.target.value)}
+                      />
+                      <TextInput
+                        type="time"
+                        value={editTime}
+                        onChange={(e) => setEditTime(e.target.value)}
+                      />
+                      <div className="flex gap-2">
+                        <Button onClick={saveEdit} disabled={!editTitle.trim()} className="flex-1">
+                          {t.schedule.save}
+                        </Button>
+                        <Button variant="secondary" onClick={() => setEditingId(null)} className="flex-1">
+                          {t.schedule.cancel}
+                        </Button>
+                        <button
+                          onClick={() => onDeleteEvent(ev.id)}
+                          className="flex items-center justify-center rounded-xl bg-red-500/20 px-3 text-red-400"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ) : (
+                  <li
+                    key={ev.id}
+                    className="flex flex-col rounded-card bg-surface-card px-4 py-3"
+                  >
+                    <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setColorPickerId((id) => id === ev.id ? null : ev.id)}
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: resolveColor(ev) }}
+                    />
+                    <div className="flex flex-1 flex-col">
+                      <span className="text-sm">{ev.title}</span>
+                      {ev.source && (
+                        <span className="mt-0.5 flex items-center gap-1 text-[10px] text-text-secondary">
+                          <Sparkles size={10} />
+                          {ev.source.type === "memo" ? t.schedule.fromMemo : t.schedule.fromTodo}
+                        </span>
+                      )}
+                    </div>
+                    {ev.time && <span className="text-xs text-text-secondary">{ev.time}</span>}
+                    <button
+                      onClick={() => startEdit(ev)}
+                      className="shrink-0 text-text-secondary"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    </div>
+                    {colorPickerId === ev.id && (
+                      <div className="mt-2 flex gap-2 pl-5">
+                        {LABEL_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            onClick={() => {
+                              updateEventColor(currentProject.id, ev.id, color);
+                              setColorPickerId(null);
+                            }}
+                            className="h-4 w-4 rounded-full"
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                )
+              )
+          )}
+        </ul>
+      </div>
+    </>
   );
 }

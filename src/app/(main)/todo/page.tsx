@@ -62,56 +62,61 @@ export default function TodoPage() {
   };
 
   return (
-    <div className="px-5 pt-8">
-      <h1 className="mb-4 text-3xl font-bold">{t.todo.title}</h1>
-      <form onSubmit={onAdd} className="mb-6 flex gap-2">
-        <TextInput
-          placeholder={t.todo.inputPlaceholder}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        <button
-          type="submit"
-          className="flex shrink-0 items-center justify-center rounded-xl bg-surface-pill px-3"
-        >
-          <Plus size={18} />
-        </button>
-      </form>
-      {addError && <p className="mb-4 text-xs text-red-400">{addError}</p>}
+    <>
+      <div className="sticky top-0 z-[1] bg-bg-base px-5 pt-8 pb-4">
+        <h1 className="text-3xl font-bold">{t.todo.title}</h1>
+      </div>
 
-      {todos.length === 0 ? (
-        <EmptyState message={t.todo.empty} />
-      ) : (
-        <ul className="flex flex-col gap-2">
-          <AnimatePresence initial={false}>
-            {active.map((todo) => (
-              <TodoRow
-                key={todo.id}
-                todo={todo}
-                statusLabel={statusLabel[todo.status]}
-                onToggle={() => cycleStatus(todo)}
-              />
-            ))}
-          </AnimatePresence>
+      <div className="px-5 pb-10">
+        <form onSubmit={onAdd} className="mb-6 flex gap-2">
+          <TextInput
+            placeholder={t.todo.inputPlaceholder}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="flex shrink-0 items-center justify-center rounded-xl bg-surface-pill px-3"
+          >
+            <Plus size={18} />
+          </button>
+        </form>
+        {addError && <p className="mb-4 text-xs text-red-400">{addError}</p>}
 
-          {done.length > 0 && (
-            <p className="mt-4 mb-1 text-xs font-semibold text-text-secondary">
-              {t.todo.statusDone}
-            </p>
-          )}
-          <AnimatePresence initial={false}>
-            {done.map((todo) => (
-              <TodoRow
-                key={todo.id}
-                todo={todo}
-                statusLabel={statusLabel[todo.status]}
-                onToggle={() => cycleStatus(todo)}
-              />
-            ))}
-          </AnimatePresence>
-        </ul>
-      )}
-    </div>
+        {todos.length === 0 ? (
+          <EmptyState message={t.todo.empty} />
+        ) : (
+          <ul className="flex flex-col gap-2">
+            <AnimatePresence initial={false}>
+              {active.map((todo) => (
+                <TodoRow
+                  key={todo.id}
+                  todo={todo}
+                  statusLabel={statusLabel[todo.status]}
+                  onToggle={() => cycleStatus(todo)}
+                />
+              ))}
+            </AnimatePresence>
+
+            {done.length > 0 && (
+              <p className="mt-4 mb-1 text-xs font-semibold text-text-secondary">
+                {t.todo.statusDone}
+              </p>
+            )}
+            <AnimatePresence initial={false}>
+              {done.map((todo) => (
+                <TodoRow
+                  key={todo.id}
+                  todo={todo}
+                  statusLabel={statusLabel[todo.status]}
+                  onToggle={() => cycleStatus(todo)}
+                />
+              ))}
+            </AnimatePresence>
+          </ul>
+        )}
+      </div>
+    </>
   );
 }
 
