@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { useAuth } from "@/lib/context/AuthContext";
 import { BottomNav } from "@/components/nav/BottomNav";
 import { ProjectTabBar } from "@/components/nav/ProjectTabBar";
@@ -31,7 +32,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     <DataProvider>
       <div className="h-full" style={{ display: "grid", gridTemplateRows: "auto 1fr" }}>
         <ProjectTabBar />
-        <div className="overflow-y-auto overscroll-y-contain pb-20">{children}</div>
+        <motion.div layoutScroll className="overflow-y-auto overscroll-y-contain pb-20">
+          {children}
+        </motion.div>
         <BottomNav />
       </div>
     </DataProvider>

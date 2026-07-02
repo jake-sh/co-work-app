@@ -101,6 +101,7 @@ export interface Dictionary {
     nickname: string;
     colorCode: string;
     memoDefaultShared: string;
+    notifications: string;
     signOut: string;
   };
   common: {
