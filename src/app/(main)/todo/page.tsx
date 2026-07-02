@@ -64,11 +64,8 @@ export default function TodoPage() {
   return (
     <>
       <div className="sticky top-0 z-[1] bg-bg-base px-5 pt-4 pb-3">
-        <h1 className="text-3xl font-bold">{t.todo.title}</h1>
-      </div>
-
-      <div className="px-5 pb-10">
-        <form onSubmit={onAdd} className="mb-6 flex gap-2">
+        <h1 className="mb-3 text-3xl font-bold">{t.todo.title}</h1>
+        <form onSubmit={onAdd} className="flex gap-2">
           <TextInput
             placeholder={t.todo.inputPlaceholder}
             value={text}
@@ -81,7 +78,10 @@ export default function TodoPage() {
             <Plus size={18} />
           </button>
         </form>
-        {addError && <p className="mb-4 text-xs text-red-400">{addError}</p>}
+        {addError && <p className="mt-2 text-xs text-red-400">{addError}</p>}
+      </div>
+
+      <div className="px-5 pb-10">
 
         {todos.length === 0 ? (
           <EmptyState message={t.todo.empty} />
