@@ -95,6 +95,7 @@ const ko: Dictionary = {
     korean: "한국어",
     english: "English",
     account: "계정",
+    nickname: "닉네임",
     colorCode: "내 색상",
     signOut: "로그아웃",
   },

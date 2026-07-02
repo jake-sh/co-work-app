@@ -6,6 +6,7 @@ export interface UserProfile {
   uid: string;
   displayName: string;
   username: string;
+  nickname?: string;
   colorCode: string;
   locale: Locale;
   createdAt: number;
