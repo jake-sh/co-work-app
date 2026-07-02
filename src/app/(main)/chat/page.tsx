@@ -135,11 +135,14 @@ export default function ChatPage() {
               return (
                 <li
                   key={msg.id}
-                  className={clsx("flex flex-col", isMine ? "items-end" : "items-start")}
+                  className={clsx(
+                    "flex items-end",
+                    isMine ? "flex-col" : "flex-row gap-2"
+                  )}
                 >
                   {!isMine && (
                     <div
-                      className="mb-1 ml-1 flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold text-black"
+                      className="shrink-0 flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold text-black"
                       style={{ backgroundColor: msg.authorColor }}
                     >
                       {msg.authorName.slice(0, 2)}
