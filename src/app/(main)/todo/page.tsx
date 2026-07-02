@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addTodo, setTodoStatus, subscribeTodos } from "@/lib/data/todos";
+import { addTodo, setTodoStatus } from "@/lib/data/todos";
+import { useData } from "@/lib/context/DataContext";
 import { TextInput } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ColorDot } from "@/components/ui/ColorDot";
@@ -23,14 +24,9 @@ export default function TodoPage() {
   const { profile } = useAuth();
   const { currentProject } = useProjects();
   const { t } = useI18n();
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const { todos } = useData();
   const [text, setText] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!currentProject) return;
-    return subscribeTodos(currentProject.id, setTodos);
-  }, [currentProject]);
 
   if (!currentProject) {
     return <EmptyState message={t.todo.selectProjectFirst} />;
