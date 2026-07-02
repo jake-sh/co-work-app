@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Globe, LogOut, User as UserIcon } from "lucide-react";
+import { Check, ChevronDown, Globe, LogOut, User as UserIcon } from "lucide-react";
 import { useAuth, persistLocale } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { MEMBER_COLOR_PALETTE } from "@/lib/colors";
@@ -10,9 +10,10 @@ import { TextInput } from "@/components/ui/TextInput";
 import { clsx } from "clsx";
 
 export default function SettingsPage() {
-  const { profile, signOut, updateColorCode, updateNickname, updateMemoDefaultShared } = useAuth();
+  const { profile, signOut, updateColorCode, updateNickname, updateMemoDefaultShared, updateNotificationsEnabled } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const [nickname, setNickname] = useState(() => profile?.nickname ?? "");
   const [nicknameSaved, setNicknameSaved] = useState(false);
 
@@ -25,6 +26,7 @@ export default function SettingsPage() {
   const onChangeLocale = (next: "ko" | "en") => {
     setLocale(next);
     if (profile) persistLocale(profile.uid, next);
+    setLangOpen(false);
   };
 
   const onSelectColor = async (color: string) => {
@@ -90,7 +92,7 @@ export default function SettingsPage() {
         )}
       </Card>
 
-      <Card className="mb-4 flex items-center justify-between">
+      <Card className="mb-3 flex items-center justify-between">
         <span className="text-sm text-text-secondary">{t.settings.memoDefaultShared}</span>
         <button
           onClick={() => updateMemoDefaultShared(!(profile?.memoDefaultShared ?? true))}
@@ -108,38 +110,57 @@ export default function SettingsPage() {
         </button>
       </Card>
 
+      <Card className="mb-4 flex items-center justify-between">
+        <span className="text-sm text-text-secondary">{t.settings.notifications}</span>
+        <button
+          onClick={() => updateNotificationsEnabled(!(profile?.notificationsEnabled ?? true))}
+          className={clsx(
+            "relative h-6 w-10 rounded-full transition-colors",
+            (profile?.notificationsEnabled ?? true) ? "bg-white" : "bg-surface-pill"
+          )}
+        >
+          <span
+            className={clsx(
+              "absolute top-1 h-4 w-4 rounded-full bg-black transition-transform",
+              (profile?.notificationsEnabled ?? true) ? "left-5" : "left-1"
+            )}
+          />
+        </button>
+      </Card>
+
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.language}</p>
-      <Card className="mb-6 flex flex-col divide-y divide-border-divider p-0">
+      <Card className="mb-6 p-0">
         <button
-          onClick={() => onChangeLocale("ko")}
-          className="flex items-center justify-between px-4 py-3.5"
+          onClick={() => setLangOpen((v) => !v)}
+          className="flex w-full items-center justify-between px-4 py-3.5"
         >
           <span className="flex items-center gap-3 text-sm">
             <Globe size={18} className="text-text-secondary" />
-            {t.settings.korean}
+            {locale === "ko" ? t.settings.korean : t.settings.english}
           </span>
-          <span
-            className={clsx(
-              "h-2.5 w-2.5 rounded-full",
-              locale === "ko" ? "bg-white" : "bg-transparent"
-            )}
+          <ChevronDown
+            size={16}
+            className={clsx("text-text-secondary transition-transform", langOpen && "rotate-180")}
           />
         </button>
-        <button
-          onClick={() => onChangeLocale("en")}
-          className="flex items-center justify-between px-4 py-3.5"
-        >
-          <span className="flex items-center gap-3 text-sm">
-            <Globe size={18} className="text-text-secondary" />
-            {t.settings.english}
-          </span>
-          <span
-            className={clsx(
-              "h-2.5 w-2.5 rounded-full",
-              locale === "en" ? "bg-white" : "bg-transparent"
-            )}
-          />
-        </button>
+        {langOpen && (
+          <div className="flex flex-col divide-y divide-border-divider border-t border-border-divider">
+            <button
+              onClick={() => onChangeLocale("ko")}
+              className="flex items-center justify-between px-4 py-3.5"
+            >
+              <span className="text-sm">{t.settings.korean}</span>
+              {locale === "ko" && <Check size={14} />}
+            </button>
+            <button
+              onClick={() => onChangeLocale("en")}
+              className="flex items-center justify-between px-4 py-3.5"
+            >
+              <span className="text-sm">{t.settings.english}</span>
+              {locale === "en" && <Check size={14} />}
+            </button>
+          </div>
+        )}
       </Card>
 
       <button

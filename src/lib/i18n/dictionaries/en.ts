@@ -103,6 +103,7 @@ const en: Dictionary = {
     nickname: "Nickname",
     colorCode: "My color",
     memoDefaultShared: "Share new memos by default",
+    notifications: "Notifications",
     signOut: "Sign Out",
   },
   common: {

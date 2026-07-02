@@ -8,6 +8,7 @@ export interface UserProfile {
   username: string;
   nickname?: string;
   memoDefaultShared?: boolean;
+  notificationsEnabled?: boolean;
   colorCode: string;
   locale: Locale;
   createdAt: number;
