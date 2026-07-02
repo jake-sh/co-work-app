@@ -1,4 +1,4 @@
-import { addDoc, arrayUnion, collection, deleteDoc, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
+import { addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { addEvent } from "@/lib/data/schedule";
 import { parseScheduleFromText } from "@/lib/scheduleParse";
@@ -35,7 +35,8 @@ export async function addMemo(
   body: string,
   authorId: string,
   authorName: string,
-  authorColor: string
+  authorColor: string,
+  memberIds: string[] = []
 ) {
   const finalTitle = deriveTitle(title, body);
   const ref = await addDoc(memosCol(projectId), {
@@ -45,7 +46,7 @@ export async function addMemo(
     authorName,
     authorColor,
     createdAt: Date.now(),
-    sharedWith: [],
+    sharedWith: memberIds,
   });
 
   const parsed = parseScheduleFromText(`${title} ${body}`);
@@ -72,5 +73,11 @@ export async function deleteMemo(projectId: string, memoId: string) {
 export async function shareMemoWithMembers(projectId: string, memoId: string, memberIds: string[]) {
   await updateDoc(doc(db, "projects", projectId, "memos", memoId), {
     sharedWith: arrayUnion(...memberIds),
+  });
+}
+
+export async function unshareMemo(projectId: string, memoId: string, memberIds: string[]) {
+  await updateDoc(doc(db, "projects", projectId, "memos", memoId), {
+    sharedWith: memberIds.length ? arrayRemove(...memberIds) : [],
   });
 }

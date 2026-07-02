@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addMemo, deleteMemo, shareMemoWithMembers, subscribeMemos, updateMemo } from "@/lib/data/memos";
+import { addMemo, deleteMemo, shareMemoWithMembers, unshareMemo, subscribeMemos, updateMemo } from "@/lib/data/memos";
 import { Card } from "@/components/ui/Card";
 import { TextInput, TextArea } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -56,7 +56,7 @@ export default function MemoPage() {
   const onSave = async () => {
     if (!profile || !body.trim()) return;
     if (view === "new") {
-      await addMemo(currentProject.id, title, body.trim(), profile.uid, profile.displayName, profile.colorCode);
+      await addMemo(currentProject.id, title, body.trim(), profile.uid, profile.displayName, profile.colorCode, currentProject.memberIds);
     } else if (view === "edit" && editingMemo) {
       await updateMemo(currentProject.id, editingMemo.id, title, body.trim());
     }
@@ -70,7 +70,11 @@ export default function MemoPage() {
 
   const onShare = (e: React.MouseEvent, memo: Memo) => {
     e.stopPropagation();
-    shareMemoWithMembers(currentProject.id, memo.id, currentProject.memberIds);
+    if (memo.sharedWith.length > 0) {
+      unshareMemo(currentProject.id, memo.id, currentProject.memberIds);
+    } else {
+      shareMemoWithMembers(currentProject.id, memo.id, currentProject.memberIds);
+    }
   };
 
   // ── Editor view (new / edit) ───────────────────────────────────────────────
@@ -156,14 +160,16 @@ export default function MemoPage() {
                   <div className="flex items-center gap-3">
                     <button
                       onClick={(e) => onShare(e, memo)}
-                      className={`flex items-center gap-1 text-[11px] ${memo.sharedWith.length > 0 ? "text-red-400" : "text-text-secondary"}`}
+                      className="flex items-center gap-1 text-[11px] text-text-secondary"
                     >
                       <Share2 size={13} />
-                      {memo.sharedWith.length > 0 ? t.memo.shared : t.memo.share}
+                      {memo.sharedWith.length > 0
+                        ? <span className="text-red-400">{t.memo.shared}</span>
+                        : t.memo.share}
                     </button>
                     <button
                       onClick={(e) => onDelete(e, memo)}
-                      className="text-red-400"
+                      className="text-text-secondary"
                     >
                       <Trash2 size={14} />
                     </button>
