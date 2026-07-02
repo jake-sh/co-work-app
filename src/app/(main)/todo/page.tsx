@@ -158,30 +158,30 @@ export default function TodoPage() {
           onClick={() => setActionMenuTodo(null)}
         >
           <div
-            className="mx-6 w-full max-w-xs overflow-hidden rounded-2xl bg-surface-card"
+            className="mx-6 w-full max-w-xs rounded-2xl bg-surface-card p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="px-6 py-4 text-center text-sm font-semibold text-text-secondary">
-              {actionMenuTodo.text}
-            </p>
-            <button
-              onClick={onSelectEdit}
-              className="w-full border-t border-border-divider py-3 text-sm font-semibold"
-            >
-              {t.todo.edit}
-            </button>
-            <button
-              onClick={onSelectDelete}
-              className="w-full border-t border-border-divider py-3 text-sm font-semibold text-red-400"
-            >
-              {t.todo.delete}
-            </button>
-            <button
-              onClick={() => setActionMenuTodo(null)}
-              className="w-full border-t border-border-divider py-3 text-sm font-semibold text-text-secondary"
-            >
-              {t.project.cancel}
-            </button>
+            <p className="mb-5 text-center text-sm font-semibold">{actionMenuTodo.text}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActionMenuTodo(null)}
+                className="flex-1 rounded-xl bg-surface-pill py-2.5 text-sm font-semibold"
+              >
+                {t.project.cancel}
+              </button>
+              <button
+                onClick={onSelectEdit}
+                className="flex-1 rounded-xl bg-blue-500/20 py-2.5 text-sm font-semibold text-blue-300"
+              >
+                {t.todo.edit}
+              </button>
+              <button
+                onClick={onSelectDelete}
+                className="flex-1 rounded-xl bg-red-500/20 py-2.5 text-sm font-semibold text-red-400"
+              >
+                {t.todo.delete}
+              </button>
+            </div>
           </div>
         </div>
       )}
