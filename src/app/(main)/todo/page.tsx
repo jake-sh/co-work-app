@@ -70,6 +70,9 @@ export default function TodoPage() {
             placeholder={t.todo.inputPlaceholder}
             value={text}
             onChange={(e) => setText(e.target.value)}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
           />
           <button
             type="submit"
