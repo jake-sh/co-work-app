@@ -24,6 +24,7 @@ export default function MemoPage() {
   const [editingMemo, setEditingMemo] = useState<Memo | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [confirmDeleteMemo, setConfirmDeleteMemo] = useState<Memo | null>(null);
 
   useEffect(() => {
     if (!currentProject) return;
@@ -64,9 +65,15 @@ export default function MemoPage() {
     goBack();
   };
 
-  const onDelete = async (e: React.MouseEvent, memo: Memo) => {
+  const onDelete = (e: React.MouseEvent, memo: Memo) => {
     e.stopPropagation();
-    await deleteMemo(currentProject.id, memo.id);
+    setConfirmDeleteMemo(memo);
+  };
+
+  const onConfirmDelete = async () => {
+    if (!confirmDeleteMemo) return;
+    await deleteMemo(currentProject.id, confirmDeleteMemo.id);
+    setConfirmDeleteMemo(null);
   };
 
   const onShare = (e: React.MouseEvent, memo: Memo) => {
@@ -132,6 +139,33 @@ export default function MemoPage() {
   // ── List view ─────────────────────────────────────────────────────────────
   return (
     <div className="px-5 pt-8 pb-10">
+      {confirmDeleteMemo && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => setConfirmDeleteMemo(null)}
+        >
+          <div
+            className="mx-6 w-full max-w-xs rounded-2xl bg-surface-card p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="mb-5 text-center text-sm font-semibold">{t.memo.deleteConfirm}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDeleteMemo(null)}
+                className="flex-1 rounded-xl bg-surface-pill py-2.5 text-sm font-semibold"
+              >
+                {t.memo.cancel}
+              </button>
+              <button
+                onClick={onConfirmDelete}
+                className="flex-1 rounded-xl bg-red-500/20 py-2.5 text-sm font-semibold text-red-400"
+              >
+                {t.memo.delete}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">{t.memo.title}</h1>
         <button
