@@ -116,8 +116,8 @@ export default function ChatPage() {
 
   const keyboardOpen = keyboardHeight > 50;
 
-  // Space below the last message so it isn't hidden behind fixed form + nav/keyboard
-  const messagesPaddingBottom = formHeight + (keyboardOpen ? keyboardHeight : NAV_H) + 16;
+  // Layout adds pb-20 (80px) globally; subtract it to avoid double-counting
+  const messagesPaddingBottom = formHeight + (keyboardOpen ? keyboardHeight : NAV_H) + 16 - 80;
 
   return (
     <>
