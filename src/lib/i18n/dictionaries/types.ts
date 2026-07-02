@@ -38,6 +38,7 @@ export interface Dictionary {
     noProjects: string;
     selectProject: string;
     overview: string;
+    overviewPlaceholder: string;
     open: string;
     complete: string;
     reopen: string;

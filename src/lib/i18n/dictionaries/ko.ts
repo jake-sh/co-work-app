@@ -40,6 +40,7 @@ const ko: Dictionary = {
     noProjects: "아직 프로젝트가 없습니다",
     selectProject: "프로젝트를 선택하세요",
     overview: "개요",
+    overviewPlaceholder: "프로젝트에 대해 간단히 설명해주세요",
     open: "열기",
     complete: "완료",
     reopen: "재개",
