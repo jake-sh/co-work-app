@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { clsx } from "clsx";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { Button } from "@/components/ui/Button";
@@ -51,15 +52,32 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <label className="flex items-center gap-2 text-sm text-text-secondary">
-          <input
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            className="h-4 w-4 rounded accent-white"
-          />
-          {t.auth.autoLogin}
-        </label>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={rememberMe}
+            onClick={() => setRememberMe((v) => !v)}
+            className={clsx(
+              "relative h-6 w-10 shrink-0 rounded-full transition-colors",
+              rememberMe ? "bg-white" : "bg-surface-pill"
+            )}
+          >
+            <span
+              className={clsx(
+                "absolute top-1 h-4 w-4 rounded-full bg-black transition-transform",
+                rememberMe ? "left-5" : "left-1"
+              )}
+            />
+          </button>
+          <button
+            type="button"
+            onClick={() => setRememberMe((v) => !v)}
+            className="text-sm text-text-secondary"
+          >
+            {t.auth.autoLogin}
+          </button>
+        </div>
         {error && <p className="text-sm text-red-400">{error}</p>}
         <Button type="submit" disabled={submitting} className="mt-2">
           {t.auth.loginButton}

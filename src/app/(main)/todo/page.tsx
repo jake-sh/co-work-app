@@ -17,7 +17,7 @@ import { clsx } from "clsx";
 const NEXT_STATUS: Record<TodoStatus, TodoStatus> = {
   new: "in_progress",
   in_progress: "done",
-  done: "in_progress",
+  done: "done",
 };
 
 const PREV_STATUS: Record<TodoStatus, TodoStatus> = {
@@ -105,11 +105,15 @@ export default function TodoPage() {
   };
 
   const advanceStatus = (todo: Todo) => {
-    setTodoStatus(currentProject.id, todo.id, NEXT_STATUS[todo.status]);
+    const next = NEXT_STATUS[todo.status];
+    if (next === todo.status) return;
+    setTodoStatus(currentProject.id, todo.id, next);
   };
 
   const revertStatus = (todo: Todo) => {
-    setTodoStatus(currentProject.id, todo.id, PREV_STATUS[todo.status]);
+    const prev = PREV_STATUS[todo.status];
+    if (prev === todo.status) return;
+    setTodoStatus(currentProject.id, todo.id, prev);
   };
 
   const onConfirmDelete = async () => {
