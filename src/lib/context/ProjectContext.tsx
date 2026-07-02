@@ -46,7 +46,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
-    if (loading) return;
+    if (loading || !user) return;
     if (currentProjectId && !projects.some((p) => p.id === currentProjectId)) {
       setCurrentProjectIdState(projects[0]?.id ?? null);
     } else if (!currentProjectId && projects.length > 0) {
@@ -54,7 +54,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
     /* eslint-enable react-hooks/set-state-in-effect */
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projects, loading]);
+  }, [projects, loading, user]);
 
   const setCurrentProjectId = (id: string | null) => {
     setCurrentProjectIdState(id);
