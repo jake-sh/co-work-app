@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addTodo, setTodoStatus } from "@/lib/data/todos";
+import { addTodo, deleteTodo, setTodoStatus } from "@/lib/data/todos";
 import { useData } from "@/lib/context/DataContext";
 import { TextInput } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -27,6 +27,7 @@ export default function TodoPage() {
   const { todos } = useData();
   const [text, setText] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Todo | null>(null);
 
   if (!currentProject) {
     return <EmptyState message={t.todo.selectProjectFirst} />;
@@ -48,6 +49,12 @@ export default function TodoPage() {
     setTodoStatus(currentProject.id, todo.id, NEXT_STATUS[todo.status]);
   };
 
+  const onConfirmDelete = async () => {
+    if (!confirmDelete) return;
+    await deleteTodo(currentProject.id, confirmDelete.id);
+    setConfirmDelete(null);
+  };
+
   const active = todos
     .filter((td) => td.status !== "done")
     .sort((a, b) => b.createdAt - a.createdAt);
@@ -63,6 +70,34 @@ export default function TodoPage() {
 
   return (
     <>
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => setConfirmDelete(null)}
+        >
+          <div
+            className="mx-6 w-full max-w-xs rounded-2xl bg-surface-card p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="mb-5 text-center text-sm font-semibold">{t.todo.deleteConfirm}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 rounded-xl bg-surface-pill py-2.5 text-sm font-semibold"
+              >
+                {t.project.cancel}
+              </button>
+              <button
+                onClick={onConfirmDelete}
+                className="flex-1 rounded-xl bg-red-500/20 py-2.5 text-sm font-semibold text-red-400"
+              >
+                {t.todo.delete}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="sticky top-0 z-[1] bg-bg-base px-5 pt-4 pb-3">
         <h1 className="mb-3 text-3xl font-bold">{t.todo.title}</h1>
         <form onSubmit={onAdd} className="flex gap-2">
@@ -70,6 +105,9 @@ export default function TodoPage() {
             placeholder={t.todo.inputPlaceholder}
             value={text}
             onChange={(e) => setText(e.target.value)}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
           />
           <button
             type="submit"
@@ -94,6 +132,7 @@ export default function TodoPage() {
                   todo={todo}
                   statusLabel={statusLabel[todo.status]}
                   onToggle={() => cycleStatus(todo)}
+                  onDelete={() => setConfirmDelete(todo)}
                 />
               ))}
             </AnimatePresence>
@@ -110,6 +149,7 @@ export default function TodoPage() {
                   todo={todo}
                   statusLabel={statusLabel[todo.status]}
                   onToggle={() => cycleStatus(todo)}
+                  onDelete={() => setConfirmDelete(todo)}
                 />
               ))}
             </AnimatePresence>
@@ -124,10 +164,12 @@ function TodoRow({
   todo,
   statusLabel,
   onToggle,
+  onDelete,
 }: {
   todo: Todo;
   statusLabel: string;
   onToggle: () => void;
+  onDelete: () => void;
 }) {
   return (
     <motion.li
@@ -137,17 +179,9 @@ function TodoRow({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ type: "spring", stiffness: 400, damping: 32 }}
-      className="flex items-center gap-3 rounded-card bg-surface-card px-4 py-3"
+      className="flex items-center gap-2.5 rounded-card bg-surface-card px-3 py-3"
     >
       <ColorDot color={todo.authorColor} />
-      <span
-        className={clsx(
-          "flex-1 text-sm",
-          todo.status === "done" ? "text-text-disabled line-through" : "text-text-primary"
-        )}
-      >
-        {todo.text}
-      </span>
       <button
         onClick={onToggle}
         className={clsx(
@@ -158,6 +192,20 @@ function TodoRow({
         )}
       >
         {statusLabel}
+      </button>
+      <span
+        className={clsx(
+          "flex-1 text-sm",
+          todo.status === "done" ? "text-text-disabled line-through" : "text-text-primary"
+        )}
+      >
+        {todo.text}
+      </span>
+      <button
+        onClick={onDelete}
+        className="shrink-0 flex items-center justify-center rounded-lg p-1.5 text-text-disabled hover:text-red-400"
+      >
+        <X size={14} />
       </button>
     </motion.li>
   );

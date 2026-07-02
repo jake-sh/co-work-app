@@ -57,6 +57,8 @@ const ko: Dictionary = {
     statusDone: "완료",
     empty: "등록된 할 일이 없어요",
     selectProjectFirst: "먼저 프로젝트를 선택하세요",
+    delete: "삭제",
+    deleteConfirm: "정말 삭제하시겠습니까?",
   },
   memo: {
     title: "메모",
