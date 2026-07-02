@@ -121,8 +121,8 @@ export default function ChatPage() {
 
   return (
     <>
-      <div className="px-5 pt-8">
-        <h1 className="mb-4 text-3xl font-bold">{currentProject.name}</h1>
+      <div className="sticky top-0 z-[1] bg-bg-base px-5 pt-8 pb-4">
+        <h1 className="text-3xl font-bold">{currentProject.name}</h1>
       </div>
 
       <div className="px-5" style={{ paddingBottom: messagesPaddingBottom }}>

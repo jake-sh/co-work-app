@@ -134,7 +134,7 @@ export default function MemoPage() {
 
   // ── List view ─────────────────────────────────────────────────────────────
   return (
-    <div className="px-5 pt-8 pb-10">
+    <>
       {confirmDeleteMemo && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
@@ -162,55 +162,60 @@ export default function MemoPage() {
           </div>
         </div>
       )}
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{t.memo.title}</h1>
-        <button
-          onClick={openNew}
-          className="rounded-pill bg-surface-pill px-3 py-2 text-sm font-semibold"
-        >
-          {t.memo.newButton}
-        </button>
+
+      <div className="sticky top-0 z-[1] bg-bg-base px-5 pt-8 pb-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">{t.memo.title}</h1>
+          <button
+            onClick={openNew}
+            className="rounded-pill bg-surface-pill px-3 py-2 text-sm font-semibold"
+          >
+            {t.memo.newButton}
+          </button>
+        </div>
       </div>
 
-      {memos.length === 0 ? (
-        <EmptyState message={t.memo.empty} />
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {memos.map((memo) => (
-            <li key={memo.id} onClick={() => openEdit(memo)} className="cursor-pointer">
-              <Card className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <ColorDot color={memo.authorColor} />
-                  <p className="line-clamp-1 text-sm font-semibold">{memo.title}</p>
-                </div>
-                <p className="line-clamp-3 text-xs text-text-secondary">{memo.body}</p>
-                <div className="mt-1 flex items-center justify-between">
-                  <span className="text-[11px] text-text-disabled">
-                    {format(new Date(memo.createdAt), "yyyy.MM.dd")}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={(e) => onShare(e, memo)}
-                      className="flex items-center gap-1 text-[11px] text-text-secondary"
-                    >
-                      <Share2 size={13} />
-                      {memo.sharedWith.length > 0
-                        ? <span className="text-red-400">{t.memo.shared}</span>
-                        : t.memo.share}
-                    </button>
-                    <button
-                      onClick={(e) => onDelete(e, memo)}
-                      className="text-text-secondary"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+      <div className="px-5 pb-10">
+        {memos.length === 0 ? (
+          <EmptyState message={t.memo.empty} />
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {memos.map((memo) => (
+              <li key={memo.id} onClick={() => openEdit(memo)} className="cursor-pointer">
+                <Card className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <ColorDot color={memo.authorColor} />
+                    <p className="line-clamp-1 text-sm font-semibold">{memo.title}</p>
                   </div>
-                </div>
-              </Card>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+                  <p className="line-clamp-3 text-xs text-text-secondary">{memo.body}</p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span className="text-[11px] text-text-disabled">
+                      {format(new Date(memo.createdAt), "yyyy.MM.dd")}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={(e) => onShare(e, memo)}
+                        className="flex items-center gap-1 text-[11px] text-text-secondary"
+                      >
+                        <Share2 size={13} />
+                        {memo.sharedWith.length > 0
+                          ? <span className="text-red-400">{t.memo.shared}</span>
+                          : t.memo.share}
+                      </button>
+                      <button
+                        onClick={(e) => onDelete(e, memo)}
+                        className="text-text-secondary"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
   );
 }

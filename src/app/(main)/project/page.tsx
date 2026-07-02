@@ -51,69 +51,73 @@ export default function ProjectListPage() {
   };
 
   return (
-    <div className="px-5 pt-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{t.project.title}</h1>
-        <button
-          onClick={() => setCreating((v) => !v)}
-          className="flex items-center gap-1 rounded-pill bg-surface-pill px-3 py-2 text-sm font-semibold"
-        >
-          <Plus size={16} />
-          {t.project.create}
-        </button>
+    <>
+      <div className="sticky top-0 z-[1] bg-bg-base px-5 pt-8 pb-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">{t.project.title}</h1>
+          <button
+            onClick={() => setCreating((v) => !v)}
+            className="flex items-center gap-1 rounded-pill bg-surface-pill px-3 py-2 text-sm font-semibold"
+          >
+            <Plus size={16} />
+            {t.project.create}
+          </button>
+        </div>
       </div>
 
-      {creating && (
-        <Card className="mb-6 flex flex-col gap-3">
-          <TextInput
-            placeholder={t.project.name}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <TextArea
-            placeholder={t.project.description}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-          />
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="mb-1 block text-xs text-text-secondary">{t.project.startDate}</label>
-              <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+      <div className="px-5 pb-10">
+        {creating && (
+          <Card className="mb-6 flex flex-col gap-3">
+            <TextInput
+              placeholder={t.project.name}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <TextArea
+              placeholder={t.project.description}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+            />
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="mb-1 block text-xs text-text-secondary">{t.project.startDate}</label>
+                <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              </div>
+              <div className="flex-1">
+                <label className="mb-1 block text-xs text-text-secondary">{t.project.endDate}</label>
+                <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
             </div>
-            <div className="flex-1">
-              <label className="mb-1 block text-xs text-text-secondary">{t.project.endDate}</label>
-              <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            </div>
-          </div>
-          {createError && <p className="text-xs text-red-400">{createError}</p>}
-          <Button onClick={onCreate} disabled={submitting || !name.trim()}>
-            {t.project.save}
-          </Button>
-        </Card>
-      )}
+            {createError && <p className="text-xs text-red-400">{createError}</p>}
+            <Button onClick={onCreate} disabled={submitting || !name.trim()}>
+              {t.project.save}
+            </Button>
+          </Card>
+        )}
 
-      {projects.length === 0 && !creating ? (
-        <EmptyState message={t.project.noProjects} />
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {projects.map((project) => (
-            <li key={project.id}>
-              <Link href={`/project/${project.id}`} onClick={() => setCurrentProjectId(project.id)}>
-                <Card className="hover:bg-zinc-800">
-                  <p className="text-base font-semibold">{project.name}</p>
-                  {project.description && (
-                    <p className="mt-1 line-clamp-2 text-sm text-text-secondary">{project.description}</p>
-                  )}
-                  <p className="mt-2 text-xs text-text-disabled">
-                    {project.memberIds.length} {t.project.members}
-                  </p>
-                </Card>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+        {projects.length === 0 && !creating ? (
+          <EmptyState message={t.project.noProjects} />
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {projects.map((project) => (
+              <li key={project.id}>
+                <Link href={`/project/${project.id}`} onClick={() => setCurrentProjectId(project.id)}>
+                  <Card className="hover:bg-zinc-800">
+                    <p className="text-base font-semibold">{project.name}</p>
+                    {project.description && (
+                      <p className="mt-1 line-clamp-2 text-sm text-text-secondary">{project.description}</p>
+                    )}
+                    <p className="mt-2 text-xs text-text-disabled">
+                      {project.memberIds.length} {t.project.members}
+                    </p>
+                  </Card>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
   );
 }
