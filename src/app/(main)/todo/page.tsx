@@ -213,7 +213,7 @@ export default function TodoPage() {
           <EmptyState message={t.todo.empty} />
         ) : (
           <ul className="flex flex-col gap-2">
-            <AnimatePresence initial={false}>
+            <AnimatePresence initial={false} mode="popLayout">
               {active.map((todo) => (
                 <TodoRow
                   key={todo.id}
@@ -233,7 +233,7 @@ export default function TodoPage() {
                 {t.todo.statusDone}
               </p>
             )}
-            <AnimatePresence initial={false}>
+            <AnimatePresence initial={false} mode="popLayout">
               {done.map((todo) => (
                 <TodoRow
                   key={todo.id}
