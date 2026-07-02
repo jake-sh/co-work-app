@@ -18,7 +18,6 @@ export default function ChatPage() {
   const { messages } = useData();
   const [text, setText] = useState("");
   const [inputKey, setInputKey] = useState(0);
-  const [vpHeight, setVpHeight] = useState(0);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -26,10 +25,8 @@ export default function ChatPage() {
     const vv = window.visualViewport;
     if (!vv) return;
     const update = () => {
-      setVpHeight(vv.height);
       setKeyboardHeight(Math.max(0, window.innerHeight - vv.offsetTop - vv.height));
     };
-    update();
     vv.addEventListener("resize", update);
     vv.addEventListener("scroll", update);
     return () => {
@@ -60,21 +57,19 @@ export default function ChatPage() {
     setInputKey((k) => k + 1);
   };
 
-  const keyboardOpen = keyboardHeight > 20;
+  // Only switch to fixed when keyboard is clearly open (> 100px to avoid false positives)
+  const keyboardOpen = keyboardHeight > 100;
 
   return (
-    <div
-      className="flex flex-col overflow-hidden"
-      style={{
-        height: vpHeight > 0 ? vpHeight : undefined,
-        paddingBottom: keyboardOpen ? 0 : 80,
-      }}
-    >
+    <div className="flex h-full flex-col">
       <div className="shrink-0 px-5 pt-8">
         <h1 className="mb-4 text-3xl font-bold">{currentProject.name}</h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5">
+      <div
+        className="flex-1 overflow-y-auto px-5"
+        style={{ paddingBottom: keyboardOpen ? keyboardHeight + 64 : 12 }}
+      >
         {messages.length === 0 ? (
           <EmptyState message={t.chat.empty} />
         ) : (
@@ -112,7 +107,14 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={onSend} className="flex shrink-0 items-end gap-2 px-5 py-3">
+      <form
+        onSubmit={onSend}
+        className={clsx(
+          "flex items-end gap-2 px-5 py-3",
+          keyboardOpen ? "fixed inset-x-0 z-10 bg-bg-base" : "shrink-0"
+        )}
+        style={keyboardOpen ? { bottom: keyboardHeight } : undefined}
+      >
         <TextArea
           key={inputKey}
           placeholder={t.chat.inputPlaceholder}
