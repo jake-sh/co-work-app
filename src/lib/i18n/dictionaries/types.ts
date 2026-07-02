@@ -95,6 +95,7 @@ export interface Dictionary {
     account: string;
     nickname: string;
     colorCode: string;
+    memoDefaultShared: string;
     signOut: string;
   };
   common: {

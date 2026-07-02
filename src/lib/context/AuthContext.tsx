@@ -13,7 +13,7 @@ import {
   type User,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
-import { createUserProfile, getUserProfile, updateUserColor, updateUserLocale, updateUserNickname } from "@/lib/data/users";
+import { createUserProfile, getUserProfile, updateUserColor, updateUserLocale, updateUserNickname, updateMemoDefaultShared } from "@/lib/data/users";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import type { UserProfile } from "@/types";
 
@@ -32,6 +32,7 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   updateColorCode: (color: string) => Promise<void>;
   updateNickname: (nickname: string) => Promise<void>;
+  updateMemoDefaultShared: (value: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -96,8 +97,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile((prev) => (prev ? { ...prev, nickname } : prev));
   };
 
+  const updateMemoDefaultSharedFn = async (value: boolean) => {
+    if (!user) return;
+    await updateMemoDefaultShared(user.uid, value);
+    setProfile((prev) => (prev ? { ...prev, memoDefaultShared: value } : prev));
+  };
+
   const value = useMemo<AuthContextValue>(
-    () => ({ user, profile, loading, signUp, signIn, signOut, updateColorCode, updateNickname }),
+    () => ({ user, profile, loading, signUp, signIn, signOut, updateColorCode, updateNickname, updateMemoDefaultShared: updateMemoDefaultSharedFn }),
     // signUp/signIn/signOut are stable in behavior; only re-derive when auth state changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [user, profile, loading]

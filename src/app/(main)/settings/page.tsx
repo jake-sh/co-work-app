@@ -10,7 +10,7 @@ import { TextInput } from "@/components/ui/TextInput";
 import { clsx } from "clsx";
 
 export default function SettingsPage() {
-  const { profile, signOut, updateColorCode, updateNickname } = useAuth();
+  const { profile, signOut, updateColorCode, updateNickname, updateMemoDefaultShared } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [nickname, setNickname] = useState(() => profile?.nickname ?? "");
@@ -88,6 +88,24 @@ export default function SettingsPage() {
             ))}
           </div>
         )}
+      </Card>
+
+      <Card className="mb-4 flex items-center justify-between">
+        <span className="text-sm text-text-secondary">{t.settings.memoDefaultShared}</span>
+        <button
+          onClick={() => updateMemoDefaultShared(!(profile?.memoDefaultShared ?? true))}
+          className={clsx(
+            "relative h-6 w-10 rounded-full transition-colors",
+            (profile?.memoDefaultShared ?? true) ? "bg-white" : "bg-surface-pill"
+          )}
+        >
+          <span
+            className={clsx(
+              "absolute top-1 h-4 w-4 rounded-full bg-black transition-transform",
+              (profile?.memoDefaultShared ?? true) ? "left-5" : "left-1"
+            )}
+          />
+        </button>
       </Card>
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.language}</p>

@@ -56,7 +56,8 @@ export default function MemoPage() {
   const onSave = async () => {
     if (!profile || !body.trim()) return;
     if (view === "new") {
-      await addMemo(currentProject.id, title, body.trim(), profile.uid, profile.displayName, profile.colorCode, currentProject.memberIds);
+      const defaultShared = profile.memoDefaultShared ?? true;
+      await addMemo(currentProject.id, title, body.trim(), profile.uid, profile.displayName, profile.colorCode, defaultShared ? currentProject.memberIds : []);
     } else if (view === "edit" && editingMemo) {
       await updateMemo(currentProject.id, editingMemo.id, title, body.trim());
     }
