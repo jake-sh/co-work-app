@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowLeft, Share2, Trash2, X } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addMemo, deleteMemo, shareMemoWithMembers, unshareMemo, subscribeMemos, updateMemo } from "@/lib/data/memos";
+import { addMemo, deleteMemo, shareMemoWithMembers, unshareMemo, updateMemo } from "@/lib/data/memos";
+import { useData } from "@/lib/context/DataContext";
 import { Card } from "@/components/ui/Card";
 import { TextInput, TextArea } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -19,17 +20,12 @@ export default function MemoPage() {
   const { profile } = useAuth();
   const { currentProject } = useProjects();
   const { t } = useI18n();
-  const [memos, setMemos] = useState<Memo[]>([]);
+  const { memos } = useData();
   const [view, setView] = useState<View>("list");
   const [editingMemo, setEditingMemo] = useState<Memo | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [confirmDeleteMemo, setConfirmDeleteMemo] = useState<Memo | null>(null);
-
-  useEffect(() => {
-    if (!currentProject) return;
-    return subscribeMemos(currentProject.id, setMemos);
-  }, [currentProject]);
 
   if (!currentProject) {
     return <EmptyState message={t.todo.selectProjectFirst} />;

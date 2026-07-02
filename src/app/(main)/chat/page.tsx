@@ -1,21 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useData } from "@/lib/context/DataContext";
 import { Send } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { sendMessage, subscribeMessages } from "@/lib/data/chat";
+import { sendMessage } from "@/lib/data/chat";
 import { TextArea } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
-import type { ChatMessage } from "@/types";
 import { clsx } from "clsx";
 
 export default function ChatPage() {
   const { profile } = useAuth();
   const { currentProject } = useProjects();
   const { t } = useI18n();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const { messages } = useData();
   const [text, setText] = useState("");
   const [inputKey, setInputKey] = useState(0);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -35,11 +35,6 @@ export default function ChatPage() {
       vv.removeEventListener("scroll", update);
     };
   }, []);
-
-  useEffect(() => {
-    if (!currentProject) return;
-    return subscribeMessages(currentProject.id, setMessages);
-  }, [currentProject]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

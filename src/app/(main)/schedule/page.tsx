@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   addMonths,
   eachDayOfInterval,
@@ -17,7 +17,8 @@ import { clsx } from "clsx";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addEvent, deleteEvent, subscribeEvents, updateEvent, updateEventColor } from "@/lib/data/schedule";
+import { addEvent, deleteEvent, updateEvent, updateEventColor } from "@/lib/data/schedule";
+import { useData } from "@/lib/context/DataContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/TextInput";
@@ -37,7 +38,7 @@ export default function SchedulePage() {
   const { profile } = useAuth();
   const { currentProject } = useProjects();
   const { t } = useI18n();
-  const [events, setEvents] = useState<ScheduleEvent[]>([]);
+  const { events } = useData();
   const [month, setMonth] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const [adding, setAdding] = useState(false);
@@ -48,11 +49,6 @@ export default function SchedulePage() {
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
   const [colorPickerId, setColorPickerId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!currentProject) return;
-    return subscribeEvents(currentProject.id, setEvents);
-  }, [currentProject]);
 
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(month));
