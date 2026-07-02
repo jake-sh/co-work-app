@@ -31,7 +31,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     <DataProvider>
       <div className="flex flex-1 flex-col">
         <ProjectTabBar />
-        <div className="flex-1 pb-20">{children}</div>
+        <div className="flex-1 min-h-0 overflow-y-auto pb-20">{children}</div>
         <BottomNav />
       </div>
     </DataProvider>

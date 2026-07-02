@@ -11,6 +11,9 @@ import { TextArea } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { clsx } from "clsx";
 
+// Bottom nav content height (py-2.5 × 2 + icon 22px + gap 4px + label ~16px)
+const NAV_H = 62;
+
 export default function ChatPage() {
   const { profile } = useAuth();
   const { currentProject } = useProjects();
@@ -19,25 +22,59 @@ export default function ChatPage() {
   const [text, setText] = useState("");
   const [inputKey, setInputKey] = useState(0);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [formHeight, setFormHeight] = useState(56);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
+    // Android Chrome: opt in to Virtual Keyboard API so keyboard overlays content
+    if ("virtualKeyboard" in navigator) {
+      (navigator as { virtualKeyboard: { overlaysContent: boolean } }).virtualKeyboard.overlaysContent = true;
+    }
+
     const update = () => {
+      const vv = window.visualViewport;
+      if (!vv) return;
       setKeyboardHeight(Math.max(0, window.innerHeight - vv.offsetTop - vv.height));
     };
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
+
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener("resize", update);
+      vv.addEventListener("scroll", update);
+    }
+    window.addEventListener("resize", update);
+
     return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
+      if (vv) {
+        vv.removeEventListener("resize", update);
+        vv.removeEventListener("scroll", update);
+      }
+      window.removeEventListener("resize", update);
     };
   }, []);
 
+  // Track form height for messages bottom padding
+  useEffect(() => {
+    const el = formRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setFormHeight(el.offsetHeight));
+    ro.observe(el);
+    setFormHeight(el.offsetHeight);
+    return () => ro.disconnect();
+  }, []);
+
+  // Scroll to bottom on new message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  // Scroll to bottom when keyboard opens so last message stays visible
+  useEffect(() => {
+    if (keyboardHeight > 50) {
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  }, [keyboardHeight]);
 
   if (!currentProject) {
     return <EmptyState message={t.todo.selectProjectFirst} />;
@@ -52,28 +89,33 @@ export default function ChatPage() {
   const onSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile || !text.trim()) return;
-    await sendMessage(currentProject.id, text.trim(), profile.uid, profile.nickname ?? profile.displayName, profile.colorCode);
+    await sendMessage(
+      currentProject.id,
+      text.trim(),
+      profile.uid,
+      profile.nickname ?? profile.displayName,
+      profile.colorCode,
+    );
     setText("");
     setInputKey((k) => k + 1);
   };
 
-  // Only switch to fixed when keyboard is clearly open (> 100px to avoid false positives)
-  const keyboardOpen = keyboardHeight > 100;
+  const keyboardOpen = keyboardHeight > 50;
+
+  // Space below the last message so it isn't hidden behind fixed form + nav/keyboard
+  const messagesPaddingBottom = formHeight + (keyboardOpen ? keyboardHeight : NAV_H) + 16;
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="shrink-0 px-5 pt-8">
+    <>
+      <div className="px-5 pt-8">
         <h1 className="mb-4 text-3xl font-bold">{currentProject.name}</h1>
       </div>
 
-      <div
-        className="flex-1 overflow-y-auto px-5"
-        style={{ paddingBottom: keyboardOpen ? keyboardHeight + 64 : 12 }}
-      >
+      <div className="px-5" style={{ paddingBottom: messagesPaddingBottom }}>
         {messages.length === 0 ? (
           <EmptyState message={t.chat.empty} />
         ) : (
-          <ul className="flex flex-col gap-2 pb-3">
+          <ul className="flex flex-col gap-2">
             {messages.map((msg) => {
               const isMine = msg.authorId === profile?.uid;
               return (
@@ -94,7 +136,7 @@ export default function ChatPage() {
                       "max-w-[75%] px-3.5 py-2 text-sm whitespace-pre-wrap break-words",
                       isMine
                         ? "rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl rounded-br-sm bg-white text-black"
-                        : "rounded-2xl bg-surface-card text-text-primary"
+                        : "rounded-2xl bg-surface-card text-text-primary",
                     )}
                   >
                     {msg.text}
@@ -107,13 +149,16 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
+      {/* Fixed form — sits just above bottom nav when keyboard closed, just above keyboard when open */}
       <form
+        ref={formRef}
         onSubmit={onSend}
-        className={clsx(
-          "flex items-end gap-2 px-5 py-3",
-          keyboardOpen ? "fixed inset-x-0 z-10 bg-bg-base" : "shrink-0"
-        )}
-        style={keyboardOpen ? { bottom: keyboardHeight } : undefined}
+        className="fixed inset-x-0 z-10 flex items-end gap-2 bg-bg-base px-5 py-2"
+        style={{
+          bottom: keyboardOpen
+            ? keyboardHeight
+            : `calc(env(safe-area-inset-bottom, 0px) + ${NAV_H}px)`,
+        }}
       >
         <TextArea
           key={inputKey}
@@ -121,7 +166,7 @@ export default function ChatPage() {
           value={text}
           onChange={handleTextChange}
           rows={1}
-          enterKeyHint="enter"
+          enterKeyHint="send"
           className="min-h-[44px] max-h-[120px] overflow-y-auto"
         />
         <button
@@ -131,6 +176,6 @@ export default function ChatPage() {
           <Send size={18} />
         </button>
       </form>
-    </div>
+    </>
   );
 }
