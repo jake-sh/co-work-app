@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
@@ -19,6 +19,65 @@ const NEXT_STATUS: Record<TodoStatus, TodoStatus> = {
   in_progress: "done",
   done: "in_progress",
 };
+
+const PREV_STATUS: Record<TodoStatus, TodoStatus> = {
+  new: "new",
+  in_progress: "new",
+  done: "in_progress",
+};
+
+const LONG_PRESS_MS = 500;
+const MOVE_CANCEL_PX = 10;
+
+function useTapAndHold(onTap: () => void, onHold: () => void) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const held = useRef(false);
+  const start = useRef<{ x: number; y: number } | null>(null);
+
+  const clearTimer = () => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+  };
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    held.current = false;
+    start.current = { x: e.clientX, y: e.clientY };
+    clearTimer();
+    timer.current = setTimeout(() => {
+      held.current = true;
+      onHold();
+    }, LONG_PRESS_MS);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!start.current || !timer.current) return;
+    const dx = e.clientX - start.current.x;
+    const dy = e.clientY - start.current.y;
+    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) clearTimer();
+  };
+
+  const onPointerUp = () => {
+    clearTimer();
+    if (!held.current) onTap();
+    start.current = null;
+  };
+
+  const onPointerLeave = () => {
+    clearTimer();
+    start.current = null;
+  };
+
+  return {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave,
+    onPointerCancel: onPointerLeave,
+    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+  };
+}
 
 export default function TodoPage() {
   const { profile } = useAuth();
@@ -45,8 +104,12 @@ export default function TodoPage() {
     }
   };
 
-  const cycleStatus = (todo: Todo) => {
+  const advanceStatus = (todo: Todo) => {
     setTodoStatus(currentProject.id, todo.id, NEXT_STATUS[todo.status]);
+  };
+
+  const revertStatus = (todo: Todo) => {
+    setTodoStatus(currentProject.id, todo.id, PREV_STATUS[todo.status]);
   };
 
   const onConfirmDelete = async () => {
@@ -131,7 +194,8 @@ export default function TodoPage() {
                   key={todo.id}
                   todo={todo}
                   statusLabel={statusLabel[todo.status]}
-                  onToggle={() => cycleStatus(todo)}
+                  onAdvance={() => advanceStatus(todo)}
+                  onRevert={() => revertStatus(todo)}
                   onDelete={() => setConfirmDelete(todo)}
                 />
               ))}
@@ -148,7 +212,8 @@ export default function TodoPage() {
                   key={todo.id}
                   todo={todo}
                   statusLabel={statusLabel[todo.status]}
-                  onToggle={() => cycleStatus(todo)}
+                  onAdvance={() => advanceStatus(todo)}
+                  onRevert={() => revertStatus(todo)}
                   onDelete={() => setConfirmDelete(todo)}
                 />
               ))}
@@ -163,14 +228,19 @@ export default function TodoPage() {
 function TodoRow({
   todo,
   statusLabel,
-  onToggle,
+  onAdvance,
+  onRevert,
   onDelete,
 }: {
   todo: Todo;
   statusLabel: string;
-  onToggle: () => void;
+  onAdvance: () => void;
+  onRevert: () => void;
   onDelete: () => void;
 }) {
+  const textHandlers = useTapAndHold(() => {}, onDelete);
+  const pillHandlers = useTapAndHold(onAdvance, onRevert);
+
   return (
     <motion.li
       layout
@@ -182,30 +252,25 @@ function TodoRow({
       className="flex items-center gap-2.5 rounded-card bg-surface-card px-3 py-3"
     >
       <ColorDot color={todo.authorColor} />
-      <button
-        onClick={onToggle}
-        className={clsx(
-          "shrink-0 rounded-pill px-2.5 py-1 text-[11px] font-semibold",
-          todo.status === "new" && "bg-surface-pill text-text-secondary",
-          todo.status === "in_progress" && "bg-blue-500/20 text-blue-300",
-          todo.status === "done" && "bg-emerald-500/20 text-emerald-300"
-        )}
-      >
-        {statusLabel}
-      </button>
       <span
+        {...textHandlers}
         className={clsx(
-          "flex-1 text-sm",
+          "flex-1 select-none text-sm",
           todo.status === "done" ? "text-text-disabled line-through" : "text-text-primary"
         )}
       >
         {todo.text}
       </span>
       <button
-        onClick={onDelete}
-        className="shrink-0 flex items-center justify-center rounded-lg p-1.5 text-text-disabled hover:text-red-400"
+        {...pillHandlers}
+        className={clsx(
+          "flex w-16 shrink-0 items-center justify-center rounded-pill px-2 py-1 text-center text-[11px] font-semibold select-none",
+          todo.status === "new" && "bg-surface-pill text-text-secondary",
+          todo.status === "in_progress" && "bg-blue-500/20 text-blue-300",
+          todo.status === "done" && "bg-emerald-500/20 text-emerald-300"
+        )}
       >
-        <X size={14} />
+        {statusLabel}
       </button>
     </motion.li>
   );

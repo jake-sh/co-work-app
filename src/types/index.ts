@@ -24,6 +24,7 @@ export interface Project {
   createdAt: number;
   status?: "active" | "completed";
   color?: string;
+  order?: number;
 }
 
 export interface Todo {

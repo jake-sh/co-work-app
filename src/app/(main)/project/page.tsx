@@ -1,17 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { Reorder, useDragControls } from "framer-motion";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { createProject } from "@/lib/data/projects";
+import { createProject, reorderProjects } from "@/lib/data/projects";
 import { PROJECT_COLOR_PALETTE } from "@/lib/colors";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextInput, TextArea } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
+import type { Project } from "@/types";
+
+const LONG_PRESS_MS = 400;
+const MOVE_CANCEL_PX = 10;
 
 export default function ProjectListPage() {
   const { profile } = useAuth();
@@ -25,6 +30,29 @@ export default function ProjectListPage() {
   const [color, setColor] = useState(PROJECT_COLOR_PALETTE[0]);
   const [submitting, setSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [orderedProjects, setOrderedProjects] = useState(projects);
+  const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setOrderedProjects((prev) => {
+      const prevIds = prev.map((p) => p.id).join(",");
+      const nextIds = projects.map((p) => p.id).join(",");
+      if (prevIds === nextIds) {
+        return prev.map((p) => projects.find((np) => np.id === p.id) ?? p);
+      }
+      return projects;
+    });
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [projects]);
+
+  const onReorder = (next: Project[]) => {
+    setOrderedProjects(next);
+    if (persistTimer.current) clearTimeout(persistTimer.current);
+    persistTimer.current = setTimeout(() => {
+      reorderProjects(next.map((p) => p.id));
+    }, 500);
+  };
 
   const onCreate = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
@@ -120,28 +148,107 @@ export default function ProjectListPage() {
         {projects.length === 0 && !creating ? (
           <EmptyState message={t.project.noProjects} />
         ) : (
-          <ul className="flex flex-col gap-3">
-            {projects.map((project) => (
-              <li key={project.id}>
-                <Link href={`/project/${project.id}`} onClick={() => setCurrentProjectId(project.id)}>
-                  <div className="flex overflow-hidden rounded-card bg-surface-card hover:bg-zinc-800 transition-colors">
-                    <div className="w-1 shrink-0" style={{ backgroundColor: project.color ?? "#9900CC" }} />
-                    <div className="flex-1 p-4">
-                      <p className="text-base font-semibold">{project.name}</p>
-                      {project.description && (
-                        <p className="mt-1 line-clamp-2 text-sm text-text-secondary">{project.description}</p>
-                      )}
-                      <p className="mt-2 text-xs text-text-disabled">
-                        {project.memberIds.length} {t.project.members}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              </li>
+          <Reorder.Group
+            as="ul"
+            axis="y"
+            values={orderedProjects}
+            onReorder={onReorder}
+            className="flex flex-col gap-3"
+          >
+            {orderedProjects.map((project) => (
+              <ProjectRow
+                key={project.id}
+                project={project}
+                membersLabel={`${project.memberIds.length} ${t.project.members}`}
+                onOpen={() => setCurrentProjectId(project.id)}
+              />
             ))}
-          </ul>
+          </Reorder.Group>
         )}
       </div>
     </>
+  );
+}
+
+function ProjectRow({
+  project,
+  membersLabel,
+  onOpen,
+}: {
+  project: Project;
+  membersLabel: string;
+  onOpen: () => void;
+}) {
+  const router = useRouter();
+  const controls = useDragControls();
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressStart = useRef<{ x: number; y: number } | null>(null);
+  const isLifting = useRef(false);
+
+  const clearHoldTimer = () => {
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+  };
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    isLifting.current = false;
+    pressStart.current = { x: e.clientX, y: e.clientY };
+    clearHoldTimer();
+    holdTimer.current = setTimeout(() => {
+      isLifting.current = true;
+      controls.start(e);
+    }, LONG_PRESS_MS);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!pressStart.current || !holdTimer.current) return;
+    const dx = e.clientX - pressStart.current.x;
+    const dy = e.clientY - pressStart.current.y;
+    if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) clearHoldTimer();
+  };
+
+  const onPointerUp = () => {
+    clearHoldTimer();
+    if (!isLifting.current) {
+      onOpen();
+      router.push(`/project/${project.id}`);
+    }
+    pressStart.current = null;
+  };
+
+  const onPointerLeave = () => {
+    clearHoldTimer();
+    pressStart.current = null;
+  };
+
+  return (
+    <Reorder.Item
+      value={project}
+      dragControls={controls}
+      dragListener={false}
+      whileDrag={{ scale: 1.03, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
+      className="rounded-lg"
+    >
+      <div
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerLeave}
+        onPointerCancel={onPointerLeave}
+        onContextMenu={(e) => e.preventDefault()}
+        className="flex overflow-hidden rounded-lg bg-surface-card select-none active:bg-zinc-800 transition-colors"
+      >
+        <div className="w-1 shrink-0" style={{ backgroundColor: project.color ?? "#9900CC" }} />
+        <div className="flex-1 p-4">
+          <p className="text-base font-semibold">{project.name}</p>
+          {project.description && (
+            <p className="mt-1 line-clamp-2 text-sm text-text-secondary">{project.description}</p>
+          )}
+          <p className="mt-2 text-xs text-text-disabled">{membersLabel}</p>
+        </div>
+      </div>
+    </Reorder.Item>
   );
 }

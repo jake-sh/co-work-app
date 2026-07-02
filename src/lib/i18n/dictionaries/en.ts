@@ -53,7 +53,7 @@ const en: Dictionary = {
     inputPlaceholder: "Enter a task",
     add: "Add",
     statusNew: "New",
-    statusInProgress: "In Progress",
+    statusInProgress: "Progress",
     statusDone: "Done",
     empty: "No to-dos yet",
     selectProjectFirst: "Select a project first",

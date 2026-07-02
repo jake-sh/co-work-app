@@ -22,11 +22,20 @@ export function subscribeUserProjects(uid: string, cb: (projects: Project[]) => 
     (snap) => {
       const sorted = snap.docs
         .map((d) => ({ ...(d.data() as Omit<Project, "id">), id: d.id }))
-        .sort((a, b) => b.createdAt - a.createdAt);
+        .sort((a, b) => (a.order ?? a.createdAt) - (b.order ?? b.createdAt));
       cb(sorted);
     },
     () => cb([])
   );
+}
+
+export async function reorderProjects(projectIds: string[]) {
+  const { writeBatch } = await import("firebase/firestore");
+  const batch = writeBatch(db);
+  projectIds.forEach((id, index) => {
+    batch.update(doc(db, "projects", id), { order: index });
+  });
+  await batch.commit();
 }
 
 export async function createProject(
