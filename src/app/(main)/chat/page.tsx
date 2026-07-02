@@ -27,19 +27,32 @@ export default function ChatPage() {
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
+    type VK = { overlaysContent: boolean; boundingRect: DOMRect } & EventTarget;
+
+    if ("virtualKeyboard" in navigator) {
+      // Android Chrome: Virtual Keyboard API — fires in sync with keyboard animation
+      const vk = (navigator as { virtualKeyboard: VK }).virtualKeyboard;
+      vk.overlaysContent = true;
+      const onGeometry = () => setKeyboardHeight((vk as VK & { boundingRect: DOMRect }).boundingRect.height);
+      vk.addEventListener("geometrychange", onGeometry);
+      return () => {
+        vk.removeEventListener("geometrychange", onGeometry);
+        vk.overlaysContent = false;
+      };
+    }
+
+    // iOS Safari: visualViewport shrinks when keyboard appears
     const update = () => {
       const vv = window.visualViewport;
       if (!vv) return;
       setKeyboardHeight(Math.max(0, window.innerHeight - vv.offsetTop - vv.height));
     };
-
     const vv = window.visualViewport;
     if (vv) {
       vv.addEventListener("resize", update);
       vv.addEventListener("scroll", update);
     }
     window.addEventListener("resize", update);
-
     return () => {
       if (vv) {
         vv.removeEventListener("resize", update);
