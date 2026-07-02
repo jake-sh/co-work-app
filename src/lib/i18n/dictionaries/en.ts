@@ -57,6 +57,7 @@ const en: Dictionary = {
     statusDone: "Done",
     empty: "No to-dos yet",
     selectProjectFirst: "Select a project first",
+    edit: "Edit",
     delete: "Delete",
     deleteConfirm: "Delete this to-do?",
   },

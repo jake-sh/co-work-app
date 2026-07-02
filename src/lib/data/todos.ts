@@ -44,6 +44,10 @@ export async function addTodo(
   }
 }
 
+export async function updateTodoText(projectId: string, todoId: string, text: string) {
+  await updateDoc(doc(db, "projects", projectId, "todos", todoId), { text });
+}
+
 export async function deleteTodo(projectId: string, todoId: string) {
   const { deleteDoc } = await import("firebase/firestore");
   await deleteDoc(doc(db, "projects", projectId, "todos", todoId));

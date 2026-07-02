@@ -55,6 +55,7 @@ export interface Dictionary {
     statusDone: string;
     empty: string;
     selectProjectFirst: string;
+    edit: string;
     delete: string;
     deleteConfirm: string;
   };
