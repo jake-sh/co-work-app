@@ -6,12 +6,21 @@ import { useAuth, persistLocale } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { MEMBER_COLOR_PALETTE } from "@/lib/colors";
 import { Card } from "@/components/ui/Card";
+import { TextInput } from "@/components/ui/TextInput";
 import { clsx } from "clsx";
 
 export default function SettingsPage() {
-  const { profile, signOut, updateColorCode } = useAuth();
+  const { profile, signOut, updateColorCode, updateNickname } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [nickname, setNickname] = useState(() => profile?.nickname ?? "");
+  const [nicknameSaved, setNicknameSaved] = useState(false);
+
+  const onSaveNickname = async () => {
+    await updateNickname(nickname.trim());
+    setNicknameSaved(true);
+    setTimeout(() => setNicknameSaved(false), 1500);
+  };
 
   const onChangeLocale = (next: "ko" | "en") => {
     setLocale(next);
@@ -34,6 +43,23 @@ export default function SettingsPage() {
           <UserIcon size={22} color="#0B0B0B" />
         </div>
       </div>
+
+      <Card className="mb-3 flex items-center gap-3">
+        <span className="shrink-0 text-sm text-text-secondary">{t.settings.nickname}</span>
+        <TextInput
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          placeholder={profile?.displayName ?? ""}
+          className="flex-1"
+        />
+        <button
+          onClick={onSaveNickname}
+          disabled={!nickname.trim()}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-pill"
+        >
+          <Check size={14} className={nicknameSaved ? "text-green-400" : "text-text-primary"} />
+        </button>
+      </Card>
 
       <Card className="mb-4">
         <button

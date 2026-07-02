@@ -8,7 +8,6 @@ import { useI18n } from "@/lib/i18n/I18nContext";
 import { sendMessage, subscribeMessages } from "@/lib/data/chat";
 import { TextArea } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { ColorDot } from "@/components/ui/ColorDot";
 import type { ChatMessage } from "@/types";
 import { clsx } from "clsx";
 
@@ -59,7 +58,7 @@ export default function ChatPage() {
   const onSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile || !text.trim()) return;
-    await sendMessage(currentProject.id, text.trim(), profile.uid, profile.displayName, profile.colorCode);
+    await sendMessage(currentProject.id, text.trim(), profile.uid, profile.nickname ?? profile.displayName, profile.colorCode);
     setText("");
     setInputKey((k) => k + 1);
   };
@@ -83,9 +82,11 @@ export default function ChatPage() {
                   className={clsx("flex flex-col", isMine ? "items-end" : "items-start")}
                 >
                   {!isMine && (
-                    <div className="mb-0.5 flex items-center gap-1.5 px-1">
-                      <ColorDot color={msg.authorColor} size={6} />
-                      <span className="text-[11px] text-text-secondary">{msg.authorName}</span>
+                    <div
+                      className="mb-1 ml-1 flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold text-black"
+                      style={{ backgroundColor: msg.authorColor }}
+                    >
+                      {msg.authorName.slice(0, 2)}
                     </div>
                   )}
                   <div

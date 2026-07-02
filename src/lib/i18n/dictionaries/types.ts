@@ -93,6 +93,7 @@ export interface Dictionary {
     korean: string;
     english: string;
     account: string;
+    nickname: string;
     colorCode: string;
     signOut: string;
   };
