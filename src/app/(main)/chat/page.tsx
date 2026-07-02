@@ -20,11 +20,11 @@ export default function ChatPage() {
   const { t } = useI18n();
   const { messages } = useData();
   const [text, setText] = useState("");
-  const [inputKey, setInputKey] = useState(0);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [formHeight, setFormHeight] = useState(56);
   const bottomRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     type VK = { overlaysContent: boolean; boundingRect: DOMRect } & EventTarget;
@@ -105,7 +105,11 @@ export default function ChatPage() {
       profile.colorCode,
     );
     setText("");
-    setInputKey((k) => k + 1);
+    const el = textareaRef.current;
+    if (el) {
+      el.style.height = "auto";
+      el.focus();
+    }
   };
 
   const keyboardOpen = keyboardHeight > 50;
@@ -169,7 +173,7 @@ export default function ChatPage() {
         }}
       >
         <TextArea
-          key={inputKey}
+          ref={textareaRef}
           placeholder={t.chat.inputPlaceholder}
           value={text}
           onChange={handleTextChange}
