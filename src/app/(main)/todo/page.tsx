@@ -143,6 +143,7 @@ export default function TodoPage() {
   const done = todos
     .filter((td) => td.status === "done")
     .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
+  const sortedTodos = [...active, ...done];
 
   const statusLabel: Record<TodoStatus, string> = {
     new: t.todo.statusNew,
@@ -214,35 +215,7 @@ export default function TodoPage() {
         ) : (
           <ul className="flex flex-col gap-2">
             <AnimatePresence initial={false} mode="popLayout">
-              {active.map((todo) => (
-                <TodoRow
-                  key={todo.id}
-                  todo={todo}
-                  statusLabel={statusLabel[todo.status]}
-                  isEditing={editingId === todo.id}
-                  onAdvance={() => advanceStatus(todo)}
-                  onRevert={() => revertStatus(todo)}
-                  onOpenMenu={() => setActionMenuTodo(todo)}
-                  onSaveEdit={(nextText) => onSaveEdit(todo, nextText)}
-                />
-              ))}
-            </AnimatePresence>
-
-            <AnimatePresence initial={false} mode="popLayout">
-              {done.length > 0 && (
-                <motion.li
-                  key="done-label"
-                  layout="position"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                  className="mt-4 mb-1 text-xs font-semibold text-text-secondary"
-                >
-                  {t.todo.statusDone}
-                </motion.li>
-              )}
-              {done.map((todo) => (
+              {sortedTodos.map((todo) => (
                 <TodoRow
                   key={todo.id}
                   todo={todo}
@@ -298,7 +271,6 @@ function TodoRow({
   return (
     <motion.li
       layout="position"
-      layoutId={todo.id}
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
