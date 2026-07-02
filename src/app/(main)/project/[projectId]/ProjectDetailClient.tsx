@@ -136,7 +136,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         <TextArea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder={t.project.overview}
+          placeholder={t.project.overviewPlaceholder}
           rows={3}
           className="w-full"
         />

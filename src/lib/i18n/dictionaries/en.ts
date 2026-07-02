@@ -40,6 +40,7 @@ const en: Dictionary = {
     noProjects: "No projects yet",
     selectProject: "Select a project",
     overview: "Overview",
+    overviewPlaceholder: "Briefly describe this project",
     open: "Open",
     complete: "Complete",
     reopen: "Reopen",
