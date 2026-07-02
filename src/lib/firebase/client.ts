@@ -4,7 +4,7 @@ import {
   getFirestore,
   initializeFirestore,
   persistentLocalCache,
-  persistentMultipleTabManager,
+  persistentSingleTabManager,
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -21,6 +21,6 @@ export const firebaseApp = isNewApp ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(firebaseApp);
 export const db = isNewApp
   ? initializeFirestore(firebaseApp, {
-      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+      localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({ forceOwnership: true }) }),
     })
   : getFirestore(firebaseApp);
