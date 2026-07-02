@@ -147,10 +147,8 @@ export default function SchedulePage() {
               <span>{format(day, "d")}</span>
               {hasEvents && (
                 <span
-                  className={clsx(
-                    "mt-0.5 w-full truncate px-0.5 text-center text-[8px] leading-none",
-                    key === selectedDate ? "text-black" : "text-text-secondary"
-                  )}
+                  className="mt-0.5 w-full truncate px-0.5 text-center text-[8px] leading-none"
+                  style={key !== selectedDate ? { color: eventsByDate[key][0].authorColor } : { color: "#000" }}
                 >
                   {(() => {
                     const raw = eventsByDate[key][0].title;
