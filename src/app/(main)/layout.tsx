@@ -29,9 +29,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <DataProvider>
-      <div className="flex h-dvh flex-col">
+      <div className="h-full" style={{ display: "grid", gridTemplateRows: "auto 1fr" }}>
         <ProjectTabBar />
-        <div className="flex-1 min-h-0 overflow-y-auto pb-20">{children}</div>
+        <div className="overflow-y-auto pb-20">{children}</div>
         <BottomNav />
       </div>
     </DataProvider>
