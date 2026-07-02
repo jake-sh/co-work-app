@@ -1,4 +1,4 @@
-const CACHE_NAME = "co-work-shell-v2";
+const CACHE_NAME = "co-work-shell-v3";
 const PRECACHE = ["/manifest.webmanifest", "/icon.svg"];
 
 const isStaticAsset = (url) =>
@@ -41,8 +41,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // HTML pages and API routes: network-first, no caching
+  // HTML pages and API routes: always hit the network, bypassing the
+  // browser's HTTP cache so stale documents never reference asset hashes
+  // from a since-replaced deployment.
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    fetch(event.request, { cache: "no-store" }).catch(() => caches.match(event.request))
   );
 });
