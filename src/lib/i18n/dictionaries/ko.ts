@@ -69,6 +69,7 @@ const ko: Dictionary = {
     share: "공유",
     shared: "공유됨",
     delete: "삭제",
+    deleteConfirm: "정말 삭제하시겠습니까?",
     empty: "메모가 없습니다",
   },
   schedule: {

@@ -67,6 +67,7 @@ export interface Dictionary {
     share: string;
     shared: string;
     delete: string;
+    deleteConfirm: string;
     empty: string;
   };
   schedule: {

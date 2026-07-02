@@ -69,6 +69,7 @@ const en: Dictionary = {
     share: "Share",
     shared: "Shared",
     delete: "Delete",
+    deleteConfirm: "Delete this memo?",
     empty: "No memos yet",
   },
   schedule: {
