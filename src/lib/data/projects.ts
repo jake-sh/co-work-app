@@ -34,7 +34,8 @@ export async function createProject(
   description: string,
   ownerId: string,
   startDate: string | null,
-  endDate: string | null
+  endDate: string | null,
+  color: string = "#9900CC"
 ): Promise<string> {
   const ref = await addDoc(projectsCol, {
     name,
@@ -43,9 +44,14 @@ export async function createProject(
     memberIds: [ownerId],
     startDate,
     endDate,
+    color,
     createdAt: Date.now(),
   });
   return ref.id;
+}
+
+export async function updateProjectColor(projectId: string, color: string) {
+  await updateDoc(doc(db, "projects", projectId), { color });
 }
 
 export async function addMemberByUsername(projectId: string, username: string) {

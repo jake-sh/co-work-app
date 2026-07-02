@@ -1,3 +1,14 @@
+export const PROJECT_COLOR_PALETTE = [
+  "#9900CC",
+  "#3B82F6",
+  "#22C55E",
+  "#F97316",
+  "#EF4444",
+  "#06B6D4",
+  "#EC4899",
+  "#EAB308",
+];
+
 export const MEMBER_COLOR_PALETTE = [
   "#FF6B6B",
   "#FFA94D",
