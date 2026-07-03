@@ -34,6 +34,14 @@ function resolveColor(ev: ScheduleEvent): string {
   return "#9b9b9b";
 }
 
+function cellLabel(title: string): string {
+  const stripped = title
+    .replace(/^(\d+월\s*\d+일|\d+\/\d+|\d+\.\d+)\s*/, "")
+    .replace(/^((오전|오후)\d+시(\d+분)?|\d{1,2}:\d{2})\s*/, "")
+    .trim();
+  return (stripped || title).slice(0, 5);
+}
+
 export default function SchedulePage() {
   const { profile } = useAuth();
   const { currentProject } = useProjects();
@@ -153,20 +161,22 @@ export default function SchedulePage() {
               >
                 <span>{format(day, "d")}</span>
                 {hasEvents && (
-                  <span
-                    className="mt-0.5 w-full truncate px-0.5 text-center text-[8px] leading-none"
-                    style={{ color: resolveColor(eventsByDate[key][0]) }}
-                  >
-                    {(() => {
-                      const raw = eventsByDate[key][0].title;
-                      const stripped = raw
-                        .replace(/^(\d+월\s*\d+일|\d+\/\d+|\d+\.\d+)\s*/, "")
-                        .replace(/^((오전|오후)\d+시(\d+분)?|\d{1,2}:\d{2})\s*/, "")
-                        .trim();
-                      return (stripped || raw).slice(0, 5);
-                    })()}
-                    {eventsByDate[key].length > 1 && `+${eventsByDate[key].length - 1}`}
-                  </span>
+                  <div className="mt-0.5 flex w-full flex-col items-center px-0.5 leading-none">
+                    {eventsByDate[key].slice(0, 3).map((ev) => (
+                      <span
+                        key={ev.id}
+                        className="w-full truncate text-center text-[8px]"
+                        style={{ color: resolveColor(ev) }}
+                      >
+                        {cellLabel(ev.title)}
+                      </span>
+                    ))}
+                    {eventsByDate[key].length > 3 && (
+                      <span className="text-[8px] text-text-disabled">
+                        +{eventsByDate[key].length - 3}
+                      </span>
+                    )}
+                  </div>
                 )}
               </button>
             );
