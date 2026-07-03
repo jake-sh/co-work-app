@@ -14,6 +14,7 @@ import {
   leaveProject,
   removeMember,
   setProjectStatus,
+  transferOwnership,
   updateProject,
   updateProjectColor,
 } from "@/lib/data/projects";
@@ -40,6 +41,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<UserProfile | null>(null);
+  const [confirmPromote, setConfirmPromote] = useState<UserProfile | null>(null);
   const [members, setMembers] = useState<UserProfile[]>([]);
   const [saved, setSaved] = useState(false);
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,6 +96,12 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     if (!confirmRemove) return;
     await removeMember(projectId, confirmRemove.uid);
     setConfirmRemove(null);
+  };
+
+  const onConfirmPromote = async () => {
+    if (!confirmPromote) return;
+    await transferOwnership(projectId, confirmPromote.uid);
+    setConfirmPromote(null);
   };
 
   const onSave = async () => {
@@ -158,6 +166,35 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         </div>
       )}
 
+      {confirmPromote && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => setConfirmPromote(null)}
+        >
+          <div
+            className="mx-6 w-full max-w-xs rounded-2xl bg-surface-card p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="mb-1 text-center text-sm font-semibold">{confirmPromote.displayName}</p>
+            <p className="mb-5 text-center text-sm text-text-secondary">{t.project.changePlConfirm}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmPromote(null)}
+                className="flex-1 rounded-xl bg-surface-pill py-2.5 text-sm font-semibold"
+              >
+                {t.project.cancel}
+              </button>
+              <button
+                onClick={onConfirmPromote}
+                className="flex-1 rounded-xl bg-blue-500/20 py-2.5 text-sm font-semibold text-blue-300"
+              >
+                {t.project.changePl}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {confirmLeave && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
@@ -190,7 +227,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         <Link href="/project" className="text-text-secondary">
           <ArrowLeft size={20} />
         </Link>
-        {isPL && (
+        {isPL ? (
           <div className="flex gap-2">
             <button
               onClick={onToggleComplete}
@@ -207,11 +244,21 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
               {confirmDelete ? t.project.deleteConfirm : t.project.delete}
             </button>
           </div>
+        ) : (
+          <span
+            className={
+              isCompleted
+                ? "rounded-pill bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-300"
+                : "rounded-pill bg-blue-500/20 px-3 py-1.5 text-xs font-semibold text-blue-300"
+            }
+          >
+            {isCompleted ? t.project.complete : t.project.inProgress}
+          </span>
         )}
       </div>
 
       <div className="flex flex-col px-5 pb-28">
-        {isCompleted && (
+        {isCompleted && isPL && (
           <span className="mb-3 inline-block rounded-pill bg-emerald-500/20 px-2.5 py-0.5 text-xs text-emerald-400">
             {t.project.completed}
           </span>
@@ -292,24 +339,16 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           {members.length > 0 && (
             <ul className={`flex flex-col gap-2 ${isPL ? "mt-3 border-t border-border-divider pt-3" : ""}`}>
               {members.map((m) => (
-                <li key={m.uid} className="flex items-center gap-2">
-                  <ColorDot color={m.colorCode} size={8} />
-                  <span className="text-sm text-text-primary">{m.displayName}</span>
-                  <span className="text-xs text-text-secondary">@{m.username}</span>
-                  {m.uid === project.ownerId ? (
-                    <span className="ml-auto text-[10px] text-text-disabled">{t.project.pl}</span>
-                  ) : (
-                    isPL && (
-                      <button
-                        onClick={() => setConfirmRemove(m)}
-                        className="ml-auto text-text-disabled hover:text-red-400"
-                        aria-label={t.project.delete}
-                      >
-                        <X size={16} />
-                      </button>
-                    )
-                  )}
-                </li>
+                <MemberRow
+                  key={m.uid}
+                  member={m}
+                  isOwner={m.uid === project.ownerId}
+                  canManage={isPL}
+                  ownerLabel={t.project.pl}
+                  removeLabel={t.project.delete}
+                  onRemove={() => setConfirmRemove(m)}
+                  onPromote={() => setConfirmPromote(m)}
+                />
               ))}
             </ul>
           )}
@@ -347,5 +386,91 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+const LONG_PRESS_MS = 500;
+const MOVE_CANCEL_PX = 10;
+
+// A member row. For the PL, long-pressing a non-owner member triggers the
+// "make PL" flow; the X button removes them. Rows are otherwise static.
+function MemberRow({
+  member,
+  isOwner,
+  canManage,
+  ownerLabel,
+  removeLabel,
+  onRemove,
+  onPromote,
+}: {
+  member: UserProfile;
+  isOwner: boolean;
+  canManage: boolean;
+  ownerLabel: string;
+  removeLabel: string;
+  onRemove: () => void;
+  onPromote: () => void;
+}) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const promotable = canManage && !isOwner;
+
+  const clearTimer = () => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+  };
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (!promotable) return;
+    start.current = { x: e.clientX, y: e.clientY };
+    clearTimer();
+    timer.current = setTimeout(() => {
+      clearTimer();
+      onPromote();
+    }, LONG_PRESS_MS);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!start.current || !timer.current) return;
+    if (Math.hypot(e.clientX - start.current.x, e.clientY - start.current.y) > MOVE_CANCEL_PX) {
+      clearTimer();
+    }
+  };
+
+  const cancel = () => {
+    clearTimer();
+    start.current = null;
+  };
+
+  return (
+    <li
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={cancel}
+      onPointerLeave={cancel}
+      onPointerCancel={cancel}
+      onContextMenu={(e) => promotable && e.preventDefault()}
+      className={`flex items-center gap-2 ${promotable ? "select-none" : ""}`}
+    >
+      <ColorDot color={member.colorCode} size={8} />
+      <span className="text-sm text-text-primary">{member.displayName}</span>
+      <span className="text-xs text-text-secondary">@{member.username}</span>
+      {isOwner ? (
+        <span className="ml-auto text-[10px] text-text-disabled">{ownerLabel}</span>
+      ) : (
+        canManage && (
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={onRemove}
+            className="ml-auto text-text-disabled hover:text-red-400"
+            aria-label={removeLabel}
+          >
+            <X size={16} />
+          </button>
+        )
+      )}
+    </li>
   );
 }

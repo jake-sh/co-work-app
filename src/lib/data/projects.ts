@@ -72,6 +72,12 @@ export async function addMemberByUsername(projectId: string, username: string) {
   return member;
 }
 
+// Transfers PL (ownership) to another member. The previous owner stays on as
+// a regular member; only ownerId changes.
+export async function transferOwnership(projectId: string, newOwnerId: string) {
+  await updateDoc(doc(db, "projects", projectId), { ownerId: newOwnerId });
+}
+
 export async function removeMember(projectId: string, uid: string) {
   await updateDoc(doc(db, "projects", projectId), {
     memberIds: arrayRemove(uid),
