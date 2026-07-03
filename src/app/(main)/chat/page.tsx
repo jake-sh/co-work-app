@@ -136,8 +136,8 @@ export default function ChatPage() {
                 <li
                   key={msg.id}
                   className={clsx(
-                    "flex items-end",
-                    isMine ? "flex-col" : "flex-row gap-2"
+                    "flex",
+                    isMine ? "flex-col items-end" : "flex-row items-start gap-2"
                   )}
                 >
                   {!isMine && (
@@ -153,7 +153,7 @@ export default function ChatPage() {
                       "max-w-[75%] px-3.5 py-2 text-sm whitespace-pre-wrap break-words",
                       isMine
                         ? "rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl rounded-br-sm bg-white text-black"
-                        : "rounded-2xl bg-surface-card text-text-primary",
+                        : "rounded-tr-2xl rounded-bl-2xl rounded-br-2xl rounded-tl-sm bg-surface-card text-text-primary",
                     )}
                   >
                     {msg.text}
