@@ -159,7 +159,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
 
         <div className="mt-6">
           <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.color}</p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 rounded-xl border border-border-divider bg-surface-input px-4 py-3">
             {PROJECT_COLOR_PALETTE.map((c) => (
               <button
                 key={c}
