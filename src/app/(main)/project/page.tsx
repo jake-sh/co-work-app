@@ -115,11 +115,11 @@ export default function ProjectListPage() {
             <div className="flex gap-2">
               <div className="flex-1">
                 <label className="mb-1 block text-xs text-text-secondary">{t.project.startDate}</label>
-                <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="no-date-arrow" />
               </div>
               <div className="flex-1">
                 <label className="mb-1 block text-xs text-text-secondary">{t.project.endDate}</label>
-                <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="no-date-arrow" />
               </div>
             </div>
             <div>

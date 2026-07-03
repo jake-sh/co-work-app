@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, CheckCircle, RotateCcw, Trash2, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,6 +30,8 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
   const [endDate, setEndDate] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [members, setMembers] = useState<UserProfile[]>([]);
+  const [saved, setSaved] = useState(false);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setCurrentProjectId(projectId);
@@ -81,6 +84,9 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
       startDate || null,
       endDate || null
     );
+    setSaved(true);
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+    savedTimer.current = setTimeout(() => setSaved(false), 2000);
   };
 
   const onToggleComplete = async () => {
@@ -131,7 +137,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         className="mb-4 text-xl font-bold"
       />
 
-      <Card className="mt-0">
+      <div>
         <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.overview}</p>
         <TextArea
           value={description}
@@ -140,18 +146,18 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           rows={3}
           className="w-full"
         />
-      </Card>
+      </div>
 
-      <Card className="mt-4">
+      <div className="mt-6">
         <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.period}</p>
         <div className="flex items-center gap-2">
           <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="no-date-arrow" />
           <span className="shrink-0 text-sm text-text-secondary">~</span>
           <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="no-date-arrow" />
         </div>
-      </Card>
+      </div>
 
-      <Card className="mt-4">
+      <Card className="mt-6">
         <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.color}</p>
         <div className="flex gap-2">
           {PROJECT_COLOR_PALETTE.map((c) => (
@@ -169,7 +175,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         </div>
       </Card>
 
-      <Card className="mt-4">
+      <div className="mt-6">
         <p className="mb-2 text-xs font-semibold text-text-secondary">
           {t.project.members} ({project.memberIds.length})
         </p>
@@ -205,13 +211,28 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
             ))}
           </ul>
         )}
-      </Card>
+      </div>
 
       <div className="mt-auto pt-6">
         <Button onClick={onSave} className="w-full">
           {t.project.save}
         </Button>
       </div>
+
+      <AnimatePresence>
+        {saved && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-x-0 bottom-24 z-50 flex justify-center px-6"
+          >
+            <div className="rounded-pill bg-surface-card px-4 py-2.5 text-sm font-semibold shadow-lg">
+              {t.project.saved}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
