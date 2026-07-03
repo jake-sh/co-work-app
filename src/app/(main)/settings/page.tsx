@@ -129,10 +129,10 @@ export default function SettingsPage() {
       </Card>
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.language}</p>
-      <Card className="mb-6 p-0">
+      <Card className="mb-6">
         <button
           onClick={() => setLangOpen((v) => !v)}
-          className="flex w-full items-center justify-between px-4 py-3.5"
+          className="flex w-full items-center justify-between"
         >
           <span className="flex items-center gap-3 text-sm">
             <Globe size={18} className="text-text-secondary" />
@@ -144,17 +144,17 @@ export default function SettingsPage() {
           />
         </button>
         {langOpen && (
-          <div className="flex flex-col divide-y divide-border-divider border-t border-border-divider">
+          <div className="mt-3 flex flex-col divide-y divide-border-divider border-t border-border-divider pt-3">
             <button
               onClick={() => onChangeLocale("ko")}
-              className="flex items-center justify-between px-4 py-3.5"
+              className="flex items-center justify-between py-2.5"
             >
               <span className="text-sm">{t.settings.korean}</span>
               {locale === "ko" && <Check size={14} />}
             </button>
             <button
               onClick={() => onChangeLocale("en")}
-              className="flex items-center justify-between px-4 py-3.5"
+              className="flex items-center justify-between py-2.5"
             >
               <span className="text-sm">{t.settings.english}</span>
               {locale === "en" && <Check size={14} />}
