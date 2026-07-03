@@ -56,7 +56,7 @@ export function ProjectTabBar() {
 
       {/* "cowork" branding — right-aligned, hidden behind tabs when they overflow */}
       <div
-        className="absolute inset-y-0 right-0 flex items-center bg-bg-base px-3 text-base tracking-tight text-text-secondary pointer-events-none select-none"
+        className="absolute inset-y-0 right-0 flex items-center bg-bg-base px-3 text-xl tracking-tight text-text-secondary pointer-events-none select-none"
         style={{ fontFamily: "var(--font-titillium)" }}
       >
         <span>co</span><span style={{ color: "#9900CC" }}>w</span><span>ork</span>
