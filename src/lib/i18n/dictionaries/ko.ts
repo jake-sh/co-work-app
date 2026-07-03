@@ -95,6 +95,8 @@ const ko: Dictionary = {
     title: "채팅",
     inputPlaceholder: "메시지를 입력하세요",
     empty: "아직 메시지가 없습니다",
+    deleteAll: "채팅 삭제",
+    deleteAllConfirm: "모든 채팅 메시지를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
   },
   settings: {
     title: "설정",
