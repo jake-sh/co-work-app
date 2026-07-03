@@ -66,12 +66,17 @@ export async function addMemo(
     sharedWith: memberIds,
   });
 
-  const parsed = parseScheduleFromText(`${title} ${body}`);
-  if (parsed) {
-    await addEvent(projectId, finalTitle, parsed.date, parsed.time, authorId, authorColor, {
-      type: "memo",
-      id: ref.id,
-    }).catch(() => {});
+  const fullText = `${title} ${body}`;
+  const isShared = memberIds.length > 0;
+  const isExcludedFromParsing = fullText.includes("주요신문");
+  if (isShared && !isExcludedFromParsing) {
+    const parsed = parseScheduleFromText(fullText);
+    if (parsed) {
+      await addEvent(projectId, finalTitle, parsed.date, parsed.time, authorId, authorColor, {
+        type: "memo",
+        id: ref.id,
+      }).catch(() => {});
+    }
   }
 }
 
