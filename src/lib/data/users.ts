@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { assignMemberColor } from "@/lib/colors";
 import type { Locale, UserProfile } from "@/types";
@@ -44,6 +44,16 @@ export async function updateMemoDefaultShared(uid: string, value: boolean) {
 
 export async function updateNotificationsEnabled(uid: string, value: boolean) {
   await updateDoc(doc(db, "users", uid), { notificationsEnabled: value });
+}
+
+// FCM registration tokens are stored one-per-doc under the user so a single
+// account can receive push on multiple devices. The token string is the doc id.
+export async function saveFcmToken(uid: string, token: string) {
+  await setDoc(doc(db, "users", uid, "fcmTokens", token), { updatedAt: Date.now() });
+}
+
+export async function deleteFcmToken(uid: string, token: string) {
+  await deleteDoc(doc(db, "users", uid, "fcmTokens", token));
 }
 
 export async function findUserByUsername(username: string): Promise<UserProfile | null> {

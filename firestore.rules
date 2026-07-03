@@ -10,6 +10,12 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if isAuth();
       allow write: if isAuth() && request.auth.uid == uid;
+
+      // FCM push tokens: only the owner may read/write their own device tokens.
+      // The Cloud Function reads them via the Admin SDK, which bypasses rules.
+      match /fcmTokens/{token} {
+        allow read, write: if isAuth() && request.auth.uid == uid;
+      }
     }
 
     // Projects: members can read; any auth'd user can create;
