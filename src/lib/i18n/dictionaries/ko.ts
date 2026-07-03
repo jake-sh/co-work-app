@@ -49,6 +49,10 @@ const ko: Dictionary = {
     completed: "완료됨",
     color: "색상",
     saved: "프로젝트 설정이 저장되었습니다",
+    pl: "PL",
+    removeMemberConfirm: "이 멤버를 삭제하시겠습니까?",
+    leave: "이 프로젝트에서 나가기",
+    leaveConfirm: "이 프로젝트에서 나가시겠습니까?",
   },
   todo: {
     title: "할일",

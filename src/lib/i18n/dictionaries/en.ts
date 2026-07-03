@@ -49,6 +49,10 @@ const en: Dictionary = {
     completed: "Completed",
     color: "Color",
     saved: "Project settings saved",
+    pl: "PL",
+    removeMemberConfirm: "Remove this member?",
+    leave: "Leave this project",
+    leaveConfirm: "Leave this project?",
   },
   todo: {
     title: "To-Do",
