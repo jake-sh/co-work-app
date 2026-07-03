@@ -1,4 +1,4 @@
-import { addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
+import { addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, onSnapshot, query, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { addEvent } from "@/lib/data/schedule";
 import { parseScheduleFromText } from "@/lib/scheduleParse";
@@ -15,14 +15,35 @@ export function deriveTitle(title: string, body: string): string {
   return tokens.slice(0, 10).join(" ") || "Untitled";
 }
 
-export function subscribeMemos(projectId: string, cb: (memos: Memo[]) => void) {
-  const q = query(memosCol(projectId));
-  return onSnapshot(q, (snap) => {
-    const sorted = snap.docs
-      .map((d) => ({ ...(d.data() as Omit<Memo, "id">), id: d.id }))
-      .sort((a, b) => b.createdAt - a.createdAt);
-    cb(sorted);
+// A memo is only visible to its author and whoever it's been shared with —
+// two separate queries merged client-side, since Firestore can't express
+// "authorId == uid OR uid in sharedWith" in a single indexed query.
+export function subscribeMemos(projectId: string, uid: string, cb: (memos: Memo[]) => void) {
+  const ownQuery = query(memosCol(projectId), where("authorId", "==", uid));
+  const sharedQuery = query(memosCol(projectId), where("sharedWith", "array-contains", uid));
+
+  let ownMemos: Memo[] = [];
+  let sharedMemos: Memo[] = [];
+
+  const emit = () => {
+    const byId = new Map<string, Memo>();
+    for (const memo of [...ownMemos, ...sharedMemos]) byId.set(memo.id, memo);
+    cb(Array.from(byId.values()).sort((a, b) => b.createdAt - a.createdAt));
+  };
+
+  const unsubOwn = onSnapshot(ownQuery, (snap) => {
+    ownMemos = snap.docs.map((d) => ({ ...(d.data() as Omit<Memo, "id">), id: d.id }));
+    emit();
   });
+  const unsubShared = onSnapshot(sharedQuery, (snap) => {
+    sharedMemos = snap.docs.map((d) => ({ ...(d.data() as Omit<Memo, "id">), id: d.id }));
+    emit();
+  });
+
+  return () => {
+    unsubOwn();
+    unsubShared();
+  };
 }
 
 export async function addMemo(

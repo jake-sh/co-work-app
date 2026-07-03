@@ -19,10 +19,33 @@ service cloud.firestore {
       allow create: if isAuth();
       allow update, delete: if isAuth() && request.auth.uid in resource.data.memberIds;
 
-      // Subcollections: accessible to project members only.
-      match /{sub=**} {
-        allow read, write: if isAuth()
+      function isMember() {
+        return isAuth()
           && request.auth.uid in get(/databases/$(database)/documents/projects/$(projectId)).data.memberIds;
+      }
+
+      // Todos, schedule events, and chat messages: visible to any project
+      // member (no per-document sharing concept).
+      match /todos/{todoId} {
+        allow read, write: if isMember();
+      }
+      match /schedule/{eventId} {
+        allow read, write: if isMember();
+      }
+      match /messages/{messageId} {
+        allow read, write: if isMember();
+      }
+
+      // Memos: only visible to their author and whoever they're shared
+      // with, even though every member is a project member.
+      match /memos/{memoId} {
+        allow read: if isMember()
+          && (resource.data.authorId == request.auth.uid
+            || request.auth.uid in resource.data.sharedWith);
+        allow create: if isMember() && request.resource.data.authorId == request.auth.uid;
+        allow update, delete: if isMember()
+          && (resource.data.authorId == request.auth.uid
+            || request.auth.uid in resource.data.sharedWith);
       }
     }
   }
