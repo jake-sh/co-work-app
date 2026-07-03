@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/lib/context/AuthContext";
 import { BottomNav } from "@/components/nav/BottomNav";
 import { ProjectTabBar } from "@/components/nav/ProjectTabBar";
+import { PushTokenSync } from "@/components/PushTokenSync";
 import { DataProvider } from "@/lib/context/DataContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 
@@ -30,6 +31,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <DataProvider>
+      <PushTokenSync />
       <div className="h-full" style={{ display: "grid", gridTemplateRows: "auto 1fr" }}>
         <ProjectTabBar />
         <motion.div layoutScroll className="overflow-y-auto overscroll-y-contain pb-20">

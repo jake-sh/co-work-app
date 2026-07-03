@@ -5,6 +5,7 @@ import { Check, ChevronDown, Globe, LogOut, User as UserIcon } from "lucide-reac
 import { useAuth, persistLocale } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { MEMBER_COLOR_PALETTE } from "@/lib/colors";
+import { enablePush, disablePush } from "@/lib/messaging";
 import { Card } from "@/components/ui/Card";
 import { TextInput } from "@/components/ui/TextInput";
 import { clsx } from "clsx";
@@ -32,6 +33,20 @@ export default function SettingsPage() {
   const onSelectColor = async (color: string) => {
     await updateColorCode(color);
     setColorPickerOpen(false);
+  };
+
+  const onToggleNotifications = async () => {
+    if (!profile) return;
+    const next = !(profile.notificationsEnabled ?? true);
+    if (next) {
+      // Turning on: register this device for push first. If the user denies
+      // the browser permission prompt, getting a token fails — but we still
+      // keep the account-level preference on so their other devices can push.
+      await enablePush(profile.uid);
+    } else {
+      await disablePush(profile.uid);
+    }
+    await updateNotificationsEnabled(next);
   };
 
   return (
@@ -113,7 +128,7 @@ export default function SettingsPage() {
       <Card className="mb-4 flex items-center justify-between">
         <span className="text-sm text-text-secondary">{t.settings.notifications}</span>
         <button
-          onClick={() => updateNotificationsEnabled(!(profile?.notificationsEnabled ?? true))}
+          onClick={onToggleNotifications}
           className={clsx(
             "relative h-6 w-10 rounded-full transition-colors",
             (profile?.notificationsEnabled ?? true) ? "bg-white" : "bg-surface-pill"
