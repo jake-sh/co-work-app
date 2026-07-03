@@ -45,10 +45,23 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
   const [members, setMembers] = useState<UserProfile[]>([]);
   const [saved, setSaved] = useState(false);
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const overviewRef = useRef<HTMLTextAreaElement>(null);
+
+  const resizeOverview = () => {
+    const el = overviewRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
 
   useEffect(() => {
     setCurrentProjectId(projectId);
   }, [projectId, setCurrentProjectId]);
+
+  // Keep the overview textarea sized to its content (starts at one row).
+  useEffect(() => {
+    resizeOverview();
+  }, [description]);
 
   useEffect(() => {
     setName(project?.name ?? "");
@@ -275,10 +288,14 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         <div>
           <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.overview}</p>
           <TextArea
+            ref={overviewRef}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => {
+              setDescription(e.target.value);
+              resizeOverview();
+            }}
             placeholder={t.project.overviewPlaceholder}
-            rows={3}
+            rows={1}
             className="w-full"
             readOnly={!isPL}
           />
