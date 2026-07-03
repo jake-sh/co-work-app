@@ -1,6 +1,6 @@
 import { addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, onSnapshot, query, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
-import { addEvent } from "@/lib/data/schedule";
+import { addEvent, deleteEvent, findEventBySource, updateEvent } from "@/lib/data/schedule";
 import { parseScheduleFromText } from "@/lib/scheduleParse";
 import type { Memo } from "@/types";
 
@@ -46,6 +46,39 @@ export function subscribeMemos(projectId: string, uid: string, cb: (memos: Memo[
   };
 }
 
+// Keeps the memo's auto-created calendar event (if any) in sync: creates it
+// the first time a shared, non-excluded memo's text parses to a date,
+// updates it if the date/time changes, and removes it if the memo stops
+// qualifying (unshared, edited to remove the date, or now excluded).
+async function syncScheduleFromMemo(
+  projectId: string,
+  memoId: string,
+  finalTitle: string,
+  fullText: string,
+  authorId: string,
+  authorColor: string,
+  isShared: boolean
+) {
+  const isExcludedFromParsing = fullText.includes("주요신문");
+  const parsed = isShared && !isExcludedFromParsing ? parseScheduleFromText(fullText) : null;
+  const source = { type: "memo" as const, id: memoId };
+
+  try {
+    const existingEventId = await findEventBySource(projectId, source);
+    if (parsed) {
+      if (existingEventId) {
+        await updateEvent(projectId, existingEventId, finalTitle, parsed.date, parsed.time);
+      } else {
+        await addEvent(projectId, finalTitle, parsed.date, parsed.time, authorId, authorColor, source);
+      }
+    } else if (existingEventId) {
+      await deleteEvent(projectId, existingEventId);
+    }
+  } catch {
+    // Best-effort: the memo save itself already succeeded.
+  }
+}
+
 export async function addMemo(
   projectId: string,
   title: string,
@@ -66,26 +99,25 @@ export async function addMemo(
     sharedWith: memberIds,
   });
 
-  const fullText = `${title} ${body}`;
-  const isShared = memberIds.length > 0;
-  const isExcludedFromParsing = fullText.includes("주요신문");
-  if (isShared && !isExcludedFromParsing) {
-    const parsed = parseScheduleFromText(fullText);
-    if (parsed) {
-      await addEvent(projectId, finalTitle, parsed.date, parsed.time, authorId, authorColor, {
-        type: "memo",
-        id: ref.id,
-      }).catch(() => {});
-    }
-  }
+  await syncScheduleFromMemo(projectId, ref.id, finalTitle, `${title} ${body}`, authorId, authorColor, memberIds.length > 0);
 }
 
-export async function updateMemo(projectId: string, memoId: string, title: string, body: string) {
+export async function updateMemo(
+  projectId: string,
+  memoId: string,
+  title: string,
+  body: string,
+  authorId: string,
+  authorColor: string,
+  isShared: boolean
+) {
   const finalTitle = deriveTitle(title, body);
   await updateDoc(doc(db, "projects", projectId, "memos", memoId), {
     title: finalTitle,
     body,
   });
+
+  await syncScheduleFromMemo(projectId, memoId, finalTitle, `${title} ${body}`, authorId, authorColor, isShared);
 }
 
 export async function deleteMemo(projectId: string, memoId: string) {

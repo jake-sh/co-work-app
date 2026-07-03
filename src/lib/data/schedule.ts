@@ -1,9 +1,19 @@
-import { addDoc, collection, deleteDoc, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import type { ScheduleEvent } from "@/types";
 
 function eventsCol(projectId: string) {
   return collection(db, "projects", projectId, "schedule");
+}
+
+export async function findEventBySource(
+  projectId: string,
+  source: { type: "memo" | "todo"; id: string }
+): Promise<string | null> {
+  const snap = await getDocs(
+    query(eventsCol(projectId), where("source.type", "==", source.type), where("source.id", "==", source.id))
+  );
+  return snap.empty ? null : snap.docs[0].id;
 }
 
 export function subscribeEvents(projectId: string, cb: (events: ScheduleEvent[]) => void) {
