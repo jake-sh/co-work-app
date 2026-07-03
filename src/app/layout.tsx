@@ -1,9 +1,16 @@
 import type { Metadata, Viewport } from "next";
+import { Titillium_Web } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n/I18nContext";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { ProjectProvider } from "@/lib/context/ProjectContext";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+
+const titilliumWeb = Titillium_Web({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-titillium",
+});
 
 export const metadata: Metadata = {
   title: "co-work",
@@ -28,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="h-full antialiased">
+    <html lang="ko" className={`h-full antialiased ${titilliumWeb.variable}`}>
       <body className="min-h-full flex flex-col bg-bg-base text-text-primary">
         <I18nProvider>
           <AuthProvider>
