@@ -10,7 +10,6 @@ import { useI18n } from "@/lib/i18n/I18nContext";
 import { addMemberByUsername, deleteProject, setProjectStatus, updateProject, updateProjectColor } from "@/lib/data/projects";
 import { PROJECT_COLOR_PALETTE } from "@/lib/colors";
 import { getUserProfile } from "@/lib/data/users";
-import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextInput, TextArea } from "@/components/ui/TextInput";
 import { ColorDot } from "@/components/ui/ColorDot";
@@ -157,7 +156,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         </div>
       </div>
 
-      <Card className="mt-6">
+      <div className="mt-6">
         <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.color}</p>
         <div className="flex gap-2">
           {PROJECT_COLOR_PALETTE.map((c) => (
@@ -173,7 +172,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
             />
           ))}
         </div>
-      </Card>
+      </div>
 
       <div className="mt-6">
         <p className="mb-2 text-xs font-semibold text-text-secondary">
