@@ -7,7 +7,7 @@ import { ProjectProvider } from "@/lib/context/ProjectContext";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
 const titilliumWeb = Titillium_Web({
-  weight: "400",
+  weight: ["400", "600"],
   subsets: ["latin"],
   variable: "--font-titillium",
 });
