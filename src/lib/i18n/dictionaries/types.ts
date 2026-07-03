@@ -50,6 +50,8 @@ export interface Dictionary {
     pl: string;
     inProgress: string;
     removeMemberConfirm: string;
+    changePl: string;
+    changePlConfirm: string;
     leave: string;
     leaveConfirm: string;
   };

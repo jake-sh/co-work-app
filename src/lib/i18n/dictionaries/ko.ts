@@ -52,6 +52,8 @@ const ko: Dictionary = {
     pl: "PL",
     inProgress: "진행중",
     removeMemberConfirm: "이 멤버를 삭제하시겠습니까?",
+    changePl: "PL로 변경",
+    changePlConfirm: "이 멤버를 PL로 변경하시겠습니까? 프로젝트 수정 권한이 위임됩니다.",
     leave: "이 프로젝트에서 나가기",
     leaveConfirm: "이 프로젝트에서 나가시겠습니까?",
   },

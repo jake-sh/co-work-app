@@ -52,6 +52,8 @@ const en: Dictionary = {
     pl: "PL",
     inProgress: "In Progress",
     removeMemberConfirm: "Remove this member?",
+    changePl: "Make PL",
+    changePlConfirm: "Make this member the PL? Project edit permissions will be transferred.",
     leave: "Leave this project",
     leaveConfirm: "Leave this project?",
   },
