@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { subscribeTodos } from "@/lib/data/todos";
 import { subscribeMemos } from "@/lib/data/memos";
@@ -18,6 +19,7 @@ interface DataContextValue {
 const DataContext = createContext<DataContextValue | null>(null);
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const { currentProject } = useProjects();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [memos, setMemos] = useState<Memo[]>([]);
@@ -39,15 +41,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || !user) return;
     const unsubs = [
       subscribeTodos(projectId, setTodos),
-      subscribeMemos(projectId, setMemos),
+      subscribeMemos(projectId, user.uid, setMemos),
       subscribeEvents(projectId, setEvents),
       subscribeMessages(projectId, setMessages),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [projectId]);
+  }, [projectId, user]);
 
   const value = useMemo<DataContextValue>(
     () => ({ todos, memos, events, messages }),
