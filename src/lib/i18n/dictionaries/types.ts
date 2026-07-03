@@ -46,6 +46,7 @@ export interface Dictionary {
     deleteConfirm: string;
     completed: string;
     color: string;
+    saved: string;
   };
   todo: {
     title: string;

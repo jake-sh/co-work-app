@@ -48,6 +48,7 @@ const en: Dictionary = {
     deleteConfirm: "Delete this project?",
     completed: "Completed",
     color: "Color",
+    saved: "Project settings saved",
   },
   todo: {
     title: "To-Do",

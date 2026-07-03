@@ -62,8 +62,14 @@ textarea,
   -webkit-touch-callout: default;
 }
 
+.no-date-arrow {
+  -webkit-appearance: none;
+  appearance: none;
+}
 .no-date-arrow::-webkit-calendar-picker-indicator {
   display: none;
+  -webkit-appearance: none;
+  opacity: 0;
 }
 
 .hide-scrollbar {
