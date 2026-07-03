@@ -9,12 +9,14 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { createProject, reorderProjects } from "@/lib/data/projects";
+import { getUserProfile } from "@/lib/data/users";
 import { PROJECT_COLOR_PALETTE } from "@/lib/colors";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextInput, TextArea } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
-import type { Project } from "@/types";
+import { ColorDot } from "@/components/ui/ColorDot";
+import type { Project, UserProfile } from "@/types";
 
 const LONG_PRESS_MS = 400;
 const MOVE_CANCEL_PX = 10;
@@ -32,7 +34,28 @@ export default function ProjectListPage() {
   const [submitting, setSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [orderedProjects, setOrderedProjects] = useState(projects);
+  const [profileMap, setProfileMap] = useState<Record<string, UserProfile>>({});
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Resolve member uids across all projects into profiles (color + name) so
+  // each card can list its members instead of just a count.
+  const allMemberIds = projects.flatMap((p) => p.memberIds).join(",");
+  useEffect(() => {
+    const uids = Array.from(new Set(projects.flatMap((p) => p.memberIds)));
+    const missing = uids.filter((u) => !profileMap[u]);
+    if (missing.length === 0) return;
+    let cancelled = false;
+    Promise.all(missing.map((u) => getUserProfile(u))).then((profiles) => {
+      if (cancelled) return;
+      setProfileMap((prev) => {
+        const next = { ...prev };
+        for (const p of profiles) if (p) next[p.uid] = p;
+        return next;
+      });
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allMemberIds]);
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -160,7 +183,7 @@ export default function ProjectListPage() {
               <ProjectRow
                 key={project.id}
                 project={project}
-                membersLabel={`${project.memberIds.length} ${t.project.members}`}
+                members={project.memberIds.map((uid) => profileMap[uid]).filter(Boolean) as UserProfile[]}
                 onOpen={() => setCurrentProjectId(project.id)}
               />
             ))}
@@ -173,11 +196,11 @@ export default function ProjectListPage() {
 
 function ProjectRow({
   project,
-  membersLabel,
+  members,
   onOpen,
 }: {
   project: Project;
-  membersLabel: string;
+  members: UserProfile[];
   onOpen: () => void;
 }) {
   const router = useRouter();
@@ -274,7 +297,16 @@ function ProjectRow({
           {project.description && (
             <p className="mt-1 line-clamp-2 text-sm text-text-secondary">{project.description}</p>
           )}
-          <p className="mt-2 text-xs text-text-disabled">{membersLabel}</p>
+          {members.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+              {members.map((m) => (
+                <span key={m.uid} className="flex items-center gap-1 text-xs text-text-disabled">
+                  <ColorDot color={m.colorCode} size={6} />
+                  {m.nickname ?? m.displayName}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </Reorder.Item>
