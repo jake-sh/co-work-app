@@ -100,8 +100,8 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
   };
 
   return (
-    <div className="flex flex-col px-5 pt-8 pb-10 min-h-full">
-      <div className="mb-4 flex items-center justify-between">
+    <>
+      <div className="sticky top-0 z-[1] flex items-center justify-between bg-bg-base px-5 pt-8 pb-4">
         <Link href="/project" className="text-text-secondary">
           <ArrowLeft size={20} />
         </Link>
@@ -123,96 +123,98 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         </div>
       </div>
 
-      {isCompleted && (
-        <span className="mb-3 inline-block rounded-pill bg-emerald-500/20 px-2.5 py-0.5 text-xs text-emerald-400">
-          {t.project.completed}
-        </span>
-      )}
+      <div className="flex flex-col px-5 pb-28">
+        {isCompleted && (
+          <span className="mb-3 inline-block rounded-pill bg-emerald-500/20 px-2.5 py-0.5 text-xs text-emerald-400">
+            {t.project.completed}
+          </span>
+        )}
 
-      <TextInput
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder={t.project.name}
-        className="mb-4 text-xl font-bold"
-      />
-
-      <div>
-        <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.overview}</p>
-        <TextArea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder={t.project.overviewPlaceholder}
-          rows={3}
-          className="w-full"
+        <TextInput
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={t.project.name}
+          className="mb-4 text-xl font-bold"
         />
-      </div>
 
-      <div className="mt-6">
-        <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.period}</p>
-        <div className="flex items-center gap-2">
-          <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="no-date-arrow" />
-          <span className="shrink-0 text-sm text-text-secondary">~</span>
-          <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="no-date-arrow" />
-        </div>
-      </div>
-
-      <div className="mt-6">
-        <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.color}</p>
-        <div className="flex gap-2">
-          {PROJECT_COLOR_PALETTE.map((c) => (
-            <button
-              key={c}
-              onClick={() => updateProjectColor(projectId, c)}
-              className="h-6 w-6 rounded-full transition-transform"
-              style={{
-                backgroundColor: c,
-                outline: (project.color ?? PROJECT_COLOR_PALETTE[0]) === c ? `2px solid ${c}` : "none",
-                outlineOffset: "2px",
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-6">
-        <p className="mb-2 text-xs font-semibold text-text-secondary">
-          {t.project.members} ({project.memberIds.length})
-        </p>
-        <form onSubmit={onAddMember} className="flex gap-2">
-          <TextInput
-            type="text"
-            placeholder={t.project.addMember}
-            value={memberUsername}
-            onChange={(e) => setMemberUsername(e.target.value)}
-            autoCapitalize="none"
+        <div>
+          <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.overview}</p>
+          <TextArea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t.project.overviewPlaceholder}
+            rows={3}
+            className="w-full"
           />
-          <button
-            type="submit"
-            className="flex shrink-0 items-center justify-center rounded-xl bg-surface-pill px-3"
-          >
-            <UserPlus size={18} />
-          </button>
-        </form>
-        {memberError && (
-          <p className="mt-2 text-xs text-red-400">{t.auth.genericError}</p>
-        )}
-        {members.length > 0 && (
-          <ul className="mt-3 flex flex-col gap-2 border-t border-border-divider pt-3">
-            {members.map((m) => (
-              <li key={m.uid} className="flex items-center gap-2">
-                <ColorDot color={m.colorCode} size={8} />
-                <span className="text-sm text-text-primary">{m.displayName}</span>
-                <span className="text-xs text-text-secondary">@{m.username}</span>
-                {m.uid === project.ownerId && (
-                  <span className="ml-auto text-[10px] text-text-disabled">Owner</span>
-                )}
-              </li>
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.period}</p>
+          <div className="flex items-center gap-2">
+            <TextInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="no-date-arrow" />
+            <span className="shrink-0 text-sm text-text-secondary">~</span>
+            <TextInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="no-date-arrow" />
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.color}</p>
+          <div className="flex gap-2">
+            {PROJECT_COLOR_PALETTE.map((c) => (
+              <button
+                key={c}
+                onClick={() => updateProjectColor(projectId, c)}
+                className="h-6 w-6 rounded-full transition-transform"
+                style={{
+                  backgroundColor: c,
+                  outline: (project.color ?? PROJECT_COLOR_PALETTE[0]) === c ? `2px solid ${c}` : "none",
+                  outlineOffset: "2px",
+                }}
+              />
             ))}
-          </ul>
-        )}
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-semibold text-text-secondary">
+            {t.project.members} ({project.memberIds.length})
+          </p>
+          <form onSubmit={onAddMember} className="flex gap-2">
+            <TextInput
+              type="text"
+              placeholder={t.project.addMember}
+              value={memberUsername}
+              onChange={(e) => setMemberUsername(e.target.value)}
+              autoCapitalize="none"
+            />
+            <button
+              type="submit"
+              className="flex shrink-0 items-center justify-center rounded-xl bg-surface-pill px-3"
+            >
+              <UserPlus size={18} />
+            </button>
+          </form>
+          {memberError && (
+            <p className="mt-2 text-xs text-red-400">{t.auth.genericError}</p>
+          )}
+          {members.length > 0 && (
+            <ul className="mt-3 flex flex-col gap-2 border-t border-border-divider pt-3">
+              {members.map((m) => (
+                <li key={m.uid} className="flex items-center gap-2">
+                  <ColorDot color={m.colorCode} size={8} />
+                  <span className="text-sm text-text-primary">{m.displayName}</span>
+                  <span className="text-xs text-text-secondary">@{m.username}</span>
+                  {m.uid === project.ownerId && (
+                    <span className="ml-auto text-[10px] text-text-disabled">Owner</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
-      <div className="mt-auto pt-6">
+      <div className="fixed inset-x-0 bottom-20 z-[1] bg-bg-base px-5 pt-3 pb-4">
         <Button onClick={onSave} className="w-full">
           {t.project.save}
         </Button>
@@ -224,7 +226,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-x-0 bottom-24 z-50 flex justify-center px-6"
+            className="fixed inset-x-0 bottom-40 z-50 flex justify-center px-6"
           >
             <div className="rounded-pill bg-surface-card px-4 py-2.5 text-sm font-semibold shadow-lg">
               {t.project.saved}
@@ -232,6 +234,6 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }
