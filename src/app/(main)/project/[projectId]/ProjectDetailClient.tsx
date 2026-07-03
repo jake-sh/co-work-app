@@ -190,7 +190,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         <Link href="/project" className="text-text-secondary">
           <ArrowLeft size={20} />
         </Link>
-        {isPL && (
+        {isPL ? (
           <div className="flex gap-2">
             <button
               onClick={onToggleComplete}
@@ -207,11 +207,21 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
               {confirmDelete ? t.project.deleteConfirm : t.project.delete}
             </button>
           </div>
+        ) : (
+          <span
+            className={
+              isCompleted
+                ? "rounded-pill bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-300"
+                : "rounded-pill bg-blue-500/20 px-3 py-1.5 text-xs font-semibold text-blue-300"
+            }
+          >
+            {isCompleted ? t.project.complete : t.project.inProgress}
+          </span>
         )}
       </div>
 
       <div className="flex flex-col px-5 pb-28">
-        {isCompleted && (
+        {isCompleted && isPL && (
           <span className="mb-3 inline-block rounded-pill bg-emerald-500/20 px-2.5 py-0.5 text-xs text-emerald-400">
             {t.project.completed}
           </span>

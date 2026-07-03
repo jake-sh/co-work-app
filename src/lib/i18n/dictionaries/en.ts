@@ -50,6 +50,7 @@ const en: Dictionary = {
     color: "Color",
     saved: "Project settings saved",
     pl: "PL",
+    inProgress: "In Progress",
     removeMemberConfirm: "Remove this member?",
     leave: "Leave this project",
     leaveConfirm: "Leave this project?",
