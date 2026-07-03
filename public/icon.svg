@@ -19,5 +19,5 @@
     font-weight="400"
     font-size="130"
     letter-spacing="2"
-  ><tspan fill="#FFFFFF">co</tspan><tspan fill="#9900CC">w</tspan><tspan fill="#FFFFFF">ork</tspan></text>
+  ><tspan fill="#FFFFFF">co</tspan><tspan fill="#9900CC" stroke="#9900CC" stroke-width="2">w</tspan><tspan fill="#FFFFFF">ork</tspan></text>
 </svg>
