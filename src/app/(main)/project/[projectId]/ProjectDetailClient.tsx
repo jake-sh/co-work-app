@@ -355,7 +355,10 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-20 z-[1] bg-bg-base px-5 pt-3 pb-4">
+      <div
+        className="fixed inset-x-0 z-[1] bg-bg-base px-5 pt-3 pb-3"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 62px)" }}
+      >
         {isPL ? (
           <Button onClick={onSave} className="w-full">
             {t.project.save}
