@@ -93,6 +93,8 @@ export interface Dictionary {
     title: string;
     inputPlaceholder: string;
     empty: string;
+    deleteAll: string;
+    deleteAllConfirm: string;
   };
   settings: {
     title: string;

@@ -31,3 +31,13 @@ export async function sendMessage(
     createdAt: Date.now(),
   });
 }
+
+export async function deleteAllMessages(projectId: string) {
+  const { getDocs, writeBatch } = await import("firebase/firestore");
+  const snap = await getDocs(messagesCol(projectId));
+  for (let i = 0; i < snap.docs.length; i += 500) {
+    const batch = writeBatch(db);
+    snap.docs.slice(i, i + 500).forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+}

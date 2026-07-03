@@ -95,6 +95,8 @@ const en: Dictionary = {
     title: "Chat",
     inputPlaceholder: "Type a message",
     empty: "No messages yet",
+    deleteAll: "Delete chat",
+    deleteAllConfirm: "Delete all chat messages? This can't be undone.",
   },
   settings: {
     title: "Settings",

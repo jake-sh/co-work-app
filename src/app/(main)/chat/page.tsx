@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useData } from "@/lib/context/DataContext";
-import { Send } from "lucide-react";
+import { Send, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { sendMessage } from "@/lib/data/chat";
+import { deleteAllMessages, sendMessage } from "@/lib/data/chat";
 import { TextArea } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { clsx } from "clsx";
@@ -20,6 +20,7 @@ export default function ChatPage() {
   const { t } = useI18n();
   const { messages } = useData();
   const [text, setText] = useState("");
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [formHeight, setFormHeight] = useState(56);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -114,6 +115,11 @@ export default function ChatPage() {
     );
   };
 
+  const onConfirmDeleteAll = async () => {
+    await deleteAllMessages(currentProject.id);
+    setConfirmDeleteAll(false);
+  };
+
   const keyboardOpen = keyboardHeight > 50;
 
   // Layout adds pb-20 (80px) globally; subtract it to avoid double-counting
@@ -121,8 +127,43 @@ export default function ChatPage() {
 
   return (
     <>
-      <div className="sticky top-0 z-[1] bg-bg-base px-5 pt-4 pb-3">
-        <h1 className="text-3xl font-bold">{currentProject.name}</h1>
+      {confirmDeleteAll && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => setConfirmDeleteAll(false)}
+        >
+          <div
+            className="mx-6 w-full max-w-xs rounded-2xl bg-surface-card p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="mb-5 text-center text-sm font-semibold">{t.chat.deleteAllConfirm}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDeleteAll(false)}
+                className="flex-1 rounded-xl bg-surface-pill py-2.5 text-sm font-semibold"
+              >
+                {t.project.cancel}
+              </button>
+              <button
+                onClick={onConfirmDeleteAll}
+                className="flex-1 rounded-xl bg-red-500/20 py-2.5 text-sm font-semibold text-red-400"
+              >
+                {t.chat.deleteAll}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="sticky top-0 z-[1] flex items-center justify-between gap-2 bg-bg-base px-5 pt-4 pb-3">
+        <h1 className="truncate text-3xl font-bold">{currentProject.name}</h1>
+        <button
+          onClick={() => setConfirmDeleteAll(true)}
+          className="shrink-0 text-text-secondary"
+          aria-label={t.chat.deleteAll}
+        >
+          <Trash2 size={20} />
+        </button>
       </div>
 
       <div className="px-5" style={{ paddingBottom: messagesPaddingBottom }}>
