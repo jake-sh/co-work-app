@@ -8,7 +8,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { arrayUnion } from "firebase/firestore";
+import { arrayRemove, arrayUnion } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { findUserByUsername } from "@/lib/data/users";
 import type { Project } from "@/types";
@@ -70,6 +70,20 @@ export async function addMemberByUsername(projectId: string, username: string) {
     memberIds: arrayUnion(member.uid),
   });
   return member;
+}
+
+export async function removeMember(projectId: string, uid: string) {
+  await updateDoc(doc(db, "projects", projectId), {
+    memberIds: arrayRemove(uid),
+  });
+}
+
+// A member removing themselves from the project. Same write as removeMember,
+// named separately for intent at the call site.
+export async function leaveProject(projectId: string, uid: string) {
+  await updateDoc(doc(db, "projects", projectId), {
+    memberIds: arrayRemove(uid),
+  });
 }
 
 export async function setProjectStatus(projectId: string, status: "active" | "completed") {

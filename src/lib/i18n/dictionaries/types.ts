@@ -47,6 +47,10 @@ export interface Dictionary {
     completed: string;
     color: string;
     saved: string;
+    pl: string;
+    removeMemberConfirm: string;
+    leave: string;
+    leaveConfirm: string;
   };
   todo: {
     title: string;
