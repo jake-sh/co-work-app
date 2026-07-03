@@ -302,7 +302,7 @@ function ProjectRow({
               {members.map((m) => (
                 <span key={m.uid} className="flex items-center gap-1 text-xs text-text-disabled">
                   <ColorDot color={m.colorCode} size={6} />
-                  {m.nickname ?? m.displayName}
+                  {m.displayName}
                 </span>
               ))}
             </div>
