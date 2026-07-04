@@ -132,14 +132,14 @@ export default function SettingsPage() {
             <div className="mt-4 flex gap-3">
               <button
                 onClick={closePwModal}
-                className="flex-1 rounded-xl bg-surface-pill py-2 text-sm font-semibold"
+                className="flex-1 rounded-pill bg-surface-pill py-2 text-sm font-semibold"
               >
                 {t.project.cancel}
               </button>
               <Button
                 onClick={onChangePassword}
                 disabled={!currentPw || !newPw || pwSubmitting}
-                className="flex-1 !rounded-xl !py-2"
+                className="flex-1 !py-2"
               >
                 {t.common.confirm}
               </Button>
