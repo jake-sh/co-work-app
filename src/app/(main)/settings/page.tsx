@@ -160,146 +160,158 @@ export default function SettingsPage() {
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.account}</p>
 
-      <Card className="mb-3 flex min-h-14 items-center justify-between gap-3 py-1">
-        <span className="min-w-0 truncate text-sm text-text-primary">
-          <span className="text-text-secondary">{t.settings.id}: </span>
-          {profile?.username}
-        </span>
-        <button
-          onClick={() => setPwModalOpen(true)}
-          className="shrink-0 rounded-pill bg-surface-pill px-3 py-1.5 text-xs font-semibold"
-        >
-          {t.settings.changePassword}
-        </button>
-      </Card>
-
-      <Card className="mb-4 flex min-h-14 flex-col justify-center gap-3 py-1">
-        <div className="flex items-center gap-3">
-          <span className="shrink-0 text-sm text-text-secondary">{t.settings.nickname}</span>
-          <TextInput
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            placeholder={profile?.displayName ?? ""}
-            className="flex-1 !py-1.5"
-          />
+      <Card className="mb-4 flex flex-col">
+        <div className="flex min-h-14 items-center justify-between gap-3 py-1">
+          <span className="min-w-0 truncate text-sm text-text-primary">
+            <span className="text-text-secondary">{t.settings.id}: </span>
+            {profile?.username}
+          </span>
           <button
-            onClick={onSaveNickname}
-            disabled={!nickname.trim()}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-pill"
+            onClick={() => setPwModalOpen(true)}
+            className="shrink-0 rounded-pill bg-surface-pill px-3 py-1.5 text-xs font-semibold"
           >
-            <Check size={14} className={nicknameSaved ? "text-green-400" : "text-text-primary"} />
+            {t.settings.changePassword}
           </button>
-          <button
-            onClick={() => setColorPickerOpen((v) => !v)}
-            aria-label={t.settings.colorCode}
-            className="h-7 w-7 shrink-0 rounded-full"
-            style={{ backgroundColor: profile?.colorCode ?? "#2A2A2A" }}
-          />
         </div>
-        {colorPickerOpen && (
-          <div className="grid grid-cols-6 gap-3 border-t border-border-divider pt-3">
-            {MEMBER_COLOR_PALETTE.map((color) => (
-              <button
-                key={color}
-                onClick={() => onSelectColor(color)}
-                className="relative flex aspect-square items-center justify-center rounded-full"
-                style={{ backgroundColor: color }}
-              >
-                {profile?.colorCode === color && (
-                  <Check size={14} color="#000" strokeWidth={3} />
-                )}
-              </button>
-            ))}
+
+        <div className="mx-1 h-px bg-border-divider" />
+
+        <div className="flex min-h-14 flex-col justify-center gap-3 py-1">
+          <div className="flex items-center gap-3">
+            <span className="shrink-0 text-sm text-text-secondary">{t.settings.nickname}</span>
+            <TextInput
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder={profile?.displayName ?? ""}
+              className="flex-1 !py-1.5"
+            />
+            <button
+              onClick={onSaveNickname}
+              disabled={!nickname.trim()}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-pill"
+            >
+              <Check size={14} className={nicknameSaved ? "text-green-400" : "text-text-primary"} />
+            </button>
+            <button
+              onClick={() => setColorPickerOpen((v) => !v)}
+              aria-label={t.settings.colorCode}
+              className="h-7 w-7 shrink-0 rounded-full"
+              style={{ backgroundColor: profile?.colorCode ?? "#2A2A2A" }}
+            />
           </div>
-        )}
+          {colorPickerOpen && (
+            <div className="grid grid-cols-6 gap-3 border-t border-border-divider pt-3">
+              {MEMBER_COLOR_PALETTE.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => onSelectColor(color)}
+                  className="relative flex aspect-square items-center justify-center rounded-full"
+                  style={{ backgroundColor: color }}
+                >
+                  {profile?.colorCode === color && (
+                    <Check size={14} color="#000" strokeWidth={3} />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </Card>
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.preferences}</p>
 
-      <Card className="mb-3 flex min-h-14 items-center justify-between">
-        <span className="text-sm text-text-secondary">{t.settings.memoDefaultShared}</span>
-        <button
-          onClick={() => updateMemoDefaultShared(!(profile?.memoDefaultShared ?? true))}
-          className={clsx(
-            "relative h-6 w-10 rounded-full transition-colors",
-            (profile?.memoDefaultShared ?? true) ? "bg-white" : "bg-surface-pill"
-          )}
-        >
-          <span
-            className={clsx(
-              "absolute top-1 h-4 w-4 rounded-full bg-black transition-transform",
-              (profile?.memoDefaultShared ?? true) ? "left-5" : "left-1"
-            )}
-          />
-        </button>
-      </Card>
-
-      <Card className="mb-4 flex min-h-14 items-center justify-between">
-        <span className="text-sm text-text-secondary">{t.settings.notifications}</span>
-        <button
-          onClick={onToggleNotifications}
-          className={clsx(
-            "relative h-6 w-10 rounded-full transition-colors",
-            (profile?.notificationsEnabled ?? true) ? "bg-white" : "bg-surface-pill"
-          )}
-        >
-          <span
-            className={clsx(
-              "absolute top-1 h-4 w-4 rounded-full bg-black transition-transform",
-              (profile?.notificationsEnabled ?? true) ? "left-5" : "left-1"
-            )}
-          />
-        </button>
-      </Card>
-
-      <Card className="mb-4 flex min-h-14 items-center justify-between py-1">
-        <span className="text-sm text-text-secondary">{t.settings.fontSize}</span>
-        <div className="flex gap-1 rounded-pill bg-surface-pill p-0.5">
-          {(["S", "M", "L"] as const).map((s) => (
-            <button
-              key={s}
-              onClick={() => onSelectFontScale(s)}
-              className={clsx(
-                "h-7 w-8 rounded-pill text-sm font-semibold transition-colors",
-                fontScale === s ? "bg-white text-black" : "text-text-secondary"
-              )}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      </Card>
-
-      <Card className="mb-6 flex min-h-14 items-center justify-between">
-        <span className="text-sm text-text-secondary">{t.settings.language}</span>
-        <div className="relative inline-flex">
+      <Card className="mb-6 flex flex-col">
+        <div className="flex min-h-14 items-center justify-between">
+          <span className="text-sm text-text-secondary">{t.settings.memoDefaultShared}</span>
           <button
-            onClick={() => setLangOpen((v) => !v)}
+            onClick={() => updateMemoDefaultShared(!(profile?.memoDefaultShared ?? true))}
             className={clsx(
-              "flex h-8 w-[108px] items-center justify-between rounded-2xl bg-surface-pill px-3 text-sm text-text-primary",
-              langOpen && "invisible"
+              "relative h-6 w-10 rounded-full transition-colors",
+              (profile?.memoDefaultShared ?? true) ? "bg-white" : "bg-surface-pill"
             )}
           >
-            {locale === "ko" ? t.settings.korean : t.settings.english}
-            <ChevronDown size={14} className="text-text-secondary" />
+            <span
+              className={clsx(
+                "absolute top-1 h-4 w-4 rounded-full bg-black transition-transform",
+                (profile?.memoDefaultShared ?? true) ? "left-5" : "left-1"
+              )}
+            />
           </button>
-          {langOpen && (
-            <div className="absolute inset-x-0 top-0 z-20 flex flex-col divide-y divide-border-divider overflow-hidden rounded-2xl bg-surface-pill shadow-lg">
+        </div>
+
+        <div className="mx-1 h-px bg-border-divider" />
+
+        <div className="flex min-h-14 items-center justify-between">
+          <span className="text-sm text-text-secondary">{t.settings.notifications}</span>
+          <button
+            onClick={onToggleNotifications}
+            className={clsx(
+              "relative h-6 w-10 rounded-full transition-colors",
+              (profile?.notificationsEnabled ?? true) ? "bg-white" : "bg-surface-pill"
+            )}
+          >
+            <span
+              className={clsx(
+                "absolute top-1 h-4 w-4 rounded-full bg-black transition-transform",
+                (profile?.notificationsEnabled ?? true) ? "left-5" : "left-1"
+              )}
+            />
+          </button>
+        </div>
+
+        <div className="mx-1 h-px bg-border-divider" />
+
+        <div className="flex min-h-14 items-center justify-between py-1">
+          <span className="text-sm text-text-secondary">{t.settings.fontSize}</span>
+          <div className="flex gap-1 rounded-pill bg-surface-pill p-0.5">
+            {(["S", "M", "L"] as const).map((s) => (
               <button
-                onClick={() => setLangOpen(false)}
-                className="flex h-8 items-center justify-between px-3 text-sm text-text-primary"
+                key={s}
+                onClick={() => onSelectFontScale(s)}
+                className={clsx(
+                  "h-7 w-8 rounded-pill text-sm font-semibold transition-colors",
+                  fontScale === s ? "bg-white text-black" : "text-text-secondary"
+                )}
               >
-                {locale === "ko" ? t.settings.korean : t.settings.english}
-                <ChevronDown size={14} className="rotate-180 text-text-secondary" />
+                {s}
               </button>
-              <button
-                onClick={() => onChangeLocale(locale === "ko" ? "en" : "ko")}
-                className="flex h-8 items-center px-3 text-left text-sm text-text-primary"
-              >
-                {locale === "ko" ? t.settings.english : t.settings.korean}
-              </button>
-            </div>
-          )}
+            ))}
+          </div>
+        </div>
+
+        <div className="mx-1 h-px bg-border-divider" />
+
+        <div className="flex min-h-14 items-center justify-between">
+          <span className="text-sm text-text-secondary">{t.settings.language}</span>
+          <div className="relative inline-flex">
+            <button
+              onClick={() => setLangOpen((v) => !v)}
+              className={clsx(
+                "flex h-8 w-[108px] items-center justify-between rounded-2xl bg-surface-pill px-3 text-sm text-text-primary",
+                langOpen && "invisible"
+              )}
+            >
+              {locale === "ko" ? t.settings.korean : t.settings.english}
+              <ChevronDown size={14} className="text-text-secondary" />
+            </button>
+            {langOpen && (
+              <div className="absolute inset-x-0 top-0 z-20 flex flex-col divide-y divide-border-divider overflow-hidden rounded-2xl bg-surface-pill shadow-lg">
+                <button
+                  onClick={() => setLangOpen(false)}
+                  className="flex h-8 items-center justify-between px-3 text-sm text-text-primary"
+                >
+                  {locale === "ko" ? t.settings.korean : t.settings.english}
+                  <ChevronDown size={14} className="rotate-180 text-text-secondary" />
+                </button>
+                <button
+                  onClick={() => onChangeLocale(locale === "ko" ? "en" : "ko")}
+                  className="flex h-8 items-center px-3 text-left text-sm text-text-primary"
+                >
+                  {locale === "ko" ? t.settings.english : t.settings.korean}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </Card>
 
