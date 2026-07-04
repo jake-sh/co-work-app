@@ -14,6 +14,17 @@
 
   --radius-card: 16px;
   --radius-pill: 999px;
+
+  /* User-selectable font size (Settings: S/M/L → 0/2/4px). Added as a flat
+     offset to every standard text size EXCEPT text-3xl, which is reserved for
+     the page-title headers and stays fixed. */
+  --app-font-offset: 0px;
+  --text-xs: calc(0.75rem + var(--app-font-offset));
+  --text-sm: calc(0.875rem + var(--app-font-offset));
+  --text-base: calc(1rem + var(--app-font-offset));
+  --text-lg: calc(1.125rem + var(--app-font-offset));
+  --text-xl: calc(1.25rem + var(--app-font-offset));
+  --text-2xl: calc(1.5rem + var(--app-font-offset));
 }
 
 @theme inline {

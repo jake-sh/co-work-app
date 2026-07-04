@@ -115,6 +115,7 @@ const ko: Dictionary = {
     colorCode: "내 색상",
     memoDefaultShared: "신규 메모 기본 공유",
     notifications: "알림",
+    fontSize: "글자 크기",
     signOut: "로그아웃",
   },
   common: {

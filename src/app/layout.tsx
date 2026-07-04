@@ -37,6 +37,12 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`h-full antialiased ${titilliumWeb.variable}`}>
       <body className="min-h-full flex flex-col bg-bg-base text-text-primary">
+        <script
+          // Apply the saved font-size preference before first paint (no flash).
+          dangerouslySetInnerHTML={{
+            __html: `try{var m={S:'0px',M:'2px',L:'4px'},s=localStorage.getItem('cowork.fontScale');if(s&&m[s])document.documentElement.style.setProperty('--app-font-offset',m[s]);}catch(e){}`,
+          }}
+        />
         <I18nProvider>
           <AuthProvider>
             <ProjectProvider>
