@@ -100,12 +100,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateMemoDefaultSharedFn = async (value: boolean) => {
     if (!user) return;
-    await updateMemoDefaultShared(user.uid, value);
+    // Optimistic: flip the UI immediately, then persist.
     setProfile((prev) => (prev ? { ...prev, memoDefaultShared: value } : prev));
+    await updateMemoDefaultShared(user.uid, value);
   };
 
   const updateNotificationsEnabledFn = async (value: boolean) => {
     if (!user) return;
+    // Optimistic: flip the UI immediately, then persist.
+    setProfile((prev) => (prev ? { ...prev, notificationsEnabled: value } : prev));
     await updateNotificationsEnabled(user.uid, value);
     setProfile((prev) => (prev ? { ...prev, notificationsEnabled: value } : prev));
   };
