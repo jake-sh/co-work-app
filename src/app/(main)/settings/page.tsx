@@ -270,38 +270,37 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card className="relative mb-6 flex min-h-14 items-center">
-        <button
-          onClick={() => setLangOpen((v) => !v)}
-          className="flex w-full items-center justify-between"
-        >
-          <span className="text-sm text-text-secondary">{t.settings.language}</span>
-          <span className="flex items-center gap-1 text-sm text-text-primary">
+      <Card className="mb-6 flex min-h-14 items-center justify-between">
+        <span className="text-sm text-text-secondary">{t.settings.language}</span>
+        <div className="relative inline-flex">
+          <button
+            onClick={() => setLangOpen((v) => !v)}
+            className={clsx(
+              "flex items-center gap-1.5 rounded-lg border border-border-divider bg-surface-input px-3 py-1.5 text-sm text-text-primary",
+              langOpen && "invisible"
+            )}
+          >
             {locale === "ko" ? t.settings.korean : t.settings.english}
-            <ChevronDown
-              size={16}
-              className={clsx("text-text-secondary transition-transform", langOpen && "rotate-180")}
-            />
-          </span>
-        </button>
-        {langOpen && (
-          <div className="absolute inset-x-0 top-[calc(100%+8px)] z-20 flex flex-col divide-y divide-border-divider rounded-xl border border-border-divider bg-surface-input p-1 shadow-lg">
-            <button
-              onClick={() => onChangeLocale("ko")}
-              className="flex items-center justify-between rounded-lg px-3 py-2.5"
-            >
-              <span className="text-sm">{t.settings.korean}</span>
-              {locale === "ko" && <Check size={14} />}
-            </button>
-            <button
-              onClick={() => onChangeLocale("en")}
-              className="flex items-center justify-between rounded-lg px-3 py-2.5"
-            >
-              <span className="text-sm">{t.settings.english}</span>
-              {locale === "en" && <Check size={14} />}
-            </button>
-          </div>
-        )}
+            <ChevronDown size={14} className="text-text-secondary" />
+          </button>
+          {langOpen && (
+            <div className="absolute inset-x-0 top-0 z-20 flex flex-col divide-y divide-border-divider overflow-hidden rounded-lg border border-border-divider bg-surface-input shadow-lg">
+              <button
+                onClick={() => setLangOpen(false)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-text-primary"
+              >
+                {locale === "ko" ? t.settings.korean : t.settings.english}
+                <ChevronDown size={14} className="rotate-180 text-text-secondary" />
+              </button>
+              <button
+                onClick={() => onChangeLocale(locale === "ko" ? "en" : "ko")}
+                className="px-3 py-1.5 text-left text-sm text-text-primary"
+              >
+                {locale === "ko" ? t.settings.english : t.settings.korean}
+              </button>
+            </div>
+          )}
+        </div>
       </Card>
 
       <button
