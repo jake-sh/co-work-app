@@ -213,7 +213,9 @@ export default function SettingsPage() {
       )}
 
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{profile?.displayName}</h1>
+        <h1 className="text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
+          {profile?.displayName}
+        </h1>
         <div
           className="flex h-12 w-12 items-center justify-center rounded-full"
           style={{ backgroundColor: profile?.colorCode ?? "#2A2A2A" }}

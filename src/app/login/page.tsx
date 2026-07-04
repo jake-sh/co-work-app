@@ -35,7 +35,9 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-1 flex-col justify-center px-6 py-10">
-      <h1 className="mb-8 text-3xl font-bold">{t.auth.login}</h1>
+      <h1 className="mb-8 text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
+        {t.auth.login}
+      </h1>
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <TextInput
           type="text"

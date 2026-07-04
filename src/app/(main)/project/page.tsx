@@ -110,7 +110,9 @@ export default function ProjectListPage() {
     <>
       <div className="sticky top-0 z-[1] bg-bg-base px-5 pt-4 pb-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">{t.project.title}</h1>
+          <h1 className="text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
+            {t.project.title}
+          </h1>
           <button
             onClick={() => setCreating((v) => !v)}
             className="flex items-center gap-1 rounded-pill bg-surface-pill px-3 py-2 text-sm font-semibold"

@@ -156,7 +156,9 @@ export default function ChatPage() {
       )}
 
       <div className="sticky top-0 z-[1] flex items-center justify-between gap-2 bg-bg-base px-5 pt-4 pb-3">
-        <h1 className="truncate text-3xl font-bold">{currentProject.name}</h1>
+        <h1 className="truncate text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
+          {currentProject.name}
+        </h1>
         <button
           onClick={() => setConfirmDeleteAll(true)}
           className="shrink-0 text-text-secondary"
