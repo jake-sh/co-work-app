@@ -276,7 +276,7 @@ export default function SettingsPage() {
           <button
             onClick={() => setLangOpen((v) => !v)}
             className={clsx(
-              "flex h-8 w-[108px] items-center justify-between rounded-2xl border border-border-divider bg-surface-input px-3 text-sm text-text-primary",
+              "flex h-8 w-[108px] items-center justify-between rounded-2xl bg-surface-pill px-3 text-sm text-text-primary",
               langOpen && "invisible"
             )}
           >
@@ -284,7 +284,7 @@ export default function SettingsPage() {
             <ChevronDown size={14} className="text-text-secondary" />
           </button>
           {langOpen && (
-            <div className="absolute inset-x-0 top-0 z-20 flex flex-col divide-y divide-border-divider overflow-hidden rounded-2xl border border-border-divider bg-surface-input shadow-lg">
+            <div className="absolute inset-x-0 top-0 z-20 flex flex-col divide-y divide-border-divider overflow-hidden rounded-2xl bg-surface-pill shadow-lg">
               <button
                 onClick={() => setLangOpen(false)}
                 className="flex h-8 items-center justify-between px-3 text-sm text-text-primary"
