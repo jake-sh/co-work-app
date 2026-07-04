@@ -160,7 +160,7 @@ export default function SettingsPage() {
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.account}</p>
 
-      <Card className="mb-4 flex flex-col">
+      <Card className="mb-4 flex flex-col !py-2">
         <div className="flex min-h-14 items-center justify-between gap-3 py-1">
           <span className="min-w-0 truncate text-sm text-text-primary">
             <span className="text-text-secondary">{t.settings.id}: </span>
@@ -220,7 +220,7 @@ export default function SettingsPage() {
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.preferences}</p>
 
-      <Card className="mb-6 flex flex-col">
+      <Card className="mb-6 flex flex-col !py-2">
         <div className="flex min-h-14 items-center justify-between">
           <span className="text-sm text-text-secondary">{t.settings.memoDefaultShared}</span>
           <button
