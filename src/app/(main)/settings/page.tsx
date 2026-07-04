@@ -161,10 +161,10 @@ export default function SettingsPage() {
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.account}</p>
 
       <Card className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col">
-          <span className="text-xs text-text-secondary">{t.settings.id}</span>
-          <span className="truncate text-sm text-text-primary">{profile?.username}</span>
-        </div>
+        <span className="min-w-0 truncate text-sm text-text-primary">
+          <span className="text-text-secondary">{t.settings.id}: </span>
+          {profile?.username}
+        </span>
         <button
           onClick={() => setPwModalOpen(true)}
           className="shrink-0 rounded-pill bg-surface-pill px-3 py-1.5 text-xs font-semibold"
@@ -189,35 +189,29 @@ export default function SettingsPage() {
           >
             <Check size={14} className={nicknameSaved ? "text-green-400" : "text-text-primary"} />
           </button>
-        </div>
-        <div className="border-t border-border-divider pt-3">
           <button
             onClick={() => setColorPickerOpen((v) => !v)}
-            className="flex w-full items-center justify-between"
-          >
-            <span className="text-sm text-text-secondary">{t.settings.colorCode}</span>
-            <span
-              className="h-5 w-5 rounded-full"
-              style={{ backgroundColor: profile?.colorCode ?? "#2A2A2A" }}
-            />
-          </button>
-          {colorPickerOpen && (
-            <div className="mt-3 grid grid-cols-6 gap-3 border-t border-border-divider pt-3">
-              {MEMBER_COLOR_PALETTE.map((color) => (
-                <button
-                  key={color}
-                  onClick={() => onSelectColor(color)}
-                  className="relative flex aspect-square items-center justify-center rounded-full"
-                  style={{ backgroundColor: color }}
-                >
-                  {profile?.colorCode === color && (
-                    <Check size={14} color="#000" strokeWidth={3} />
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
+            aria-label={t.settings.colorCode}
+            className="h-7 w-7 shrink-0 rounded-full"
+            style={{ backgroundColor: profile?.colorCode ?? "#2A2A2A" }}
+          />
         </div>
+        {colorPickerOpen && (
+          <div className="grid grid-cols-6 gap-3 border-t border-border-divider pt-3">
+            {MEMBER_COLOR_PALETTE.map((color) => (
+              <button
+                key={color}
+                onClick={() => onSelectColor(color)}
+                className="relative flex aspect-square items-center justify-center rounded-full"
+                style={{ backgroundColor: color }}
+              >
+                {profile?.colorCode === color && (
+                  <Check size={14} color="#000" strokeWidth={3} />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </Card>
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.preferences}</p>
