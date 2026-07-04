@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, ChevronDown, Globe, LogOut, User as UserIcon } from "lucide-react";
+import { Check, ChevronDown, LogOut, User as UserIcon } from "lucide-react";
 import { useAuth, persistLocale } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { MEMBER_COLOR_PALETTE } from "@/lib/colors";
@@ -270,20 +270,19 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.language}</p>
       <Card className="mb-6 flex min-h-14 flex-col justify-center">
         <button
           onClick={() => setLangOpen((v) => !v)}
           className="flex w-full items-center justify-between"
         >
-          <span className="flex items-center gap-3 text-sm">
-            <Globe size={18} className="text-text-secondary" />
+          <span className="text-sm text-text-secondary">{t.settings.language}</span>
+          <span className="flex items-center gap-1 text-sm text-text-primary">
             {locale === "ko" ? t.settings.korean : t.settings.english}
+            <ChevronDown
+              size={16}
+              className={clsx("text-text-secondary transition-transform", langOpen && "rotate-180")}
+            />
           </span>
-          <ChevronDown
-            size={16}
-            className={clsx("text-text-secondary transition-transform", langOpen && "rotate-180")}
-          />
         </button>
         {langOpen && (
           <div className="mt-3 flex flex-col divide-y divide-border-divider border-t border-border-divider pt-3">
