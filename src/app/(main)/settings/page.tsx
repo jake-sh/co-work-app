@@ -132,7 +132,7 @@ export default function SettingsPage() {
             <div className="mt-4 flex gap-3">
               <button
                 onClick={closePwModal}
-                className="flex-1 rounded-pill bg-surface-pill py-2 text-sm font-semibold"
+                className="flex-1 rounded-pill bg-surface-pill px-4 py-2 text-sm font-semibold"
               >
                 {t.project.cancel}
               </button>
