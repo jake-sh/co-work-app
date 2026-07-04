@@ -35,6 +35,10 @@ export default function ProjectListPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [orderedProjects, setOrderedProjects] = useState(projects);
   const [profileMap, setProfileMap] = useState<Record<string, UserProfile>>({});
+  // Shared across all rows: layout animation is only enabled while a card is
+  // actually being dragged, so no other layout change (data arriving, font
+  // swap, etc.) can trigger a stray position/size animation.
+  const [draggingId, setDraggingId] = useState<string | null>(null);
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Resolve member uids across all projects into profiles (color + name) so
@@ -187,6 +191,10 @@ export default function ProjectListPage() {
                 project={project}
                 members={project.memberIds.map((uid) => profileMap[uid]).filter(Boolean) as UserProfile[]}
                 onOpen={() => setCurrentProjectId(project.id)}
+                isDragging={draggingId === project.id}
+                anyDragging={draggingId !== null}
+                onDragStart={() => setDraggingId(project.id)}
+                onDragEnd={() => setDraggingId(null)}
               />
             ))}
           </Reorder.Group>
@@ -200,10 +208,18 @@ function ProjectRow({
   project,
   members,
   onOpen,
+  isDragging,
+  anyDragging,
+  onDragStart,
+  onDragEnd,
 }: {
   project: Project;
   members: UserProfile[];
   onOpen: () => void;
+  isDragging: boolean;
+  anyDragging: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
 }) {
   const router = useRouter();
   const controls = useDragControls();
@@ -211,15 +227,6 @@ function ProjectRow({
   const pressStart = useRef<{ x: number; y: number } | null>(null);
   const isLifting = useRef(false);
   const rowRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  // Layout animation is off for a card's very first render so it never
-  // animates in from an unmeasured/overlapping position; enabling it a beat
-  // after mount (once framer-motion has a real prior position to diff
-  // against) still lets drag-to-reorder transitions animate smoothly.
-  const [layoutReady, setLayoutReady] = useState(false);
-  useEffect(() => {
-    setLayoutReady(true);
-  }, []);
 
   const clearHoldTimer = () => {
     if (holdTimer.current) {
@@ -253,7 +260,7 @@ function ProjectRow({
       // Give immediate visual feedback the instant the long-press is
       // recognized, rather than waiting for framer's whileDrag (which only
       // applies once the pointer has moved a few pixels).
-      setIsDragging(true);
+      onDragStart();
       controls.start(e);
     }, LONG_PRESS_MS);
   };
@@ -285,8 +292,8 @@ function ProjectRow({
       dragControls={controls}
       dragListener={false}
       initial={false}
-      layout={layoutReady ? "position" : undefined}
-      onDragEnd={() => setIsDragging(false)}
+      layout={anyDragging ? "position" : undefined}
+      onDragEnd={onDragEnd}
       className="rounded-lg"
     >
       <div
