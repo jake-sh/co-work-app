@@ -115,6 +115,7 @@ const en: Dictionary = {
     colorCode: "My color",
     memoDefaultShared: "Share new memos by default",
     notifications: "Notifications",
+    fontSize: "Font size",
     signOut: "Sign Out",
   },
   common: {

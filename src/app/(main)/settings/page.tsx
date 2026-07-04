@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, ChevronDown, Globe, LogOut, User as UserIcon } from "lucide-react";
 import { useAuth, persistLocale } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
@@ -17,6 +17,20 @@ export default function SettingsPage() {
   const [langOpen, setLangOpen] = useState(false);
   const [nickname, setNickname] = useState(() => profile?.nickname ?? "");
   const [nicknameSaved, setNicknameSaved] = useState(false);
+  const [fontScale, setFontScale] = useState<"S" | "M" | "L">("S");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("cowork.fontScale");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (saved === "S" || saved === "M" || saved === "L") setFontScale(saved);
+  }, []);
+
+  const onSelectFontScale = (scale: "S" | "M" | "L") => {
+    setFontScale(scale);
+    localStorage.setItem("cowork.fontScale", scale);
+    const offset = { S: "0px", M: "2px", L: "4px" }[scale];
+    document.documentElement.style.setProperty("--app-font-offset", offset);
+  };
 
   const onSaveNickname = async () => {
     await updateNickname(nickname.trim());
@@ -141,6 +155,24 @@ export default function SettingsPage() {
             )}
           />
         </button>
+      </Card>
+
+      <Card className="mb-4 flex items-center justify-between">
+        <span className="text-sm text-text-secondary">{t.settings.fontSize}</span>
+        <div className="flex gap-1 rounded-pill bg-surface-pill p-0.5">
+          {(["S", "M", "L"] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => onSelectFontScale(s)}
+              className={clsx(
+                "h-7 w-8 rounded-pill text-sm font-semibold transition-colors",
+                fontScale === s ? "bg-white text-black" : "text-text-secondary"
+              )}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
       </Card>
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.language}</p>

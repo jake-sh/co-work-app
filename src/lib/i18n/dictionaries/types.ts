@@ -113,6 +113,7 @@ export interface Dictionary {
     colorCode: string;
     memoDefaultShared: string;
     notifications: string;
+    fontSize: string;
     signOut: string;
   };
   common: {
