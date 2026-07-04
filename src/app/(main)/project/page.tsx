@@ -300,8 +300,8 @@ function ProjectRow({
           {project.description && (
             <p className="mt-1 line-clamp-2 text-sm text-text-secondary">{project.description}</p>
           )}
-          {members.length > 0 && (
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+          {project.memberIds.length > 0 && (
+            <div className="mt-2 flex min-h-4 flex-wrap items-center gap-x-3 gap-y-1">
               {members.map((m) => (
                 <span key={m.uid} className="flex items-center gap-1 text-xs text-text-disabled">
                   <ColorDot color={m.colorCode} size={6} />
