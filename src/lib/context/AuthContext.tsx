@@ -5,10 +5,13 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   setPersistence,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
+  updatePassword,
   updateProfile,
   type User,
 } from "firebase/auth";
@@ -34,6 +37,7 @@ interface AuthContextValue {
   updateNickname: (nickname: string) => Promise<void>;
   updateMemoDefaultShared: (value: boolean) => Promise<void>;
   updateNotificationsEnabled: (value: boolean) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -110,7 +114,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Optimistic: flip the UI immediately, then persist.
     setProfile((prev) => (prev ? { ...prev, notificationsEnabled: value } : prev));
     await updateNotificationsEnabled(user.uid, value);
-    setProfile((prev) => (prev ? { ...prev, notificationsEnabled: value } : prev));
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!user || !user.email) throw new Error("NO_USER");
+    // Firebase requires a recent login to change the password; reauthenticate
+    // with the current password first (the synthetic email is user.email).
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+    await updatePassword(user, newPassword);
   };
 
   const value = useMemo<AuthContextValue>(
@@ -125,6 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       updateNickname,
       updateMemoDefaultShared: updateMemoDefaultSharedFn,
       updateNotificationsEnabled: updateNotificationsEnabledFn,
+      changePassword,
     }),
     // signUp/signIn/signOut are stable in behavior; only re-derive when auth state changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
