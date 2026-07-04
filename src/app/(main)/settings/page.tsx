@@ -180,7 +180,7 @@ export default function SettingsPage() {
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             placeholder={profile?.displayName ?? ""}
-            className="flex-1"
+            className="flex-1 !py-1.5"
           />
           <button
             onClick={onSaveNickname}
