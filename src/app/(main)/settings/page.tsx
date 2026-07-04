@@ -49,18 +49,19 @@ export default function SettingsPage() {
     setColorPickerOpen(false);
   };
 
-  const onToggleNotifications = async () => {
+  const onToggleNotifications = () => {
     if (!profile) return;
     const next = !(profile.notificationsEnabled ?? true);
+    // Flip the toggle immediately (optimistic). The push (un)registration is a
+    // network round-trip to FCM (getToken), so run it in the background instead
+    // of blocking the switch on it. If permission is denied the token just
+    // won't register, but the account-level preference stays as chosen.
+    updateNotificationsEnabled(next);
     if (next) {
-      // Turning on: register this device for push first. If the user denies
-      // the browser permission prompt, getting a token fails — but we still
-      // keep the account-level preference on so their other devices can push.
-      await enablePush(profile.uid);
+      enablePush(profile.uid).catch(() => {});
     } else {
-      await disablePush(profile.uid);
+      disablePush(profile.uid).catch(() => {});
     }
-    await updateNotificationsEnabled(next);
   };
 
   return (
