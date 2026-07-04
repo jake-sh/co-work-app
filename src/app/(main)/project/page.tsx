@@ -212,6 +212,14 @@ function ProjectRow({
   const isLifting = useRef(false);
   const rowRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  // Layout animation is off for a card's very first render so it never
+  // animates in from an unmeasured/overlapping position; enabling it a beat
+  // after mount (once framer-motion has a real prior position to diff
+  // against) still lets drag-to-reorder transitions animate smoothly.
+  const [layoutReady, setLayoutReady] = useState(false);
+  useEffect(() => {
+    setLayoutReady(true);
+  }, []);
 
   const clearHoldTimer = () => {
     if (holdTimer.current) {
@@ -277,7 +285,7 @@ function ProjectRow({
       dragControls={controls}
       dragListener={false}
       initial={false}
-      layout="position"
+      layout={layoutReady ? "position" : undefined}
       onDragEnd={() => setIsDragging(false)}
       className="rounded-lg"
     >
