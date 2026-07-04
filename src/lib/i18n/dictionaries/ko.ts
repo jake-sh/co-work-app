@@ -117,6 +117,7 @@ const ko: Dictionary = {
     newPassword: "새 비밀번호",
     passwordChanged: "비밀번호가 변경되었습니다",
     passwordError: "현재 비밀번호가 올바르지 않거나 새 비밀번호가 너무 짧습니다",
+    preferences: "환경설정",
     nickname: "닉네임",
     colorCode: "내 색상",
     memoDefaultShared: "신규 메모 기본 공유",

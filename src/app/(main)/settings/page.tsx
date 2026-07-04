@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [nickname, setNickname] = useState(() => profile?.nickname ?? "");
   const [nicknameSaved, setNicknameSaved] = useState(false);
   const [fontScale, setFontScale] = useState<"S" | "M" | "L">("S");
+  const [pwModalOpen, setPwModalOpen] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [pwError, setPwError] = useState<string | null>(null);
@@ -44,6 +45,14 @@ export default function SettingsPage() {
     setTimeout(() => setNicknameSaved(false), 1500);
   };
 
+  const closePwModal = () => {
+    setPwModalOpen(false);
+    setCurrentPw("");
+    setNewPw("");
+    setPwError(null);
+    setPwSaved(false);
+  };
+
   const onChangePassword = async () => {
     if (!currentPw || !newPw) return;
     setPwError(null);
@@ -53,7 +62,10 @@ export default function SettingsPage() {
       setCurrentPw("");
       setNewPw("");
       setPwSaved(true);
-      setTimeout(() => setPwSaved(false), 2000);
+      setTimeout(() => {
+        setPwSaved(false);
+        setPwModalOpen(false);
+      }, 1200);
     } catch {
       setPwError(t.settings.passwordError);
     } finally {
@@ -89,6 +101,53 @@ export default function SettingsPage() {
 
   return (
     <div className="px-5 pt-8">
+      {pwModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={closePwModal}
+        >
+          <div
+            className="mx-6 w-full max-w-xs rounded-2xl bg-surface-card p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="mb-4 text-center text-sm font-semibold">{t.settings.changePassword}</p>
+            <div className="flex flex-col gap-2">
+              <TextInput
+                type="password"
+                placeholder={t.settings.currentPassword}
+                value={currentPw}
+                onChange={(e) => setCurrentPw(e.target.value)}
+                autoComplete="current-password"
+              />
+              <TextInput
+                type="password"
+                placeholder={t.settings.newPassword}
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                autoComplete="new-password"
+              />
+              {pwError && <p className="text-xs text-red-400">{pwError}</p>}
+              {pwSaved && <p className="text-xs text-green-400">{t.settings.passwordChanged}</p>}
+            </div>
+            <div className="mt-4 flex gap-3">
+              <button
+                onClick={closePwModal}
+                className="flex-1 rounded-xl bg-surface-pill py-2.5 text-sm font-semibold"
+              >
+                {t.project.cancel}
+              </button>
+              <Button
+                onClick={onChangePassword}
+                disabled={!currentPw || !newPw || pwSubmitting}
+                className="flex-1"
+              >
+                {t.settings.changePassword}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">{profile?.displayName}</h1>
         <div
@@ -101,79 +160,67 @@ export default function SettingsPage() {
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.account}</p>
 
-      <Card className="mb-3 flex items-center justify-between">
-        <span className="text-sm text-text-secondary">{t.settings.id}</span>
-        <span className="text-sm text-text-primary">{profile?.username}</span>
-      </Card>
-
-      <Card className="mb-3 flex flex-col gap-2">
-        <span className="text-sm text-text-secondary">{t.settings.changePassword}</span>
-        <TextInput
-          type="password"
-          placeholder={t.settings.currentPassword}
-          value={currentPw}
-          onChange={(e) => setCurrentPw(e.target.value)}
-          autoComplete="current-password"
-        />
-        <TextInput
-          type="password"
-          placeholder={t.settings.newPassword}
-          value={newPw}
-          onChange={(e) => setNewPw(e.target.value)}
-          autoComplete="new-password"
-        />
-        {pwError && <p className="text-xs text-red-400">{pwError}</p>}
-        {pwSaved && <p className="text-xs text-green-400">{t.settings.passwordChanged}</p>}
-        <Button onClick={onChangePassword} disabled={!currentPw || !newPw || pwSubmitting}>
+      <Card className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-col">
+          <span className="text-xs text-text-secondary">{t.settings.id}</span>
+          <span className="truncate text-sm text-text-primary">{profile?.username}</span>
+        </div>
+        <button
+          onClick={() => setPwModalOpen(true)}
+          className="shrink-0 rounded-pill bg-surface-pill px-3 py-1.5 text-xs font-semibold"
+        >
           {t.settings.changePassword}
-        </Button>
-      </Card>
-
-      <Card className="mb-3 flex items-center gap-3">
-        <span className="shrink-0 text-sm text-text-secondary">{t.settings.nickname}</span>
-        <TextInput
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-          placeholder={profile?.displayName ?? ""}
-          className="flex-1"
-        />
-        <button
-          onClick={onSaveNickname}
-          disabled={!nickname.trim()}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-pill"
-        >
-          <Check size={14} className={nicknameSaved ? "text-green-400" : "text-text-primary"} />
         </button>
       </Card>
 
-      <Card className="mb-4">
-        <button
-          onClick={() => setColorPickerOpen((v) => !v)}
-          className="flex w-full items-center justify-between"
-        >
-          <span className="text-sm text-text-secondary">{t.settings.colorCode}</span>
-          <span
-            className="h-5 w-5 rounded-full"
-            style={{ backgroundColor: profile?.colorCode ?? "#2A2A2A" }}
+      <Card className="mb-4 flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <span className="shrink-0 text-sm text-text-secondary">{t.settings.nickname}</span>
+          <TextInput
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder={profile?.displayName ?? ""}
+            className="flex-1"
           />
-        </button>
-        {colorPickerOpen && (
-          <div className="mt-3 grid grid-cols-6 gap-3 border-t border-border-divider pt-3">
-            {MEMBER_COLOR_PALETTE.map((color) => (
-              <button
-                key={color}
-                onClick={() => onSelectColor(color)}
-                className="relative flex aspect-square items-center justify-center rounded-full"
-                style={{ backgroundColor: color }}
-              >
-                {profile?.colorCode === color && (
-                  <Check size={14} color="#000" strokeWidth={3} />
-                )}
-              </button>
-            ))}
-          </div>
-        )}
+          <button
+            onClick={onSaveNickname}
+            disabled={!nickname.trim()}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-pill"
+          >
+            <Check size={14} className={nicknameSaved ? "text-green-400" : "text-text-primary"} />
+          </button>
+        </div>
+        <div className="border-t border-border-divider pt-3">
+          <button
+            onClick={() => setColorPickerOpen((v) => !v)}
+            className="flex w-full items-center justify-between"
+          >
+            <span className="text-sm text-text-secondary">{t.settings.colorCode}</span>
+            <span
+              className="h-5 w-5 rounded-full"
+              style={{ backgroundColor: profile?.colorCode ?? "#2A2A2A" }}
+            />
+          </button>
+          {colorPickerOpen && (
+            <div className="mt-3 grid grid-cols-6 gap-3 border-t border-border-divider pt-3">
+              {MEMBER_COLOR_PALETTE.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => onSelectColor(color)}
+                  className="relative flex aspect-square items-center justify-center rounded-full"
+                  style={{ backgroundColor: color }}
+                >
+                  {profile?.colorCode === color && (
+                    <Check size={14} color="#000" strokeWidth={3} />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </Card>
+
+      <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.preferences}</p>
 
       <Card className="mb-3 flex items-center justify-between">
         <span className="text-sm text-text-secondary">{t.settings.memoDefaultShared}</span>

@@ -117,6 +117,7 @@ const en: Dictionary = {
     newPassword: "New password",
     passwordChanged: "Password changed",
     passwordError: "Current password is incorrect or the new password is too short",
+    preferences: "Preferences",
     nickname: "Nickname",
     colorCode: "My color",
     memoDefaultShared: "Share new memos by default",

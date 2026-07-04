@@ -115,6 +115,7 @@ export interface Dictionary {
     newPassword: string;
     passwordChanged: string;
     passwordError: string;
+    preferences: string;
     nickname: string;
     colorCode: string;
     memoDefaultShared: string;
