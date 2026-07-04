@@ -1,15 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { format } from "date-fns";
 import { useData } from "@/lib/context/DataContext";
 import { Send, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { deleteAllMessages, sendMessage } from "@/lib/data/chat";
+import { deleteAllMessages, markChatRead, sendMessage } from "@/lib/data/chat";
 import { TextArea } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { clsx } from "clsx";
+import type { ChatMessage, Project } from "@/types";
+
+function unreadCountFor(msg: ChatMessage, project: Project) {
+  return project.memberIds.filter(
+    (uid) => uid !== msg.authorId && (project.lastRead?.[uid] ?? 0) < msg.createdAt
+  ).length;
+}
 
 // Bottom nav content height (py-2.5 × 2 + icon 22px + gap 4px + label ~16px)
 const NAV_H = 62;
@@ -84,6 +92,12 @@ export default function ChatPage() {
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     }
   }, [keyboardHeight]);
+
+  // Mark chat read up to the latest message while this page is open.
+  useEffect(() => {
+    if (!profile || !currentProject || messages.length === 0) return;
+    markChatRead(currentProject.id, profile.uid);
+  }, [profile, currentProject, messages.length]);
 
   if (!currentProject) {
     return <EmptyState message={t.todo.selectProjectFirst} />;
@@ -175,13 +189,11 @@ export default function ChatPage() {
           <ul className="flex flex-col gap-2">
             {messages.map((msg) => {
               const isMine = msg.authorId === profile?.uid;
+              const unread = currentProject ? unreadCountFor(msg, currentProject) : 0;
               return (
                 <li
                   key={msg.id}
-                  className={clsx(
-                    "flex",
-                    isMine ? "flex-col items-end" : "flex-row items-start gap-2"
-                  )}
+                  className={clsx("flex items-end gap-1.5", isMine ? "flex-row-reverse" : "flex-row")}
                 >
                   {!isMine && (
                     <div
@@ -200,6 +212,14 @@ export default function ChatPage() {
                     )}
                   >
                     {msg.text}
+                  </div>
+                  <div className="flex shrink-0 flex-col items-center gap-0.5 pb-0.5">
+                    {unread > 0 && (
+                      <span className="text-[10px] font-semibold text-yellow-400">{unread}</span>
+                    )}
+                    <span className="whitespace-nowrap text-[10px] text-text-secondary">
+                      {format(new Date(msg.createdAt), "HH:mm")}
+                    </span>
                   </div>
                 </li>
               );
