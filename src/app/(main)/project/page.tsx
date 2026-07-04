@@ -277,6 +277,7 @@ function ProjectRow({
       dragControls={controls}
       dragListener={false}
       initial={false}
+      layout="position"
       onDragEnd={() => setIsDragging(false)}
       className="rounded-lg"
     >
