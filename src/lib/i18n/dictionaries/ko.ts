@@ -128,6 +128,7 @@ const ko: Dictionary = {
   common: {
     loading: "불러오는 중...",
     back: "뒤로",
+    confirm: "확인",
   },
 };
 

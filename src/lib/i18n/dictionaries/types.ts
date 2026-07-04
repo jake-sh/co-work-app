@@ -126,5 +126,6 @@ export interface Dictionary {
   common: {
     loading: string;
     back: string;
+    confirm: string;
   };
 }
