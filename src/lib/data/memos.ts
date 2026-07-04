@@ -12,7 +12,7 @@ export function deriveTitle(title: string, body: string): string {
   const trimmedTitle = title.trim();
   if (trimmedTitle) return trimmedTitle;
   const tokens = body.trim().split(/\s+/).filter(Boolean);
-  return tokens.slice(0, 10).join(" ") || "Untitled";
+  return tokens.slice(0, 5).join(" ") || "Untitled";
 }
 
 // A memo is only visible to its author and whoever it's been shared with —
