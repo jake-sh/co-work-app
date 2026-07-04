@@ -56,6 +56,10 @@ export async function deleteFcmToken(uid: string, token: string) {
   await deleteDoc(doc(db, "users", uid, "fcmTokens", token));
 }
 
+export async function deleteUserProfile(uid: string) {
+  await deleteDoc(doc(db, "users", uid));
+}
+
 export async function findUserByUsername(username: string): Promise<UserProfile | null> {
   const { collection, query, where, getDocs, limit } = await import("firebase/firestore");
   const q = query(collection(db, "users"), where("username", "==", username), limit(1));

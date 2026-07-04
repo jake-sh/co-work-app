@@ -12,7 +12,7 @@ import { TextInput } from "@/components/ui/TextInput";
 import { clsx } from "clsx";
 
 export default function SettingsPage() {
-  const { profile, signOut, updateColorCode, updateNickname, updateMemoDefaultShared, updateNotificationsEnabled, changePassword } = useAuth();
+  const { profile, signOut, updateColorCode, updateNickname, updateMemoDefaultShared, updateNotificationsEnabled, changePassword, deleteAccount } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
@@ -25,6 +25,10 @@ export default function SettingsPage() {
   const [pwError, setPwError] = useState<string | null>(null);
   const [pwSaved, setPwSaved] = useState(false);
   const [pwSubmitting, setPwSubmitting] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletePw, setDeletePw] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("cowork.fontScale");
@@ -70,6 +74,24 @@ export default function SettingsPage() {
       setPwError(t.settings.passwordError);
     } finally {
       setPwSubmitting(false);
+    }
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setDeletePw("");
+    setDeleteError(null);
+  };
+
+  const onDeleteAccount = async () => {
+    if (!deletePw) return;
+    setDeleteError(null);
+    setDeleteSubmitting(true);
+    try {
+      await deleteAccount(deletePw);
+    } catch {
+      setDeleteError(t.settings.deleteAccountError);
+      setDeleteSubmitting(false);
     }
   };
 
@@ -143,6 +165,48 @@ export default function SettingsPage() {
               >
                 {t.common.confirm}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={closeDeleteModal}
+        >
+          <div
+            className="mx-6 w-full max-w-xs rounded-2xl bg-surface-card p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="mb-2 text-center text-sm font-semibold text-red-400">
+              {t.settings.deleteAccount}
+            </p>
+            <p className="mb-4 text-center text-xs text-text-secondary">
+              {t.settings.deleteAccountWarning}
+            </p>
+            <TextInput
+              type="password"
+              placeholder={t.settings.currentPassword}
+              value={deletePw}
+              onChange={(e) => setDeletePw(e.target.value)}
+              autoComplete="current-password"
+            />
+            {deleteError && <p className="mt-2 text-xs text-red-400">{deleteError}</p>}
+            <div className="mt-4 flex gap-3">
+              <button
+                onClick={closeDeleteModal}
+                className="flex-1 rounded-pill bg-surface-pill px-4 py-2 text-sm font-semibold"
+              >
+                {t.project.cancel}
+              </button>
+              <button
+                onClick={onDeleteAccount}
+                disabled={!deletePw || deleteSubmitting}
+                className="flex-1 rounded-pill bg-red-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+              >
+                {t.settings.deleteAccount}
+              </button>
             </div>
           </div>
         </div>
@@ -321,6 +385,13 @@ export default function SettingsPage() {
       >
         <LogOut size={18} />
         {t.settings.signOut}
+      </button>
+
+      <button
+        onClick={() => setDeleteModalOpen(true)}
+        className="mt-3 w-full text-center text-xs text-red-400"
+      >
+        {t.settings.deleteAccount}
       </button>
     </div>
   );

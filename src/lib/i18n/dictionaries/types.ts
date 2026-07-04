@@ -122,6 +122,9 @@ export interface Dictionary {
     notifications: string;
     fontSize: string;
     signOut: string;
+    deleteAccount: string;
+    deleteAccountWarning: string;
+    deleteAccountError: string;
   };
   common: {
     loading: string;

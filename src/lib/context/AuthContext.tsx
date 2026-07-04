@@ -5,6 +5,7 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   createUserWithEmailAndPassword,
+  deleteUser as deleteFirebaseUser,
   EmailAuthProvider,
   onAuthStateChanged,
   reauthenticateWithCredential,
@@ -16,7 +17,7 @@ import {
   type User,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
-import { createUserProfile, getUserProfile, updateUserColor, updateUserLocale, updateUserNickname, updateMemoDefaultShared, updateNotificationsEnabled } from "@/lib/data/users";
+import { createUserProfile, deleteUserProfile, getUserProfile, updateUserColor, updateUserLocale, updateUserNickname, updateMemoDefaultShared, updateNotificationsEnabled } from "@/lib/data/users";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import type { UserProfile } from "@/types";
 
@@ -38,6 +39,7 @@ interface AuthContextValue {
   updateMemoDefaultShared: (value: boolean) => Promise<void>;
   updateNotificationsEnabled: (value: boolean) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  deleteAccount: (currentPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -125,6 +127,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await updatePassword(user, newPassword);
   };
 
+  const deleteAccount = async (currentPassword: string) => {
+    if (!user || !user.email) throw new Error("NO_USER");
+    // Same reauthentication requirement as changePassword: Firebase rejects
+    // account deletion without a recent login.
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+    await deleteUserProfile(user.uid);
+    await deleteFirebaseUser(user);
+  };
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -138,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       updateMemoDefaultShared: updateMemoDefaultSharedFn,
       updateNotificationsEnabled: updateNotificationsEnabledFn,
       changePassword,
+      deleteAccount,
     }),
     // signUp/signIn/signOut are stable in behavior; only re-derive when auth state changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps

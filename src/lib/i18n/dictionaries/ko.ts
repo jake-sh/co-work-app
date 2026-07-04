@@ -124,6 +124,9 @@ const ko: Dictionary = {
     notifications: "알림",
     fontSize: "글자 크기",
     signOut: "로그아웃",
+    deleteAccount: "계정 삭제",
+    deleteAccountWarning: "계정이 영구적으로 삭제되며 되돌릴 수 없습니다.",
+    deleteAccountError: "현재 비밀번호가 올바르지 않습니다.",
   },
   common: {
     loading: "불러오는 중...",
