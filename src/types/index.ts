@@ -26,6 +26,7 @@ export interface Project {
   status?: "active" | "completed";
   color?: string;
   order?: number;
+  lastRead?: Record<string, number>;
 }
 
 export interface Todo {

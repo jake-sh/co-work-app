@@ -1,4 +1,4 @@
-import { addDoc, collection, onSnapshot, query } from "firebase/firestore";
+import { addDoc, collection, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import type { ChatMessage } from "@/types";
 
@@ -30,6 +30,12 @@ export async function sendMessage(
     authorColor,
     createdAt: Date.now(),
   });
+}
+
+// Tracks how far each member has read into a project's chat, so unread
+// counts per message can be derived without a receipt doc per message.
+export async function markChatRead(projectId: string, uid: string) {
+  await updateDoc(doc(db, "projects", projectId), { [`lastRead.${uid}`]: Date.now() });
 }
 
 export async function deleteAllMessages(projectId: string) {
