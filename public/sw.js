@@ -1,4 +1,4 @@
-const CACHE_NAME = "co-work-shell-v4";
+const CACHE_NAME = "co-work-shell-v5";
 const PRECACHE = ["/manifest.webmanifest", "/icon.svg"];
 
 const isStaticAsset = (url) =>
@@ -73,7 +73,7 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(title, {
       body,
       icon: "/icon-192.png",
-      badge: "/icon-192.png",
+      badge: "/badge.png",
       tag: d.tag || url,
       data: { url },
     })
