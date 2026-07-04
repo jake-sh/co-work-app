@@ -196,16 +196,16 @@ export default function SettingsPage() {
             <div className="mt-4 flex gap-3">
               <button
                 onClick={closeDeleteModal}
-                className="flex-1 rounded-pill bg-surface-pill px-4 py-2 text-sm font-semibold"
+                className="flex-1 whitespace-nowrap rounded-pill bg-surface-pill px-4 py-2 text-sm font-semibold"
               >
                 {t.project.cancel}
               </button>
               <button
                 onClick={onDeleteAccount}
                 disabled={!deletePw || deleteSubmitting}
-                className="flex-1 rounded-pill bg-red-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+                className="flex-1 whitespace-nowrap rounded-pill bg-red-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
               >
-                {t.settings.deleteAccount}
+                {t.project.delete}
               </button>
             </div>
           </div>
@@ -389,7 +389,7 @@ export default function SettingsPage() {
 
       <button
         onClick={() => setDeleteModalOpen(true)}
-        className="mt-3 w-full text-center text-xs text-red-400"
+        className="my-6 w-full text-center text-xs text-red-400"
       >
         {t.settings.deleteAccount}
       </button>
