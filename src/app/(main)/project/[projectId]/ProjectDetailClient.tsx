@@ -311,25 +311,6 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         </div>
 
         <div className="mt-6">
-          <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.color}</p>
-          <div className="flex gap-2 rounded-xl border border-border-divider bg-surface-input px-4 py-3">
-            {PROJECT_COLOR_PALETTE.map((c) => (
-              <button
-                key={c}
-                onClick={() => isPL && updateProjectColor(projectId, c)}
-                disabled={!isPL}
-                className="h-6 w-6 rounded-full transition-transform disabled:cursor-default"
-                style={{
-                  backgroundColor: c,
-                  outline: (project.color ?? PROJECT_COLOR_PALETTE[0]) === c ? `2px solid ${c}` : "none",
-                  outlineOffset: "2px",
-                }}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-6">
           <p className="mb-2 text-xs font-semibold text-text-secondary">
             {t.project.members} ({project.memberIds.length})
           </p>
@@ -369,6 +350,25 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
               ))}
             </ul>
           )}
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-semibold text-text-secondary">{t.project.color}</p>
+          <div className="flex gap-2 rounded-xl border border-border-divider bg-surface-input px-4 py-3">
+            {PROJECT_COLOR_PALETTE.map((c) => (
+              <button
+                key={c}
+                onClick={() => isPL && updateProjectColor(projectId, c)}
+                disabled={!isPL}
+                className="h-6 w-6 rounded-full transition-transform disabled:cursor-default"
+                style={{
+                  backgroundColor: c,
+                  outline: (project.color ?? PROJECT_COLOR_PALETTE[0]) === c ? `2px solid ${c}` : "none",
+                  outlineOffset: "2px",
+                }}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
