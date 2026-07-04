@@ -128,6 +128,7 @@ const en: Dictionary = {
   common: {
     loading: "Loading...",
     back: "Back",
+    confirm: "OK",
   },
 };
 
