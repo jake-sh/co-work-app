@@ -276,7 +276,7 @@ export default function SettingsPage() {
           <button
             onClick={() => setLangOpen((v) => !v)}
             className={clsx(
-              "flex h-8 items-center gap-1.5 rounded-2xl border border-border-divider bg-surface-input px-4 text-sm text-text-primary",
+              "flex h-8 w-[108px] items-center justify-between rounded-2xl border border-border-divider bg-surface-input px-3 text-sm text-text-primary",
               langOpen && "invisible"
             )}
           >
@@ -287,14 +287,14 @@ export default function SettingsPage() {
             <div className="absolute inset-x-0 top-0 z-20 flex flex-col divide-y divide-border-divider overflow-hidden rounded-2xl border border-border-divider bg-surface-input shadow-lg">
               <button
                 onClick={() => setLangOpen(false)}
-                className="flex h-8 items-center gap-1.5 px-4 text-sm text-text-primary"
+                className="flex h-8 items-center justify-between px-3 text-sm text-text-primary"
               >
                 {locale === "ko" ? t.settings.korean : t.settings.english}
                 <ChevronDown size={14} className="rotate-180 text-text-secondary" />
               </button>
               <button
                 onClick={() => onChangeLocale(locale === "ko" ? "en" : "ko")}
-                className="flex h-8 items-center px-4 text-left text-sm text-text-primary"
+                className="flex h-8 items-center px-3 text-left text-sm text-text-primary"
               >
                 {locale === "ko" ? t.settings.english : t.settings.korean}
               </button>
