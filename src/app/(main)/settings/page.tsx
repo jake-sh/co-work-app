@@ -160,7 +160,7 @@ export default function SettingsPage() {
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.account}</p>
 
-      <Card className="mb-3 flex min-h-20 items-center justify-between gap-3">
+      <Card className="mb-3 flex min-h-14 items-center justify-between gap-3 py-1">
         <span className="min-w-0 truncate text-sm text-text-primary">
           <span className="text-text-secondary">{t.settings.id}: </span>
           {profile?.username}
@@ -173,7 +173,7 @@ export default function SettingsPage() {
         </button>
       </Card>
 
-      <Card className="mb-4 flex min-h-20 flex-col justify-center gap-3">
+      <Card className="mb-4 flex min-h-14 flex-col justify-center gap-3 py-1">
         <div className="flex items-center gap-3">
           <span className="shrink-0 text-sm text-text-secondary">{t.settings.nickname}</span>
           <TextInput
@@ -216,7 +216,7 @@ export default function SettingsPage() {
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.preferences}</p>
 
-      <Card className="mb-3 flex min-h-20 items-center justify-between">
+      <Card className="mb-3 flex min-h-14 items-center justify-between">
         <span className="text-sm text-text-secondary">{t.settings.memoDefaultShared}</span>
         <button
           onClick={() => updateMemoDefaultShared(!(profile?.memoDefaultShared ?? true))}
@@ -234,7 +234,7 @@ export default function SettingsPage() {
         </button>
       </Card>
 
-      <Card className="mb-4 flex min-h-20 items-center justify-between">
+      <Card className="mb-4 flex min-h-14 items-center justify-between">
         <span className="text-sm text-text-secondary">{t.settings.notifications}</span>
         <button
           onClick={onToggleNotifications}
@@ -252,7 +252,7 @@ export default function SettingsPage() {
         </button>
       </Card>
 
-      <Card className="mb-4 flex min-h-20 items-center justify-between">
+      <Card className="mb-4 flex min-h-14 items-center justify-between py-1">
         <span className="text-sm text-text-secondary">{t.settings.fontSize}</span>
         <div className="flex gap-1 rounded-pill bg-surface-pill p-0.5">
           {(["S", "M", "L"] as const).map((s) => (
@@ -271,7 +271,7 @@ export default function SettingsPage() {
       </Card>
 
       <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.language}</p>
-      <Card className="mb-6 flex min-h-20 flex-col justify-center">
+      <Card className="mb-6 flex min-h-14 flex-col justify-center">
         <button
           onClick={() => setLangOpen((v) => !v)}
           className="flex w-full items-center justify-between"
