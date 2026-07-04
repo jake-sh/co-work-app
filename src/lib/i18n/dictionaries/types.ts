@@ -109,6 +109,12 @@ export interface Dictionary {
     korean: string;
     english: string;
     account: string;
+    id: string;
+    changePassword: string;
+    currentPassword: string;
+    newPassword: string;
+    passwordChanged: string;
+    passwordError: string;
     nickname: string;
     colorCode: string;
     memoDefaultShared: string;

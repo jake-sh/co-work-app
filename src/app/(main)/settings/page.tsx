@@ -7,17 +7,23 @@ import { useI18n } from "@/lib/i18n/I18nContext";
 import { MEMBER_COLOR_PALETTE } from "@/lib/colors";
 import { enablePush, disablePush } from "@/lib/messaging";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/TextInput";
 import { clsx } from "clsx";
 
 export default function SettingsPage() {
-  const { profile, signOut, updateColorCode, updateNickname, updateMemoDefaultShared, updateNotificationsEnabled } = useAuth();
+  const { profile, signOut, updateColorCode, updateNickname, updateMemoDefaultShared, updateNotificationsEnabled, changePassword } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [nickname, setNickname] = useState(() => profile?.nickname ?? "");
   const [nicknameSaved, setNicknameSaved] = useState(false);
   const [fontScale, setFontScale] = useState<"S" | "M" | "L">("S");
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSaved, setPwSaved] = useState(false);
+  const [pwSubmitting, setPwSubmitting] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("cowork.fontScale");
@@ -36,6 +42,23 @@ export default function SettingsPage() {
     await updateNickname(nickname.trim());
     setNicknameSaved(true);
     setTimeout(() => setNicknameSaved(false), 1500);
+  };
+
+  const onChangePassword = async () => {
+    if (!currentPw || !newPw) return;
+    setPwError(null);
+    setPwSubmitting(true);
+    try {
+      await changePassword(currentPw, newPw);
+      setCurrentPw("");
+      setNewPw("");
+      setPwSaved(true);
+      setTimeout(() => setPwSaved(false), 2000);
+    } catch {
+      setPwError(t.settings.passwordError);
+    } finally {
+      setPwSubmitting(false);
+    }
   };
 
   const onChangeLocale = (next: "ko" | "en") => {
@@ -75,6 +98,36 @@ export default function SettingsPage() {
           <UserIcon size={22} color="#0B0B0B" />
         </div>
       </div>
+
+      <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.account}</p>
+
+      <Card className="mb-3 flex items-center justify-between">
+        <span className="text-sm text-text-secondary">{t.settings.id}</span>
+        <span className="text-sm text-text-primary">{profile?.username}</span>
+      </Card>
+
+      <Card className="mb-3 flex flex-col gap-2">
+        <span className="text-sm text-text-secondary">{t.settings.changePassword}</span>
+        <TextInput
+          type="password"
+          placeholder={t.settings.currentPassword}
+          value={currentPw}
+          onChange={(e) => setCurrentPw(e.target.value)}
+          autoComplete="current-password"
+        />
+        <TextInput
+          type="password"
+          placeholder={t.settings.newPassword}
+          value={newPw}
+          onChange={(e) => setNewPw(e.target.value)}
+          autoComplete="new-password"
+        />
+        {pwError && <p className="text-xs text-red-400">{pwError}</p>}
+        {pwSaved && <p className="text-xs text-green-400">{t.settings.passwordChanged}</p>}
+        <Button onClick={onChangePassword} disabled={!currentPw || !newPw || pwSubmitting}>
+          {t.settings.changePassword}
+        </Button>
+      </Card>
 
       <Card className="mb-3 flex items-center gap-3">
         <span className="shrink-0 text-sm text-text-secondary">{t.settings.nickname}</span>
