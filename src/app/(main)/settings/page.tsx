@@ -381,7 +381,7 @@ export default function SettingsPage() {
 
       <button
         onClick={() => signOut()}
-        className="flex w-full items-center gap-3 rounded-card bg-surface-card px-4 py-3.5 text-sm text-red-400"
+        className="flex w-full items-center gap-3 rounded-card bg-surface-card px-4 py-3.5 text-sm text-white"
       >
         <LogOut size={18} />
         {t.settings.signOut}
