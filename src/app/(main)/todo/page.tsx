@@ -188,7 +188,9 @@ export default function TodoPage() {
       )}
 
       <div className="sticky top-0 z-[1] bg-bg-base px-5 pt-4 pb-3">
-        <h1 className="mb-3 text-3xl font-bold">{t.todo.title}</h1>
+        <h1 className="mb-3 text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
+          {t.todo.title}
+        </h1>
         <form onSubmit={onAdd} className="flex gap-2">
           <TextInput
             placeholder={t.todo.inputPlaceholder}
