@@ -124,6 +124,9 @@ const en: Dictionary = {
     notifications: "Notifications",
     fontSize: "Font size",
     signOut: "Sign Out",
+    deleteAccount: "Delete Account",
+    deleteAccountWarning: "This permanently deletes your account and cannot be undone.",
+    deleteAccountError: "Current password is incorrect.",
   },
   common: {
     loading: "Loading...",
