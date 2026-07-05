@@ -478,7 +478,7 @@ function MemberRow({
       <span className="text-sm text-text-primary">{member.displayName}</span>
       <span className="text-xs text-text-secondary">@{member.username}</span>
       {isOwner ? (
-        <span className="ml-auto text-[10px] text-text-disabled">{ownerLabel}</span>
+        <span className="ml-auto text-xs text-text-disabled">{ownerLabel}</span>
       ) : (
         canManage && (
           <button
