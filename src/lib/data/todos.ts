@@ -40,7 +40,7 @@ export async function addTodo(
     await addEvent(projectId, text, parsed.date, parsed.time, authorId, authorColor, {
       type: "todo",
       id: ref.id,
-    }).catch(() => {});
+    }).catch((err) => console.error("Auto schedule-event creation from to-do failed:", err));
   }
 }
 
