@@ -86,9 +86,13 @@ export function parseScheduleFromText(text: string, now: Date = new Date()): Par
     if (m) {
       const month = parseInt(m[1], 10) - 1;
       const day = parseInt(m[2], 10);
-      let candidate = new Date(now.getFullYear(), month, day);
-      if (candidate < startOfDay(now)) candidate = new Date(now.getFullYear() + 1, month, day);
-      date = candidate;
+      // Always use the current year: this parses casual in-context date
+      // mentions in a memo/to-do ("7월5일 보고"), which almost always refer to
+      // a date near today — including ones that already just passed — not
+      // one a full year out. Rolling to next year for any date earlier than
+      // today (even yesterday) put auto-created events a year in the future,
+      // where they'd never be seen.
+      date = new Date(now.getFullYear(), month, day);
     }
   }
 
@@ -98,9 +102,7 @@ export function parseScheduleFromText(text: string, now: Date = new Date()): Par
       const month = parseInt(m[1], 10) - 1;
       const day = parseInt(m[2], 10);
       if (month >= 0 && month <= 11 && day >= 1 && day <= 31) {
-        let candidate = new Date(now.getFullYear(), month, day);
-        if (candidate < startOfDay(now)) candidate = new Date(now.getFullYear() + 1, month, day);
-        date = candidate;
+        date = new Date(now.getFullYear(), month, day);
       }
     }
   }
