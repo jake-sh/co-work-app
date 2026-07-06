@@ -37,7 +37,7 @@ export async function addTodo(
 
   const parsed = parseScheduleFromText(text);
   if (parsed) {
-    await addEvent(projectId, text, parsed.date, parsed.time, authorId, authorColor, {
+    await addEvent(projectId, parsed.title, parsed.date, parsed.time, authorId, authorColor, {
       type: "todo",
       id: ref.id,
     }).catch((err) => console.error("Auto schedule-event creation from to-do failed:", err));

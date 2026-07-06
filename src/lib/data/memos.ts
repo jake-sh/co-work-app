@@ -53,7 +53,6 @@ export function subscribeMemos(projectId: string, uid: string, cb: (memos: Memo[
 async function syncScheduleFromMemo(
   projectId: string,
   memoId: string,
-  finalTitle: string,
   fullText: string,
   authorId: string,
   authorColor: string,
@@ -67,9 +66,9 @@ async function syncScheduleFromMemo(
     const existingEventId = await findEventBySource(projectId, source);
     if (parsed) {
       if (existingEventId) {
-        await updateEvent(projectId, existingEventId, finalTitle, parsed.date, parsed.time);
+        await updateEvent(projectId, existingEventId, parsed.title, parsed.date, parsed.time);
       } else {
-        await addEvent(projectId, finalTitle, parsed.date, parsed.time, authorId, authorColor, source);
+        await addEvent(projectId, parsed.title, parsed.date, parsed.time, authorId, authorColor, source);
       }
     } else if (existingEventId) {
       await deleteEvent(projectId, existingEventId);
@@ -100,7 +99,7 @@ export async function addMemo(
     sharedWith: memberIds,
   });
 
-  await syncScheduleFromMemo(projectId, ref.id, finalTitle, `${title} ${body}`, authorId, authorColor, memberIds.length > 0);
+  await syncScheduleFromMemo(projectId, ref.id, `${title} ${body}`, authorId, authorColor, memberIds.length > 0);
 }
 
 export async function updateMemo(
@@ -118,7 +117,7 @@ export async function updateMemo(
     body,
   });
 
-  await syncScheduleFromMemo(projectId, memoId, finalTitle, `${title} ${body}`, authorId, authorColor, isShared);
+  await syncScheduleFromMemo(projectId, memoId, `${title} ${body}`, authorId, authorColor, isShared);
 }
 
 export async function deleteMemo(projectId: string, memoId: string) {
