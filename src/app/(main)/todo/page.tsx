@@ -125,9 +125,11 @@ export default function TodoPage() {
     setActionMenuTodo(null);
   };
 
-  const onSelectDelete = async () => {
+  const onSelectDelete = () => {
     if (!actionMenuTodo) return;
-    await deleteTodo(currentProject.id, actionMenuTodo.id);
+    // Same optimistic pattern as onAdd: don't block closing the menu on the
+    // Firestore write's server-ack round-trip.
+    deleteTodo(currentProject.id, actionMenuTodo.id).catch(() => {});
     setActionMenuTodo(null);
   };
 
