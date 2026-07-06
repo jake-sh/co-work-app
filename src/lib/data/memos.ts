@@ -74,8 +74,9 @@ async function syncScheduleFromMemo(
     } else if (existingEventId) {
       await deleteEvent(projectId, existingEventId);
     }
-  } catch {
+  } catch (err) {
     // Best-effort: the memo save itself already succeeded.
+    console.error("Auto schedule-event sync from memo failed:", err);
   }
 }
 
