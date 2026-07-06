@@ -93,16 +93,18 @@ export default function TodoPage() {
     return <EmptyState message={t.todo.selectProjectFirst} />;
   }
 
-  const onAdd = async (e: React.FormEvent) => {
+  const onAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile || !text.trim()) return;
     setAddError(null);
-    try {
-      await addTodo(currentProject.id, text.trim(), profile.uid, profile.displayName, profile.colorCode);
-      setText("");
-    } catch {
-      setAddError(t.auth.genericError);
-    }
+    // Clear the field immediately and fire the write in the background. The
+    // Firestore write promise only resolves after the server acks it, so
+    // awaiting it before clearing left the input populated for the network
+    // round-trip even though the new item already showed optimistically.
+    addTodo(currentProject.id, text.trim(), profile.uid, profile.displayName, profile.colorCode).catch(() =>
+      setAddError(t.auth.genericError)
+    );
+    setText("");
   };
 
   const advanceStatus = (todo: Todo) => {
