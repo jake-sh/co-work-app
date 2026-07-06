@@ -4,7 +4,7 @@ import {
   getFirestore,
   initializeFirestore,
   persistentLocalCache,
-  persistentMultipleTabManager,
+  persistentSingleTabManager,
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -21,17 +21,13 @@ export const firebaseApp = isNewApp ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(firebaseApp);
 export const db = isNewApp
   ? initializeFirestore(firebaseApp, {
-      // Multiple-tab manager: coordinates one shared realtime connection across
-      // every open instance (installed PWA + browser tab, etc.). The previous
-      // single-tab manager with forceOwnership had each instance seize the
-      // persistence lease from the others, which left the losing instance's
-      // onSnapshot listeners stalled — chat not arriving live and deletes not
-      // propagating.
-      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-      // Force long-polling. On mobile/PWA networks Firestore's default
-      // streaming WebChannel can silently fail to receive server pushes;
-      // long-polling is slightly less efficient but reliably delivers realtime
-      // updates (new messages, deletions) instead of appearing to hang.
-      experimentalForceLongPolling: true,
+      // Single-tab persistence with forced ownership. The multi-tab manager was
+      // tried to improve realtime sync, but its cross-tab lock acquisition
+      // deadlocked persistence init on some PWA/browser setups — getUserProfile
+      // (a getDoc) then never resolved, so AuthContext's loading flag stayed
+      // true and the app hung on the splash/loading screen forever. The actual
+      // realtime chat regression was an unrelated infinite write loop, fixed
+      // separately, so this stays on the known-good single-tab config.
+      localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({ forceOwnership: true }) }),
     })
   : getFirestore(firebaseApp);
