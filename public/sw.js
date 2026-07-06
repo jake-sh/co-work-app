@@ -1,4 +1,4 @@
-const CACHE_NAME = "co-work-shell-v5";
+const CACHE_NAME = "co-work-shell-v6";
 const PRECACHE = ["/manifest.webmanifest", "/icon.svg"];
 
 const isStaticAsset = (url) =>
@@ -24,6 +24,15 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+
+  // Only ever touch same-origin requests. Cross-origin traffic — most
+  // importantly Firestore's realtime long-poll/streaming channel to
+  // firestore.googleapis.com and FCM — must reach the network untouched.
+  // Re-issuing those GETs here with {cache:"no-store"} and a cache fallback
+  // was disrupting the realtime channel, so chat messages synced late, out
+  // of order, or (when the channel had to fully re-establish) not until the
+  // app was next opened.
+  if (new URL(event.request.url).origin !== self.location.origin) return;
 
   // Static assets (_next/static/*): cache-first (content-hashed, always fresh)
   if (isStaticAsset(event.request.url)) {
