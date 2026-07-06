@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { AnimatePresence, motion, type PanInfo } from "framer-motion";
+import { Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
@@ -28,6 +28,7 @@ const PREV_STATUS: Record<TodoStatus, TodoStatus> = {
 
 const LONG_PRESS_MS = 500;
 const MOVE_CANCEL_PX = 10;
+const SWIPE_DELETE_PX = 88;
 
 // New items are prepended (newest first) right below the sticky header, so
 // if the list is scrolled down, a freshly added item lands off-screen above
@@ -151,6 +152,10 @@ export default function TodoPage() {
     setActionMenuTodo(null);
   };
 
+  const onSwipeDelete = (todo: Todo) => {
+    deleteTodo(currentProject.id, todo.id).catch(() => {});
+  };
+
   const onSaveEdit = (todo: Todo, nextText: string) => {
     setEditingId(null);
     const trimmed = nextText.trim();
@@ -249,6 +254,7 @@ export default function TodoPage() {
                   onRevert={() => revertStatus(todo)}
                   onOpenMenu={() => setActionMenuTodo(todo)}
                   onSaveEdit={(nextText) => onSaveEdit(todo, nextText)}
+                  onSwipeDelete={() => onSwipeDelete(todo)}
                 />
               ))}
             </AnimatePresence>
@@ -267,6 +273,7 @@ function TodoRow({
   onRevert,
   onOpenMenu,
   onSaveEdit,
+  onSwipeDelete,
 }: {
   todo: Todo;
   statusLabel: string;
@@ -275,11 +282,16 @@ function TodoRow({
   onRevert: () => void;
   onOpenMenu: () => void;
   onSaveEdit: (text: string) => void;
+  onSwipeDelete: () => void;
 }) {
   const [editText, setEditText] = useState(todo.text);
   const inputRef = useRef<HTMLInputElement>(null);
   const textHandlers = useTapAndHold(() => {}, onOpenMenu);
   const pillHandlers = useTapAndHold(onAdvance, onRevert);
+
+  const onDragEnd = (_e: unknown, info: PanInfo) => {
+    if (info.offset.x > SWIPE_DELETE_PX) onSwipeDelete();
+  };
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -299,45 +311,60 @@ function TodoRow({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ type: "spring", stiffness: 400, damping: 32 }}
-      className="flex items-center gap-2.5 rounded-card bg-surface-card px-3 py-3"
+      className="relative"
     >
-      <ColorDot color={todo.authorColor} />
-      {isEditing ? (
-        <input
-          ref={inputRef}
-          value={editText}
-          onChange={(e) => setEditText(e.target.value)}
-          onBlur={() => onSaveEdit(editText)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              inputRef.current?.blur();
-            }
-          }}
-          className="flex-1 bg-transparent text-sm text-text-primary outline-none"
-        />
-      ) : (
-        <span
-          {...textHandlers}
+      {/* Revealed as the row is swiped right; touch-action: pan-y on the row
+          below lets native vertical scroll pass straight through, so only a
+          confidently horizontal drag ever moves it. */}
+      <div className="absolute inset-0 flex items-center rounded-card bg-red-500/20 px-4">
+        <Trash2 size={18} className="text-red-400" />
+      </div>
+      <motion.div
+        drag={isEditing ? false : "x"}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={{ left: 0, right: 1 }}
+        onDragEnd={onDragEnd}
+        style={{ touchAction: "pan-y" }}
+        className="relative flex items-center gap-2.5 rounded-card bg-surface-card px-3 py-3"
+      >
+        <ColorDot color={todo.authorColor} />
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            onBlur={() => onSaveEdit(editText)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                inputRef.current?.blur();
+              }
+            }}
+            className="flex-1 bg-transparent text-sm text-text-primary outline-none"
+          />
+        ) : (
+          <span
+            {...textHandlers}
+            className={clsx(
+              "flex-1 select-none text-sm",
+              todo.status === "done" ? "text-text-disabled line-through" : "text-text-primary"
+            )}
+          >
+            {todo.text}
+          </span>
+        )}
+        <button
+          {...pillHandlers}
           className={clsx(
-            "flex-1 select-none text-sm",
-            todo.status === "done" ? "text-text-disabled line-through" : "text-text-primary"
+            "flex w-16 shrink-0 items-center justify-center rounded-pill px-2 py-1 text-center text-[11px] font-semibold select-none",
+            todo.status === "new" && "bg-surface-pill text-text-secondary",
+            todo.status === "in_progress" && "bg-blue-500/20 text-blue-300",
+            todo.status === "done" && "bg-emerald-500/20 text-emerald-300"
           )}
         >
-          {todo.text}
-        </span>
-      )}
-      <button
-        {...pillHandlers}
-        className={clsx(
-          "flex w-16 shrink-0 items-center justify-center rounded-pill px-2 py-1 text-center text-[11px] font-semibold select-none",
-          todo.status === "new" && "bg-surface-pill text-text-secondary",
-          todo.status === "in_progress" && "bg-blue-500/20 text-blue-300",
-          todo.status === "done" && "bg-emerald-500/20 text-emerald-300"
-        )}
-      >
-        {statusLabel}
-      </button>
+          {statusLabel}
+        </button>
+      </motion.div>
     </motion.li>
   );
 }
