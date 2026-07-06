@@ -94,10 +94,16 @@ export default function ChatPage() {
   }, [keyboardHeight]);
 
   // Mark chat read up to the latest message while this page is open.
+  // Deps are primitives only (not the profile/currentProject objects): this
+  // write updates the project doc's lastRead map, which makes the project
+  // subscription re-emit a brand new `currentProject` object on every write.
+  // Depending on that object reference here would re-fire this effect on its
+  // own write, looping indefinitely and flooding the shared realtime
+  // connection instead of just marking read once per new message.
   useEffect(() => {
-    if (!profile || !currentProject || messages.length === 0) return;
+    if (!profile?.uid || !currentProject?.id || messages.length === 0) return;
     markChatRead(currentProject.id, profile.uid);
-  }, [profile, currentProject, messages.length]);
+  }, [profile?.uid, currentProject?.id, messages.length]);
 
   if (!currentProject) {
     return <EmptyState message={t.todo.selectProjectFirst} />;
