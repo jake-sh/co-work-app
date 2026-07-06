@@ -59,11 +59,11 @@ async function syncScheduleFromMemo(
   authorColor: string,
   isShared: boolean
 ) {
-  const isExcludedFromParsing = fullText.includes("주요신문");
-  const parsed = isShared && !isExcludedFromParsing ? parseScheduleFromText(fullText) : null;
   const source = { type: "memo" as const, id: memoId };
 
   try {
+    const isExcludedFromParsing = fullText.includes("주요신문");
+    const parsed = isShared && !isExcludedFromParsing ? parseScheduleFromText(fullText) : null;
     const existingEventId = await findEventBySource(projectId, source);
     if (parsed) {
       if (existingEventId) {
