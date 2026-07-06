@@ -50,26 +50,27 @@ export default function MemoPage() {
     setEditingMemo(null);
   };
 
-  const onSave = async () => {
+  const onSave = () => {
     if (!profile || !body.trim()) return;
-    try {
-      if (view === "new") {
-        const defaultShared = profile.memoDefaultShared ?? true;
-        await addMemo(currentProject.id, title, body.trim(), profile.uid, profile.displayName, profile.colorCode, defaultShared ? currentProject.memberIds : []);
-      } else if (view === "edit" && editingMemo) {
-        await updateMemo(
-          currentProject.id,
-          editingMemo.id,
-          title,
-          body.trim(),
-          editingMemo.authorId,
-          editingMemo.authorColor,
-          editingMemo.sharedWith.length > 0
-        );
-      }
-    } finally {
-      goBack();
+    // Firestore's write promise only resolves after the server acks it, which
+    // can stall on a slow/dropped connection. Fire the write in the
+    // background and navigate back immediately (same optimistic pattern as
+    // the settings toggles) instead of blocking the UI on that round-trip.
+    if (view === "new") {
+      const defaultShared = profile.memoDefaultShared ?? true;
+      addMemo(currentProject.id, title, body.trim(), profile.uid, profile.displayName, profile.colorCode, defaultShared ? currentProject.memberIds : []).catch(() => {});
+    } else if (view === "edit" && editingMemo) {
+      updateMemo(
+        currentProject.id,
+        editingMemo.id,
+        title,
+        body.trim(),
+        editingMemo.authorId,
+        editingMemo.authorColor,
+        editingMemo.sharedWith.length > 0
+      ).catch(() => {});
     }
+    goBack();
   };
 
   const onDelete = (e: React.MouseEvent, memo: Memo) => {
@@ -77,13 +78,10 @@ export default function MemoPage() {
     setConfirmDeleteMemo(memo);
   };
 
-  const onConfirmDelete = async () => {
+  const onConfirmDelete = () => {
     if (!confirmDeleteMemo) return;
-    try {
-      await deleteMemo(currentProject.id, confirmDeleteMemo.id);
-    } finally {
-      setConfirmDeleteMemo(null);
-    }
+    deleteMemo(currentProject.id, confirmDeleteMemo.id).catch(() => {});
+    setConfirmDeleteMemo(null);
   };
 
   const onShare = (e: React.MouseEvent, memo: Memo) => {
