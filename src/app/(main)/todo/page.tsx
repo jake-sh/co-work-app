@@ -29,6 +29,22 @@ const PREV_STATUS: Record<TodoStatus, TodoStatus> = {
 const LONG_PRESS_MS = 500;
 const MOVE_CANCEL_PX = 10;
 
+// New items are prepended (newest first) right below the sticky header, so
+// if the list is scrolled down, a freshly added item lands off-screen above
+// the viewport. The header itself is `sticky top-0`, so scrollIntoView on it
+// is a no-op (its rect already reports as "in view"); walk up to the actual
+// scrollable ancestor (MainLayout's overflow-y-auto container) instead.
+function scrollNearestScrollableToTop(el: HTMLElement | null) {
+  let node = el?.parentElement ?? null;
+  while (node) {
+    if (node.scrollHeight > node.clientHeight) {
+      node.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    node = node.parentElement;
+  }
+}
+
 function useTapAndHold(onTap: () => void, onHold: () => void) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const held = useRef(false);
@@ -88,6 +104,7 @@ export default function TodoPage() {
   const [addError, setAddError] = useState<string | null>(null);
   const [actionMenuTodo, setActionMenuTodo] = useState<Todo | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   if (!currentProject) {
     return <EmptyState message={t.todo.selectProjectFirst} />;
@@ -105,6 +122,7 @@ export default function TodoPage() {
       setAddError(t.auth.genericError)
     );
     setText("");
+    scrollNearestScrollableToTop(headerRef.current);
   };
 
   const advanceStatus = (todo: Todo) => {
@@ -191,7 +209,7 @@ export default function TodoPage() {
         </div>
       )}
 
-      <div className="sticky top-0 z-[1] bg-bg-base px-5 pt-4 pb-3">
+      <div ref={headerRef} className="sticky top-0 z-[1] bg-bg-base px-5 pt-4 pb-3">
         <h1 className="mb-3 text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
           {t.todo.title}
         </h1>
