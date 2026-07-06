@@ -52,21 +52,24 @@ export default function MemoPage() {
 
   const onSave = async () => {
     if (!profile || !body.trim()) return;
-    if (view === "new") {
-      const defaultShared = profile.memoDefaultShared ?? true;
-      await addMemo(currentProject.id, title, body.trim(), profile.uid, profile.displayName, profile.colorCode, defaultShared ? currentProject.memberIds : []);
-    } else if (view === "edit" && editingMemo) {
-      await updateMemo(
-        currentProject.id,
-        editingMemo.id,
-        title,
-        body.trim(),
-        editingMemo.authorId,
-        editingMemo.authorColor,
-        editingMemo.sharedWith.length > 0
-      );
+    try {
+      if (view === "new") {
+        const defaultShared = profile.memoDefaultShared ?? true;
+        await addMemo(currentProject.id, title, body.trim(), profile.uid, profile.displayName, profile.colorCode, defaultShared ? currentProject.memberIds : []);
+      } else if (view === "edit" && editingMemo) {
+        await updateMemo(
+          currentProject.id,
+          editingMemo.id,
+          title,
+          body.trim(),
+          editingMemo.authorId,
+          editingMemo.authorColor,
+          editingMemo.sharedWith.length > 0
+        );
+      }
+    } finally {
+      goBack();
     }
-    goBack();
   };
 
   const onDelete = (e: React.MouseEvent, memo: Memo) => {
@@ -76,8 +79,11 @@ export default function MemoPage() {
 
   const onConfirmDelete = async () => {
     if (!confirmDeleteMemo) return;
-    await deleteMemo(currentProject.id, confirmDeleteMemo.id);
-    setConfirmDeleteMemo(null);
+    try {
+      await deleteMemo(currentProject.id, confirmDeleteMemo.id);
+    } finally {
+      setConfirmDeleteMemo(null);
+    }
   };
 
   const onShare = (e: React.MouseEvent, memo: Memo) => {
