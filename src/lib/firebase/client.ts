@@ -3,8 +3,7 @@ import { getAuth } from "firebase/auth";
 import {
   getFirestore,
   initializeFirestore,
-  persistentLocalCache,
-  persistentSingleTabManager,
+  memoryLocalCache,
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -21,13 +20,14 @@ export const firebaseApp = isNewApp ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(firebaseApp);
 export const db = isNewApp
   ? initializeFirestore(firebaseApp, {
-      // Single-tab persistence with forced ownership. The multi-tab manager was
-      // tried to improve realtime sync, but its cross-tab lock acquisition
-      // deadlocked persistence init on some PWA/browser setups — getUserProfile
-      // (a getDoc) then never resolved, so AuthContext's loading flag stayed
-      // true and the app hung on the splash/loading screen forever. The actual
-      // realtime chat regression was an unrelated infinite write loop, fixed
-      // separately, so this stays on the known-good single-tab config.
-      localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({ forceOwnership: true }) }),
+      // In-memory cache instead of the persistent (IndexedDB) cache. The
+      // offline persistence layer was the common cause behind every chat sync
+      // problem we hit — writes queued and flushed hours later, deletes not
+      // propagating, and (with the multi-tab manager) a hard init deadlock.
+      // Memory cache removes IndexedDB entirely, so listeners always talk
+      // straight to the server for live data and init can never stall. The
+      // only cost is a brief cold-start load and no offline reads; within an
+      // open session reads are still served from memory and stay fast.
+      localCache: memoryLocalCache(),
     })
   : getFirestore(firebaseApp);
