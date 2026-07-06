@@ -4,7 +4,7 @@ import {
   getFirestore,
   initializeFirestore,
   persistentLocalCache,
-  persistentSingleTabManager,
+  persistentMultipleTabManager,
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -21,6 +21,17 @@ export const firebaseApp = isNewApp ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(firebaseApp);
 export const db = isNewApp
   ? initializeFirestore(firebaseApp, {
-      localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({ forceOwnership: true }) }),
+      // Multiple-tab manager: coordinates one shared realtime connection across
+      // every open instance (installed PWA + browser tab, etc.). The previous
+      // single-tab manager with forceOwnership had each instance seize the
+      // persistence lease from the others, which left the losing instance's
+      // onSnapshot listeners stalled — chat not arriving live and deletes not
+      // propagating.
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+      // Force long-polling. On mobile/PWA networks Firestore's default
+      // streaming WebChannel can silently fail to receive server pushes;
+      // long-polling is slightly less efficient but reliably delivers realtime
+      // updates (new messages, deletions) instead of appearing to hang.
+      experimentalForceLongPolling: true,
     })
   : getFirestore(firebaseApp);
