@@ -1,6 +1,6 @@
 import { addDoc, collection, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
-import { addEvent } from "@/lib/data/schedule";
+import { addEvent, deleteEvent, findEventBySource } from "@/lib/data/schedule";
 import { parseScheduleFromText } from "@/lib/scheduleParse";
 import type { Todo, TodoStatus } from "@/types";
 
@@ -51,6 +51,15 @@ export async function updateTodoText(projectId: string, todoId: string, text: st
 export async function deleteTodo(projectId: string, todoId: string) {
   const { deleteDoc } = await import("firebase/firestore");
   await deleteDoc(doc(db, "projects", projectId, "todos", todoId));
+
+  // Best-effort: clean up the auto-created calendar event (if any) so it
+  // doesn't linger orphaned once its source to-do is gone.
+  try {
+    const existingEventId = await findEventBySource(projectId, { type: "todo", id: todoId });
+    if (existingEventId) await deleteEvent(projectId, existingEventId);
+  } catch {
+    // The to-do delete itself already succeeded.
+  }
 }
 
 export async function setTodoStatus(projectId: string, todoId: string, status: TodoStatus) {
