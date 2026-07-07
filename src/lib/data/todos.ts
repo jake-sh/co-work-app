@@ -38,10 +38,16 @@ export async function addTodo(
   const parsedList = parseSchedulesFromText(text);
   await Promise.all(
     parsedList.map((parsed) =>
-      addEvent(projectId, parsed.title, parsed.date, parsed.time, authorId, authorColor, {
-        type: "todo",
-        id: ref.id,
-      }).catch((err) => console.error("Auto schedule-event creation from to-do failed:", err))
+      addEvent(
+        projectId,
+        parsed.title,
+        parsed.date,
+        parsed.time,
+        authorId,
+        authorColor,
+        { type: "todo", id: ref.id },
+        parsed.rangeId ? { rangeId: parsed.rangeId, rangeStart: parsed.rangeStart!, rangeEnd: parsed.rangeEnd! } : undefined
+      ).catch((err) => console.error("Auto schedule-event creation from to-do failed:", err))
     )
   );
 }
