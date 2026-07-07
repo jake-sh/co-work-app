@@ -161,7 +161,16 @@ export default function SchedulePage() {
                   key !== selectedDate && !isSameMonth(day, month) && "text-text-disabled"
                 )}
               >
-                <span className="text-[16.5px]">{format(day, "d")}</span>
+                <span
+                  className={clsx(
+                    "text-[16.5px]",
+                    key !== selectedDate &&
+                      isSameMonth(day, month) &&
+                      (day.getDay() === 0 ? "text-red-400" : day.getDay() === 6 && "text-blue-400")
+                  )}
+                >
+                  {format(day, "d")}
+                </span>
                 {hasEvents && (
                   <div className="mt-0.5 flex w-full flex-col items-center px-0.5 leading-none">
                     {eventsByDate[key].slice(0, 3).map((ev) => (
