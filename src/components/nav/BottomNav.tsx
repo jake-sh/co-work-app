@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
@@ -13,9 +14,39 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n/I18nContext";
 
+// iOS Safari doesn't keep `position: fixed` elements pinned to the visual
+// viewport when the on-screen keyboard opens — it visibly drags them up
+// along with the keyboard instead (Android is unaffected, either via the
+// Virtual Keyboard API's overlay mode or correct viewport resizing). Rather
+// than fight that per-platform quirk, just hide the nav while a keyboard is
+// open; it's the common mobile pattern anyway and sidesteps the bug entirely.
+const KEYBOARD_HEIGHT_THRESHOLD = 200;
+
+function useKeyboardOpen(): boolean {
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => setKeyboardOpen(window.innerHeight - vv.height > KEYBOARD_HEIGHT_THRESHOLD);
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+
+  return keyboardOpen;
+}
+
 export function BottomNav() {
   const pathname = usePathname();
   const { t } = useI18n();
+  const keyboardOpen = useKeyboardOpen();
+
+  if (keyboardOpen) return null;
 
   const items = [
     { href: "/project", label: t.nav.project, Icon: FolderKanban },
