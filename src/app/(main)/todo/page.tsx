@@ -108,6 +108,7 @@ export default function TodoPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [members, setMembers] = useState<UserProfile[]>([]);
   const [filterUserId, setFilterUserId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<TodoStatus | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const memberIdsKey = currentProject?.memberIds.join(",") ?? "";
 
@@ -180,7 +181,19 @@ export default function TodoPage() {
     }
   };
 
-  const visibleTodos = filterUserId ? todos.filter((td) => td.authorId === filterUserId) : todos;
+  const toggleStatusFilter = (status: TodoStatus) => {
+    setStatusFilter((prev) => (prev === status ? null : status));
+  };
+
+  const memberFilteredTodos = filterUserId ? todos.filter((td) => td.authorId === filterUserId) : todos;
+  const newCount = memberFilteredTodos.filter((td) => td.status === "new").length;
+  const inProgressCount = memberFilteredTodos.filter((td) => td.status === "in_progress").length;
+  const doneCount = memberFilteredTodos.filter((td) => td.status === "done").length;
+  const totalCount = memberFilteredTodos.length;
+
+  const visibleTodos = statusFilter
+    ? memberFilteredTodos.filter((td) => td.status === statusFilter)
+    : memberFilteredTodos;
   const active = visibleTodos
     .filter((td) => td.status !== "done")
     .sort((a, b) => b.createdAt - a.createdAt);
@@ -261,6 +274,28 @@ export default function TodoPage() {
             </button>
           </div>
         </div>
+
+        <div className="mb-3 flex items-center justify-between text-xs font-semibold text-text-secondary">
+          <button onClick={() => toggleStatusFilter("new")} className="flex items-center gap-1">
+            <span>New</span>
+            <span className={statusFilter === "new" ? "text-[#9900CC]" : "text-text-primary"}>
+              {newCount}
+            </span>
+          </button>
+          <button onClick={() => toggleStatusFilter("in_progress")} className="flex items-center gap-1">
+            <span>Inprogress</span>
+            <span className={statusFilter === "in_progress" ? "text-[#9900CC]" : "text-text-primary"}>
+              {inProgressCount}/{newCount + inProgressCount}
+            </span>
+          </button>
+          <button onClick={() => toggleStatusFilter("done")} className="flex items-center gap-1">
+            <span>Done</span>
+            <span className={statusFilter === "done" ? "text-[#9900CC]" : "text-text-primary"}>
+              {doneCount}/{totalCount}
+            </span>
+          </button>
+        </div>
+
         <form onSubmit={onAdd} className="flex gap-2">
           <TextInput
             placeholder={t.todo.inputPlaceholder}
