@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
+import { addDoc, collection, doc, onSnapshot, query, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { addEvent } from "@/lib/data/schedule";
 import { parseSchedulesFromText } from "@/lib/scheduleParse";
@@ -69,4 +69,25 @@ export async function setTodoStatus(projectId: string, todoId: string, status: T
     status,
     completedAt: status === "done" ? Date.now() : null,
   });
+}
+
+// Undo for a swipe-delete: recreates the doc at its original id with its
+// exact prior fields. Deliberately doesn't re-run schedule auto-parsing —
+// deleting a to-do never touched its linked schedule event either, so undo
+// shouldn't create a new one.
+export async function restoreTodo(projectId: string, todo: Todo) {
+  const { id, ...fields } = todo;
+  await setDoc(doc(db, "projects", projectId, "todos", id), fields);
+}
+
+// Undo for a status change (advance/revert/cancel/restore): restores both
+// the status and its exact prior completedAt, rather than letting
+// setTodoStatus re-derive a fresh completedAt timestamp.
+export async function restoreTodoStatus(
+  projectId: string,
+  todoId: string,
+  status: TodoStatus,
+  completedAt: number | null
+) {
+  await updateDoc(doc(db, "projects", projectId, "todos", todoId), { status, completedAt });
 }
