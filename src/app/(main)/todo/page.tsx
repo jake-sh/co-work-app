@@ -7,11 +7,12 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { addTodo, deleteTodo, setTodoStatus, updateTodoText } from "@/lib/data/todos";
+import { getUserProfile } from "@/lib/data/users";
 import { useData } from "@/lib/context/DataContext";
 import { TextInput } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ColorDot } from "@/components/ui/ColorDot";
-import type { Todo, TodoStatus } from "@/types";
+import type { Todo, TodoStatus, UserProfile } from "@/types";
 import { clsx } from "clsx";
 
 const NEXT_STATUS: Record<TodoStatus, TodoStatus> = {
@@ -105,7 +106,22 @@ export default function TodoPage() {
   const [addError, setAddError] = useState<string | null>(null);
   const [actionMenuTodo, setActionMenuTodo] = useState<Todo | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [members, setMembers] = useState<UserProfile[]>([]);
+  const [filterUserId, setFilterUserId] = useState<string | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  const memberIdsKey = currentProject?.memberIds.join(",") ?? "";
+
+  useEffect(() => {
+    if (!currentProject) return;
+    let cancelled = false;
+    Promise.all(currentProject.memberIds.map((uid) => getUserProfile(uid))).then((profiles) => {
+      if (!cancelled) setMembers(profiles.filter(Boolean) as UserProfile[]);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memberIdsKey]);
 
   if (!currentProject) {
     return <EmptyState message={t.todo.selectProjectFirst} />;
@@ -164,10 +180,11 @@ export default function TodoPage() {
     }
   };
 
-  const active = todos
+  const visibleTodos = filterUserId ? todos.filter((td) => td.authorId === filterUserId) : todos;
+  const active = visibleTodos
     .filter((td) => td.status !== "done")
     .sort((a, b) => b.createdAt - a.createdAt);
-  const done = todos
+  const done = visibleTodos
     .filter((td) => td.status === "done")
     .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
   const sortedTodos = [...active, ...done];
@@ -215,9 +232,35 @@ export default function TodoPage() {
       )}
 
       <div ref={headerRef} className="sticky top-0 z-[1] bg-bg-base px-5 pt-4 pb-3">
-        <h1 className="mb-3 text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
-          {t.todo.title}
-        </h1>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h1 className="text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
+            {t.todo.title}
+          </h1>
+          <div className="flex shrink-0 items-center gap-2">
+            {members.map((m) => (
+              <button
+                key={m.uid}
+                onClick={() => setFilterUserId(m.uid)}
+                aria-label={m.nickname ?? m.displayName}
+                className="h-3.5 w-3.5 rounded-full"
+                style={{
+                  backgroundColor: m.colorCode,
+                  outline: filterUserId === m.uid ? "2px solid white" : "none",
+                  outlineOffset: 2,
+                }}
+              />
+            ))}
+            <button
+              onClick={() => setFilterUserId(null)}
+              className={clsx(
+                "text-xs font-semibold",
+                filterUserId === null ? "text-text-primary" : "text-text-disabled"
+              )}
+            >
+              All
+            </button>
+          </div>
+        </div>
         <form onSubmit={onAdd} className="flex gap-2">
           <TextInput
             placeholder={t.todo.inputPlaceholder}
