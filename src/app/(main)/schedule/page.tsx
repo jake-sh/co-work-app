@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { addEvent, deleteEvent, updateEvent, updateEventColor } from "@/lib/data/schedule";
+import { getHolidayName } from "@/lib/holidays";
 import { useData } from "@/lib/context/DataContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -148,7 +149,9 @@ export default function SchedulePage() {
         >
           {days.map((day) => {
             const key = format(day, "yyyy-MM-dd");
-            const hasEvents = !!eventsByDate[key]?.length;
+            const holidayName = getHolidayName(key);
+            const dayEvents = eventsByDate[key] ?? [];
+            const eventSlots = holidayName ? 2 : 3;
             return (
               <button
                 key={key}
@@ -166,14 +169,21 @@ export default function SchedulePage() {
                     "text-[16.5px]",
                     key !== selectedDate &&
                       isSameMonth(day, month) &&
-                      (day.getDay() === 0 ? "text-red-400" : day.getDay() === 6 && "text-blue-400")
+                      (holidayName || day.getDay() === 0
+                        ? "text-red-400"
+                        : day.getDay() === 6 && "text-blue-400")
                   )}
                 >
                   {format(day, "d")}
                 </span>
-                {hasEvents && (
+                {(holidayName || dayEvents.length > 0) && (
                   <div className="mt-0.5 flex w-full flex-col items-center px-0.5 leading-none">
-                    {eventsByDate[key].slice(0, 3).map((ev) => (
+                    {holidayName && (
+                      <span className="w-full truncate text-center text-[8px] text-red-400">
+                        {holidayName}
+                      </span>
+                    )}
+                    {dayEvents.slice(0, eventSlots).map((ev) => (
                       <span
                         key={ev.id}
                         className="w-full truncate text-center text-[8px]"
@@ -182,9 +192,9 @@ export default function SchedulePage() {
                         {cellLabel(ev.title)}
                       </span>
                     ))}
-                    {eventsByDate[key].length > 3 && (
+                    {dayEvents.length > eventSlots && (
                       <span className="text-[8px] text-text-disabled">
-                        +{eventsByDate[key].length - 3}
+                        +{dayEvents.length - eventSlots}
                       </span>
                     )}
                   </div>
