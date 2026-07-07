@@ -385,7 +385,7 @@ function TodoRow({
                 inputRef.current?.blur();
               }
             }}
-            className="flex-1 bg-transparent text-sm text-text-primary outline-none"
+            className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none"
           />
         ) : (
           <span
