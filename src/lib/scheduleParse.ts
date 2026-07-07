@@ -102,17 +102,22 @@ function stripConsumed(text: string, consumed: string[]): string {
 }
 
 export function parseScheduleFromText(text: string, now: Date = new Date()): ParsedSchedule | null {
+  // Only the first line is ever considered — everything after a line break is
+  // treated as detail/body content, not part of the date mention or its
+  // title, and is dropped entirely (matches how the memo title is derived).
+  const line = text.split("\n")[0] ?? text;
+
   let date: Date | null = null;
   const consumed: string[] = [];
 
-  let m = text.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
+  let m = line.match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
   if (m) {
     date = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
     consumed.push(m[0]);
   }
 
   if (!date) {
-    m = text.match(/(\d{1,2})\s?월\s?(\d{1,2})\s?일/);
+    m = line.match(/(\d{1,2})\s?월\s?(\d{1,2})\s?일/);
     if (m) {
       const month = parseInt(m[1], 10) - 1;
       const day = parseInt(m[2], 10);
@@ -122,7 +127,7 @@ export function parseScheduleFromText(text: string, now: Date = new Date()): Par
   }
 
   if (!date) {
-    m = text.match(/(?<!\d)(\d{1,2})[./](\d{1,2})(?!\d)/);
+    m = line.match(/(?<!\d)(\d{1,2})[./](\d{1,2})(?!\d)/);
     if (m) {
       const month = parseInt(m[1], 10) - 1;
       const day = parseInt(m[2], 10);
@@ -134,29 +139,29 @@ export function parseScheduleFromText(text: string, now: Date = new Date()): Par
   }
 
   if (!date) {
-    let mm = text.match(/모레/);
+    let mm = line.match(/모레/);
     if (mm) {
       date = addDays(now, 2);
       consumed.push(mm[0]);
-    } else if ((mm = text.match(/내일|tomorrow/i))) {
+    } else if ((mm = line.match(/내일|tomorrow/i))) {
       date = addDays(now, 1);
       consumed.push(mm[0]);
-    } else if ((mm = text.match(/오늘|today/i))) {
+    } else if ((mm = line.match(/오늘|today/i))) {
       date = now;
       consumed.push(mm[0]);
     }
   }
 
   if (!date) {
-    const nextWeekMatch = text.match(/다음\s?주/);
-    const thisWeekMatch = text.match(/이번\s?주/);
+    const nextWeekMatch = line.match(/다음\s?주/);
+    const thisWeekMatch = line.match(/이번\s?주/);
     const nextWeek = !!nextWeekMatch;
-    const lowerText = text.toLowerCase();
+    const lowerLine = line.toLowerCase();
     for (const [key, dayIdx] of Object.entries(WEEKDAYS)) {
-      const idx = lowerText.indexOf(key.toLowerCase());
+      const idx = lowerLine.indexOf(key.toLowerCase());
       if (idx !== -1) {
         date = resolveWeekday(now, dayIdx, nextWeek);
-        consumed.push(text.slice(idx, idx + key.length));
+        consumed.push(line.slice(idx, idx + key.length));
         if (nextWeekMatch) consumed.push(nextWeekMatch[0]);
         if (thisWeekMatch) consumed.push(thisWeekMatch[0]);
         break;
@@ -166,12 +171,12 @@ export function parseScheduleFromText(text: string, now: Date = new Date()): Par
 
   if (!date) return null;
 
-  const time = parseTime(text);
+  const time = parseTime(line);
   if (time) consumed.push(time.raw);
 
   return {
     date: format(date, "yyyy-MM-dd"),
     time: time?.value ?? null,
-    title: stripConsumed(text, consumed),
+    title: stripConsumed(line, consumed),
   };
 }
