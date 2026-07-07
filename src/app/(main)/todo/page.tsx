@@ -32,12 +32,11 @@ const PREV_STATUS: Record<TodoStatus, TodoStatus> = {
 const LONG_PRESS_MS = 500;
 const MOVE_CANCEL_PX = 10;
 const SWIPE_DELETE_PX = 150;
-// Framer's drag="x" only ever looks at the horizontal component, so a
-// vertical scroll with any sideways thumb drift still nudges the row
-// sideways. Only treat a gesture as an intentional swipe once its
-// horizontal movement clearly dominates the vertical — otherwise it's a
-// scroll, and the reveal box/actions should stay out of it.
-const SWIPE_DOMINANCE_RATIO = 2;
+// A ratio check alone still let framer's drag="x" keep translating the row
+// off raw pointer-x movement during a scroll. Trip-wire instead: the moment
+// vertical movement exceeds this, kill the drag outright (drag={false}) for
+// the rest of the gesture so the touch goes back to being a plain scroll.
+const VERTICAL_CANCEL_PX = 20;
 const UNDO_STACK_LIMIT = 5;
 const UNDO_TTL_MS = 60_000;
 
@@ -415,15 +414,15 @@ function TodoRow({
     onEdit();
   });
   const pillHandlers = useTapAndHold(onAdvance, onRevert);
-
-  const isHorizontalSwipe = (info: PanInfo) =>
-    Math.abs(info.offset.x) > Math.abs(info.offset.y) * SWIPE_DOMINANCE_RATIO;
+  // Latches true the moment a drag's vertical movement crosses
+  // VERTICAL_CANCEL_PX, killing drag (drag={false}) for the rest of this
+  // gesture so it hands back off to native scrolling instead of continuing
+  // to track horizontally. Reset on pointer release, ready for the next.
+  const [verticalCancelled, setVerticalCancelled] = useState(false);
 
   const onDrag = (_e: unknown, info: PanInfo) => {
-    if (!isHorizontalSwipe(info)) {
-      // Vertical-dominant movement (a scroll with sideways drift) — don't
-      // show or arm the reveal box, even though framer's drag="x" is still
-      // nudging the row's own transform off the raw pointer delta.
+    if (Math.abs(info.offset.y) > VERTICAL_CANCEL_PX) {
+      setVerticalCancelled(true);
       setDragDir(null);
       setArmed(false);
       return;
@@ -433,7 +432,7 @@ function TodoRow({
   };
 
   const onDragEnd = (_e: unknown, info: PanInfo) => {
-    if (isHorizontalSwipe(info)) {
+    if (!verticalCancelled) {
       if (info.offset.x > SWIPE_DELETE_PX) onSwipeDelete();
       else if (info.offset.x < -SWIPE_DELETE_PX) onSwipeCancel();
     }
@@ -506,11 +505,13 @@ function TodoRow({
       )}
       <motion.div
         ref={rowRef}
-        drag={isEditing ? false : "x"}
+        drag={isEditing || verticalCancelled ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={{ left: 1, right: 1 }}
         onDrag={onDrag}
         onDragEnd={onDragEnd}
+        onPointerUp={() => setVerticalCancelled(false)}
+        onPointerCancel={() => setVerticalCancelled(false)}
         style={{ touchAction: "pan-y", minHeight: lockedHeight ?? undefined }}
         className="relative col-start-1 row-start-1 min-w-0 flex items-center gap-2.5 rounded-card bg-surface-card px-3 py-3"
       >
