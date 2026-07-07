@@ -53,7 +53,8 @@ export async function addEvent(
   time: string | null,
   authorId: string,
   authorColor: string,
-  source?: { type: "memo" | "todo"; id: string }
+  source?: { type: "memo" | "todo"; id: string },
+  range?: { rangeId: string; rangeStart: string; rangeEnd: string }
 ) {
   await addDoc(eventsCol(projectId), {
     title,
@@ -63,5 +64,31 @@ export async function addEvent(
     authorColor,
     createdAt: Date.now(),
     ...(source ? { source } : {}),
+    ...(range ? range : {}),
   });
+}
+
+// A date-range mention ("7/5~7/7 교육") creates one event per day, all
+// sharing rangeId, so the schedule list can show/edit/delete them as a
+// single period instead of separate rows.
+export async function findEventIdsByRange(projectId: string, rangeId: string): Promise<string[]> {
+  const snap = await getDocs(query(eventsCol(projectId), where("rangeId", "==", rangeId)));
+  return snap.docs.map((d) => d.id);
+}
+
+export async function deleteEventsByRange(projectId: string, rangeId: string) {
+  const ids = await findEventIdsByRange(projectId, rangeId);
+  await Promise.all(ids.map((id) => deleteEvent(projectId, id)));
+}
+
+export async function updateEventsByRange(
+  projectId: string,
+  rangeId: string,
+  title: string,
+  time: string | null
+) {
+  const ids = await findEventIdsByRange(projectId, rangeId);
+  await Promise.all(
+    ids.map((id) => updateDoc(doc(db, "projects", projectId, "schedule", id), { title, time }))
+  );
 }

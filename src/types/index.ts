@@ -61,6 +61,12 @@ export interface ScheduleEvent {
   labelColor?: string;
   createdAt: number;
   source?: { type: "memo" | "todo"; id: string };
+  // Set when this event was auto-created from a date range ("7/5~7/7 교육"):
+  // one document per day, all sharing rangeId so the schedule list can show
+  // them as a single period and edit/delete them as a group.
+  rangeId?: string;
+  rangeStart?: string;
+  rangeEnd?: string;
 }
 
 export interface ChatMessage {

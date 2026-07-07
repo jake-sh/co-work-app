@@ -17,7 +17,14 @@ import { clsx } from "clsx";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addEvent, deleteEvent, updateEvent, updateEventColor } from "@/lib/data/schedule";
+import {
+  addEvent,
+  deleteEvent,
+  deleteEventsByRange,
+  updateEvent,
+  updateEventColor,
+  updateEventsByRange,
+} from "@/lib/data/schedule";
 import { getHolidayName } from "@/lib/holidays";
 import { useData } from "@/lib/context/DataContext";
 import { Card } from "@/components/ui/Card";
@@ -35,6 +42,16 @@ function resolveColor(ev: ScheduleEvent): string {
   if (ev.title.includes("본부장")) return "#ef4444";
   if (/ceo|씨이오/i.test(ev.title)) return "#a855f7";
   return "#9b9b9b";
+}
+
+function formatShortDate(dateStr: string): string {
+  const [, m, d] = dateStr.split("-");
+  return `${parseInt(m, 10)}/${parseInt(d, 10)}`;
+}
+
+function displayTitle(ev: ScheduleEvent): string {
+  if (!ev.rangeStart || !ev.rangeEnd) return ev.title;
+  return `${formatShortDate(ev.rangeStart)}~${formatShortDate(ev.rangeEnd)} ${ev.title}`;
 }
 
 function cellLabel(title: string): string {
@@ -100,12 +117,25 @@ export default function SchedulePage() {
 
   const saveEdit = async () => {
     if (!editingId || !editTitle.trim()) return;
-    await updateEvent(currentProject.id, editingId, editTitle.trim(), editDate, editTime || null);
+    const ev = events.find((e) => e.id === editingId);
+    if (ev?.rangeId) {
+      // A ranged event's title/time is shared across every day in the
+      // period; the date itself isn't editable here (see the read-only
+      // range display in the edit form) since shifting a multi-day period
+      // isn't a single-date edit.
+      await updateEventsByRange(currentProject.id, ev.rangeId, editTitle.trim(), editTime || null);
+    } else {
+      await updateEvent(currentProject.id, editingId, editTitle.trim(), editDate, editTime || null);
+    }
     setEditingId(null);
   };
 
-  const onDeleteEvent = async (eventId: string) => {
-    await deleteEvent(currentProject.id, eventId);
+  const onDeleteEvent = async (ev: ScheduleEvent) => {
+    if (ev.rangeId) {
+      await deleteEventsByRange(currentProject.id, ev.rangeId);
+    } else {
+      await deleteEvent(currentProject.id, ev.id);
+    }
     setEditingId(null);
   };
 
@@ -248,11 +278,17 @@ export default function SchedulePage() {
                         onChange={(e) => setEditTitle(e.target.value)}
                         placeholder={t.schedule.eventTitle}
                       />
-                      <TextInput
-                        type="date"
-                        value={editDate}
-                        onChange={(e) => setEditDate(e.target.value)}
-                      />
+                      {ev.rangeId ? (
+                        <p className="text-xs text-text-secondary">
+                          {formatShortDate(ev.rangeStart!)}~{formatShortDate(ev.rangeEnd!)}
+                        </p>
+                      ) : (
+                        <TextInput
+                          type="date"
+                          value={editDate}
+                          onChange={(e) => setEditDate(e.target.value)}
+                        />
+                      )}
                       <TextInput
                         type="time"
                         value={editTime}
@@ -266,7 +302,7 @@ export default function SchedulePage() {
                           {t.schedule.cancel}
                         </Button>
                         <button
-                          onClick={() => onDeleteEvent(ev.id)}
+                          onClick={() => onDeleteEvent(ev)}
                           className="flex items-center justify-center rounded-xl bg-red-500/20 px-3 text-red-400"
                         >
                           <Trash2 size={14} />
@@ -286,7 +322,7 @@ export default function SchedulePage() {
                       style={{ backgroundColor: resolveColor(ev) }}
                     />
                     <div className="flex flex-1 flex-col">
-                      <span className="text-sm">{ev.title}</span>
+                      <span className="text-sm">{displayTitle(ev)}</span>
                       {ev.source && (
                         <span className="mt-0.5 flex items-center gap-1 text-[10px] text-text-secondary">
                           <Sparkles size={10} />

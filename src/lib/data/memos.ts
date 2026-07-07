@@ -71,7 +71,16 @@ async function syncScheduleFromMemo(
     await Promise.all(existingEventIds.map((id) => deleteEvent(projectId, id)));
     await Promise.all(
       parsedList.map((parsed) =>
-        addEvent(projectId, parsed.title, parsed.date, parsed.time, authorId, authorColor, source)
+        addEvent(
+          projectId,
+          parsed.title,
+          parsed.date,
+          parsed.time,
+          authorId,
+          authorColor,
+          source,
+          parsed.rangeId ? { rangeId: parsed.rangeId, rangeStart: parsed.rangeStart!, rangeEnd: parsed.rangeEnd! } : undefined
+        )
       )
     );
   } catch (err) {

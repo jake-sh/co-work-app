@@ -24,6 +24,12 @@ export interface ParsedSchedule {
   // auto-created event isn't titled with a redundant restatement of its own
   // date (e.g. "이번주 금요일 소장보고" -> "소장보고").
   title: string;
+  // Set when this entry is one day of a parsed range ("7/5~7/7 교육"): every
+  // entry generated from the same range shares rangeId/rangeStart/rangeEnd,
+  // so callers can tag the created events as one group.
+  rangeId?: string;
+  rangeStart?: string;
+  rangeEnd?: string;
 }
 
 function pad(n: number): string {
@@ -148,9 +154,19 @@ function parseLine(line: string, now: Date): ParsedSchedule[] {
       const time = parseTime(line);
       if (time) consumed.push(time.raw);
       const title = stripConsumed(line, consumed);
+      const rangeId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      const rangeStart = format(range.start, "yyyy-MM-dd");
+      const rangeEnd = format(range.end, "yyyy-MM-dd");
       const entries: ParsedSchedule[] = [];
       for (let i = 0; i < days; i++) {
-        entries.push({ date: format(addDays(range.start, i), "yyyy-MM-dd"), time: time?.value ?? null, title });
+        entries.push({
+          date: format(addDays(range.start, i), "yyyy-MM-dd"),
+          time: time?.value ?? null,
+          title,
+          rangeId,
+          rangeStart,
+          rangeEnd,
+        });
       }
       return entries;
     }
