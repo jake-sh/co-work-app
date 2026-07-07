@@ -1,7 +1,7 @@
 import { addDoc, collection, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { addEvent } from "@/lib/data/schedule";
-import { parseScheduleFromText } from "@/lib/scheduleParse";
+import { parseSchedulesFromText } from "@/lib/scheduleParse";
 import type { Todo, TodoStatus } from "@/types";
 
 function todosCol(projectId: string) {
@@ -35,13 +35,15 @@ export async function addTodo(
     completedAt: null,
   });
 
-  const parsed = parseScheduleFromText(text);
-  if (parsed) {
-    await addEvent(projectId, parsed.title, parsed.date, parsed.time, authorId, authorColor, {
-      type: "todo",
-      id: ref.id,
-    }).catch((err) => console.error("Auto schedule-event creation from to-do failed:", err));
-  }
+  const parsedList = parseSchedulesFromText(text);
+  await Promise.all(
+    parsedList.map((parsed) =>
+      addEvent(projectId, parsed.title, parsed.date, parsed.time, authorId, authorColor, {
+        type: "todo",
+        id: ref.id,
+      }).catch((err) => console.error("Auto schedule-event creation from to-do failed:", err))
+    )
+  );
 }
 
 export async function updateTodoText(projectId: string, todoId: string, text: string) {

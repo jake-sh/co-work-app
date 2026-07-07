@@ -101,12 +101,9 @@ function stripConsumed(text: string, consumed: string[]): string {
   return title || text.trim();
 }
 
-export function parseScheduleFromText(text: string, now: Date = new Date()): ParsedSchedule | null {
-  // Only the first line is ever considered — everything after a line break is
-  // treated as detail/body content, not part of the date mention or its
-  // title, and is dropped entirely (matches how the memo title is derived).
-  const line = text.split("\n")[0] ?? text;
-
+// Parses a single line in isolation. A line with no recognizable date
+// mention returns null and is treated as plain detail/body text.
+function parseLine(line: string, now: Date): ParsedSchedule | null {
   let date: Date | null = null;
   const consumed: string[] = [];
 
@@ -179,4 +176,17 @@ export function parseScheduleFromText(text: string, now: Date = new Date()): Par
     time: time?.value ?? null,
     title: stripConsumed(line, consumed),
   };
+}
+
+// Each line is parsed independently: a line that opens with a date mention
+// becomes its own schedule entry (title = that line with the date/time
+// stripped out); a line with no date is plain detail text and is dropped
+// entirely rather than being appended to the nearest preceding entry.
+export function parseSchedulesFromText(text: string, now: Date = new Date()): ParsedSchedule[] {
+  const results: ParsedSchedule[] = [];
+  for (const line of text.split("\n")) {
+    const parsed = parseLine(line, now);
+    if (parsed) results.push(parsed);
+  }
+  return results;
 }

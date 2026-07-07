@@ -6,14 +6,16 @@ function eventsCol(projectId: string) {
   return collection(db, "projects", projectId, "schedule");
 }
 
-export async function findEventBySource(
+// A memo/to-do can now auto-create more than one schedule event (one per
+// dated line), so lookups by source return every matching event id.
+export async function findEventIdsBySource(
   projectId: string,
   source: { type: "memo" | "todo"; id: string }
-): Promise<string | null> {
+): Promise<string[]> {
   const snap = await getDocs(
     query(eventsCol(projectId), where("source.type", "==", source.type), where("source.id", "==", source.id))
   );
-  return snap.empty ? null : snap.docs[0].id;
+  return snap.docs.map((d) => d.id);
 }
 
 export function subscribeEvents(projectId: string, cb: (events: ScheduleEvent[]) => void) {

@@ -1,7 +1,7 @@
 import { addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, onSnapshot, query, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
-import { addEvent, deleteEvent, findEventBySource, updateEvent } from "@/lib/data/schedule";
-import { parseScheduleFromText } from "@/lib/scheduleParse";
+import { addEvent, deleteEvent, findEventIdsBySource } from "@/lib/data/schedule";
+import { parseSchedulesFromText } from "@/lib/scheduleParse";
 import type { Memo } from "@/types";
 
 function memosCol(projectId: string) {
@@ -49,10 +49,11 @@ export function subscribeMemos(projectId: string, uid: string, cb: (memos: Memo[
   };
 }
 
-// Keeps the memo's auto-created calendar event (if any) in sync: creates it
-// the first time a shared, non-excluded memo's text parses to a date,
-// updates it if the date/time changes, and removes it if the memo stops
-// qualifying (unshared, edited to remove the date, or now excluded).
+// Keeps the memo's auto-created calendar events in sync: a memo can contain
+// several dated lines, each becoming its own event. Re-derives the full set
+// on every save by dropping whatever was previously linked to this memo and
+// recreating it from the current parse — simpler than diffing line-by-line,
+// and correct whether lines were added, removed, reordered, or edited.
 async function syncScheduleFromMemo(
   projectId: string,
   memoId: string,
@@ -65,17 +66,14 @@ async function syncScheduleFromMemo(
 
   try {
     const isExcludedFromParsing = fullText.includes("주요신문");
-    const parsed = isShared && !isExcludedFromParsing ? parseScheduleFromText(fullText) : null;
-    const existingEventId = await findEventBySource(projectId, source);
-    if (parsed) {
-      if (existingEventId) {
-        await updateEvent(projectId, existingEventId, parsed.title, parsed.date, parsed.time);
-      } else {
-        await addEvent(projectId, parsed.title, parsed.date, parsed.time, authorId, authorColor, source);
-      }
-    } else if (existingEventId) {
-      await deleteEvent(projectId, existingEventId);
-    }
+    const parsedList = isShared && !isExcludedFromParsing ? parseSchedulesFromText(fullText) : [];
+    const existingEventIds = await findEventIdsBySource(projectId, source);
+    await Promise.all(existingEventIds.map((id) => deleteEvent(projectId, id)));
+    await Promise.all(
+      parsedList.map((parsed) =>
+        addEvent(projectId, parsed.title, parsed.date, parsed.time, authorId, authorColor, source)
+      )
+    );
   } catch (err) {
     // Best-effort: the memo save itself already succeeded.
     console.error("Auto schedule-event sync from memo failed:", err);
