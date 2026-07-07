@@ -324,8 +324,19 @@ function TodoRow({
 }) {
   const [editText, setEditText] = useState(todo.text);
   const [armed, setArmed] = useState(false);
+  // Wrapped multi-line text is taller than the single-line edit <input>, so
+  // switching to edit mid-hold collapses the row's height while the finger
+  // is still down — that layout jump was knocking the touch off the row and
+  // kicking the user back out of edit. Lock the row to its pre-edit height
+  // (measured on the still-showing text, before onEdit flips the DOM to the
+  // input) and release the lock once editing ends.
+  const [lockedHeight, setLockedHeight] = useState<number | null>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const textHandlers = useTapAndHold(() => {}, onEdit);
+  const textHandlers = useTapAndHold(() => {}, () => {
+    if (rowRef.current) setLockedHeight(rowRef.current.getBoundingClientRect().height);
+    onEdit();
+  });
   const pillHandlers = useTapAndHold(onAdvance, onRevert);
 
   const onDrag = (_e: unknown, info: PanInfo) => {
@@ -344,6 +355,8 @@ function TodoRow({
       const input = inputRef.current;
       input?.focus();
       input?.setSelectionRange(input.value.length, input.value.length);
+    } else {
+      setLockedHeight(null);
     }
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [isEditing, todo.text]);
@@ -364,12 +377,13 @@ function TodoRow({
         <Trash2 size={18} className={armed ? "text-red-400" : "text-gray-400"} />
       </div>
       <motion.div
+        ref={rowRef}
         drag={isEditing ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={{ left: 0, right: 1 }}
         onDrag={onDrag}
         onDragEnd={onDragEnd}
-        style={{ touchAction: "pan-y" }}
+        style={{ touchAction: "pan-y", minHeight: lockedHeight ?? undefined }}
         className="relative flex items-center gap-2.5 rounded-card bg-surface-card px-3 py-3"
       >
         <ColorDot color={todo.authorColor} />
