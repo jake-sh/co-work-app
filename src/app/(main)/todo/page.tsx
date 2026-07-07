@@ -32,6 +32,12 @@ const PREV_STATUS: Record<TodoStatus, TodoStatus> = {
 const LONG_PRESS_MS = 500;
 const MOVE_CANCEL_PX = 10;
 const SWIPE_DELETE_PX = 150;
+// Framer's drag="x" only ever looks at the horizontal component, so a
+// vertical scroll with any sideways thumb drift still nudges the row
+// sideways. Only treat a gesture as an intentional swipe once its
+// horizontal movement clearly dominates the vertical — otherwise it's a
+// scroll, and the reveal box/actions should stay out of it.
+const SWIPE_DOMINANCE_RATIO = 2;
 const UNDO_STACK_LIMIT = 5;
 const UNDO_TTL_MS = 60_000;
 
@@ -410,14 +416,27 @@ function TodoRow({
   });
   const pillHandlers = useTapAndHold(onAdvance, onRevert);
 
+  const isHorizontalSwipe = (info: PanInfo) =>
+    Math.abs(info.offset.x) > Math.abs(info.offset.y) * SWIPE_DOMINANCE_RATIO;
+
   const onDrag = (_e: unknown, info: PanInfo) => {
+    if (!isHorizontalSwipe(info)) {
+      // Vertical-dominant movement (a scroll with sideways drift) — don't
+      // show or arm the reveal box, even though framer's drag="x" is still
+      // nudging the row's own transform off the raw pointer delta.
+      setDragDir(null);
+      setArmed(false);
+      return;
+    }
     setDragDir(info.offset.x > 0 ? "right" : info.offset.x < 0 ? "left" : null);
     setArmed(Math.abs(info.offset.x) > SWIPE_DELETE_PX);
   };
 
   const onDragEnd = (_e: unknown, info: PanInfo) => {
-    if (info.offset.x > SWIPE_DELETE_PX) onSwipeDelete();
-    else if (info.offset.x < -SWIPE_DELETE_PX) onSwipeCancel();
+    if (isHorizontalSwipe(info)) {
+      if (info.offset.x > SWIPE_DELETE_PX) onSwipeDelete();
+      else if (info.offset.x < -SWIPE_DELETE_PX) onSwipeCancel();
+    }
     setArmed(false);
     setDragDir(null);
   };
