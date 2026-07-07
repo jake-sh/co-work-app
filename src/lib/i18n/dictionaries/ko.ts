@@ -64,6 +64,8 @@ const ko: Dictionary = {
     statusNew: "신규",
     statusInProgress: "진행중",
     statusDone: "완료",
+    statusCancelled: "취소됨",
+    swipeCancel: "Cancel",
     empty: "등록된 할 일이 없어요",
     selectProjectFirst: "먼저 프로젝트를 선택하세요",
     edit: "수정",

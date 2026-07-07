@@ -62,6 +62,8 @@ export interface Dictionary {
     statusNew: string;
     statusInProgress: string;
     statusDone: string;
+    statusCancelled: string;
+    swipeCancel: string;
     empty: string;
     selectProjectFirst: string;
     edit: string;

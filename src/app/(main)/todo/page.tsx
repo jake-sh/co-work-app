@@ -19,12 +19,14 @@ const NEXT_STATUS: Record<TodoStatus, TodoStatus> = {
   new: "in_progress",
   in_progress: "done",
   done: "done",
+  cancelled: "cancelled",
 };
 
 const PREV_STATUS: Record<TodoStatus, TodoStatus> = {
   new: "new",
   in_progress: "new",
   done: "in_progress",
+  cancelled: "cancelled",
 };
 
 const LONG_PRESS_MS = 500;
@@ -158,6 +160,10 @@ export default function TodoPage() {
     deleteTodo(currentProject.id, todo.id).catch(() => {});
   };
 
+  const onSwipeCancel = (todo: Todo) => {
+    setTodoStatus(currentProject.id, todo.id, "cancelled").catch(() => {});
+  };
+
   const onSaveEdit = (todo: Todo, nextText: string) => {
     setEditingId(null);
     const trimmed = nextText.trim();
@@ -171,26 +177,33 @@ export default function TodoPage() {
   };
 
   const memberFilteredTodos = filterUserId ? todos.filter((td) => td.authorId === filterUserId) : todos;
-  const newCount = memberFilteredTodos.filter((td) => td.status === "new").length;
-  const inProgressCount = memberFilteredTodos.filter((td) => td.status === "in_progress").length;
-  const doneCount = memberFilteredTodos.filter((td) => td.status === "done").length;
-  const totalCount = memberFilteredTodos.length;
+  // Cancelled to-dos are excluded from every count entirely (not just "not
+  // counted as done") — they're not part of New/Progress/Done's denominator.
+  const countableTodos = memberFilteredTodos.filter((td) => td.status !== "cancelled");
+  const newCount = countableTodos.filter((td) => td.status === "new").length;
+  const inProgressCount = countableTodos.filter((td) => td.status === "in_progress").length;
+  const doneCount = countableTodos.filter((td) => td.status === "done").length;
+  const totalCount = countableTodos.length;
 
   const visibleTodos = statusFilter
     ? memberFilteredTodos.filter((td) => td.status === statusFilter)
     : memberFilteredTodos;
   const active = visibleTodos
-    .filter((td) => td.status !== "done")
+    .filter((td) => td.status === "new" || td.status === "in_progress")
     .sort((a, b) => b.createdAt - a.createdAt);
   const done = visibleTodos
     .filter((td) => td.status === "done")
     .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
-  const sortedTodos = [...active, ...done];
+  const cancelled = visibleTodos
+    .filter((td) => td.status === "cancelled")
+    .sort((a, b) => b.createdAt - a.createdAt);
+  const sortedTodos = [...active, ...done, ...cancelled];
 
   const statusLabel: Record<TodoStatus, string> = {
     new: t.todo.statusNew,
     in_progress: t.todo.statusInProgress,
     done: t.todo.statusDone,
+    cancelled: t.todo.statusCancelled,
   };
 
   return (
@@ -293,6 +306,7 @@ export default function TodoPage() {
                   onEdit={() => setEditingId(todo.id)}
                   onSaveEdit={(nextText) => onSaveEdit(todo, nextText)}
                   onSwipeDelete={() => onSwipeDelete(todo)}
+                  onSwipeCancel={() => onSwipeCancel(todo)}
                 />
               ))}
             </AnimatePresence>
@@ -312,6 +326,7 @@ function TodoRow({
   onEdit,
   onSaveEdit,
   onSwipeDelete,
+  onSwipeCancel,
 }: {
   todo: Todo;
   statusLabel: string;
@@ -321,9 +336,15 @@ function TodoRow({
   onEdit: () => void;
   onSaveEdit: (text: string) => void;
   onSwipeDelete: () => void;
+  onSwipeCancel: () => void;
 }) {
+  const { t } = useI18n();
   const [editText, setEditText] = useState(todo.text);
   const [armed, setArmed] = useState(false);
+  // Which side is currently being revealed by an in-progress drag: "right"
+  // exposes the trash/delete action on the left, "left" exposes the cancel
+  // action on the right. Null at rest, when neither is showing.
+  const [dragDir, setDragDir] = useState<"left" | "right" | null>(null);
   // Wrapped multi-line text is taller than the single-line edit <input>, so
   // switching to edit mid-hold collapses the row's height while the finger
   // is still down — that layout jump was knocking the touch off the row and
@@ -332,7 +353,7 @@ function TodoRow({
   // input) and release the lock once editing ends.
   const [lockedHeight, setLockedHeight] = useState<number | null>(null);
   const rowRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const textHandlers = useTapAndHold(() => {}, () => {
     if (rowRef.current) setLockedHeight(rowRef.current.getBoundingClientRect().height);
     onEdit();
@@ -340,12 +361,24 @@ function TodoRow({
   const pillHandlers = useTapAndHold(onAdvance, onRevert);
 
   const onDrag = (_e: unknown, info: PanInfo) => {
-    setArmed(info.offset.x > SWIPE_DELETE_PX);
+    setDragDir(info.offset.x > 0 ? "right" : info.offset.x < 0 ? "left" : null);
+    setArmed(Math.abs(info.offset.x) > SWIPE_DELETE_PX);
   };
 
   const onDragEnd = (_e: unknown, info: PanInfo) => {
     if (info.offset.x > SWIPE_DELETE_PX) onSwipeDelete();
+    else if (info.offset.x < -SWIPE_DELETE_PX) onSwipeCancel();
     setArmed(false);
+    setDragDir(null);
+  };
+
+  // Grow the textarea to fit its wrapped content instead of scrolling
+  // internally, so a multi-line todo keeps showing all of its lines while
+  // being edited.
+  const autoResize = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
   };
 
   useEffect(() => {
@@ -355,6 +388,7 @@ function TodoRow({
       const input = inputRef.current;
       input?.focus();
       input?.setSelectionRange(input.value.length, input.value.length);
+      autoResize(input);
     } else {
       setLockedHeight(null);
     }
@@ -370,20 +404,31 @@ function TodoRow({
       transition={{ type: "spring", stiffness: 400, damping: 32 }}
       className="grid"
     >
-      {/* Revealed as the row is swiped right; touch-action: pan-y on the row
+      {/* Revealed as the row is swiped right (delete, left-aligned trash) or
+          left (cancel, right-aligned label); touch-action: pan-y on the row
           below lets native vertical scroll pass straight through, so only a
-          confidently horizontal drag ever moves it. Stacked on the draggable
-          row via CSS grid (both col/row-start-1) rather than absolute+inset,
-          so the two layers always share exactly the same box regardless of
-          layout-animation timing on the row (e.g. from the edit height lock). */}
-      <div className="col-start-1 row-start-1 flex items-center rounded-card bg-[#141414] px-4">
-        <Trash2 size={18} className={armed ? "text-red-400" : "text-gray-400"} />
-      </div>
+          confidently horizontal drag ever moves it. Only one side's box
+          renders at a time based on the live drag direction, stacked on the
+          draggable row via CSS grid (both col/row-start-1) rather than
+          absolute+inset, so the visible layer always shares exactly the same
+          box as the row regardless of layout-animation timing. */}
+      {dragDir === "right" && (
+        <div className="col-start-1 row-start-1 flex items-center rounded-card bg-[#141414] px-4">
+          <Trash2 size={18} className={armed ? "text-red-400" : "text-gray-400"} />
+        </div>
+      )}
+      {dragDir === "left" && (
+        <div className="col-start-1 row-start-1 flex items-center justify-end rounded-card bg-[#141414] px-4">
+          <span className={clsx("text-xs font-semibold", armed ? "text-red-400" : "text-gray-400")}>
+            {t.todo.swipeCancel}
+          </span>
+        </div>
+      )}
       <motion.div
         ref={rowRef}
         drag={isEditing ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={{ left: 0, right: 1 }}
+        dragElastic={{ left: 1, right: 1 }}
         onDrag={onDrag}
         onDragEnd={onDragEnd}
         style={{ touchAction: "pan-y", minHeight: lockedHeight ?? undefined }}
@@ -391,10 +436,13 @@ function TodoRow({
       >
         <ColorDot color={todo.authorColor} />
         {isEditing ? (
-          <input
+          <textarea
             ref={inputRef}
             value={editText}
-            onChange={(e) => setEditText(e.target.value)}
+            onChange={(e) => {
+              setEditText(e.target.value);
+              autoResize(e.target);
+            }}
             onBlur={() => onSaveEdit(editText)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -402,14 +450,17 @@ function TodoRow({
                 inputRef.current?.blur();
               }
             }}
-            className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none"
+            rows={1}
+            className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-sm text-text-primary outline-none"
           />
         ) : (
           <span
             {...textHandlers}
             className={clsx(
               "flex-1 select-none text-sm",
-              todo.status === "done" ? "text-text-disabled line-through" : "text-text-primary"
+              todo.status === "done" || todo.status === "cancelled"
+                ? "text-text-disabled line-through"
+                : "text-text-primary"
             )}
           >
             {todo.text}
@@ -421,7 +472,8 @@ function TodoRow({
             "flex w-16 shrink-0 items-center justify-center rounded-pill px-2 py-1 text-center text-[11px] font-semibold select-none",
             todo.status === "new" && "bg-surface-pill text-text-secondary",
             todo.status === "in_progress" && "bg-blue-500/20 text-blue-300",
-            todo.status === "done" && "bg-emerald-500/20 text-emerald-300"
+            todo.status === "done" && "bg-emerald-500/20 text-emerald-300",
+            todo.status === "cancelled" && "bg-surface-pill text-text-disabled"
           )}
         >
           {statusLabel}
