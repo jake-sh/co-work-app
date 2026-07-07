@@ -101,9 +101,66 @@ function stripConsumed(text: string, consumed: string[]): string {
   return title || text.trim();
 }
 
+// A period like "7/5~7/7 교육" spans multiple days; the end side may omit its
+// month ("7/5~7") to mean "the 7th of the same month". Capped at a month so a
+// mistyped date can't silently create dozens of events.
+const MAX_RANGE_DAYS = 31;
+
+function parseRange(line: string, now: Date): { start: Date; end: Date; matched: string } | null {
+  let m = line.match(/(\d{1,2})[./](\d{1,2})\s*[~-]\s*(?:(\d{1,2})[./])?(\d{1,2})(?!\d)/);
+  if (m) {
+    const startMonth = parseInt(m[1], 10) - 1;
+    const startDay = parseInt(m[2], 10);
+    const endMonth = m[3] ? parseInt(m[3], 10) - 1 : startMonth;
+    const endDay = parseInt(m[4], 10);
+    if (startMonth >= 0 && startMonth <= 11 && endMonth >= 0 && endMonth <= 11 && startDay >= 1 && endDay >= 1) {
+      const start = resolveYearlessDate(now, startMonth, startDay);
+      let end = new Date(start.getFullYear(), endMonth, endDay);
+      if (end < start) end = new Date(start.getFullYear() + 1, endMonth, endDay);
+      return { start, end, matched: m[0] };
+    }
+  }
+
+  m = line.match(/(\d{1,2})\s?월\s?(\d{1,2})\s?일\s*[~-]\s*(?:(\d{1,2})\s?월\s?)?(\d{1,2})\s?일/);
+  if (m) {
+    const startMonth = parseInt(m[1], 10) - 1;
+    const startDay = parseInt(m[2], 10);
+    const endMonth = m[3] ? parseInt(m[3], 10) - 1 : startMonth;
+    const endDay = parseInt(m[4], 10);
+    const start = resolveYearlessDate(now, startMonth, startDay);
+    let end = new Date(start.getFullYear(), endMonth, endDay);
+    if (end < start) end = new Date(start.getFullYear() + 1, endMonth, endDay);
+    return { start, end, matched: m[0] };
+  }
+
+  return null;
+}
+
 // Parses a single line in isolation. A line with no recognizable date
-// mention returns null and is treated as plain detail/body text.
-function parseLine(line: string, now: Date): ParsedSchedule | null {
+// mention returns an empty array and is treated as plain detail/body text.
+// A period ("7/5~7/7 교육") produces one entry per day in the range.
+function parseLine(line: string, now: Date): ParsedSchedule[] {
+  const range = parseRange(line, now);
+  if (range) {
+    const days = Math.round((range.end.getTime() - range.start.getTime()) / 86_400_000) + 1;
+    if (days >= 1 && days <= MAX_RANGE_DAYS) {
+      const consumed = [range.matched];
+      const time = parseTime(line);
+      if (time) consumed.push(time.raw);
+      const title = stripConsumed(line, consumed);
+      const entries: ParsedSchedule[] = [];
+      for (let i = 0; i < days; i++) {
+        entries.push({ date: format(addDays(range.start, i), "yyyy-MM-dd"), time: time?.value ?? null, title });
+      }
+      return entries;
+    }
+  }
+
+  const single = parseSingleDate(line, now);
+  return single ? [single] : [];
+}
+
+function parseSingleDate(line: string, now: Date): ParsedSchedule | null {
   let date: Date | null = null;
   const consumed: string[] = [];
 
@@ -185,8 +242,7 @@ function parseLine(line: string, now: Date): ParsedSchedule | null {
 export function parseSchedulesFromText(text: string, now: Date = new Date()): ParsedSchedule[] {
   const results: ParsedSchedule[] = [];
   for (const line of text.split("\n")) {
-    const parsed = parseLine(line, now);
-    if (parsed) results.push(parsed);
+    results.push(...parseLine(line, now));
   }
   return results;
 }
