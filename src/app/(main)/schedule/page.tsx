@@ -32,6 +32,8 @@ function resolveColor(ev: ScheduleEvent): string {
   if (ev.labelColor) return ev.labelColor;
   if (ev.title.includes("소장")) return "#f97316";
   if (ev.title.includes("팀장")) return "#3b82f6";
+  if (ev.title.includes("본부장")) return "#ef4444";
+  if (/ceo|씨이오/i.test(ev.title)) return "#a855f7";
   return "#9b9b9b";
 }
 
