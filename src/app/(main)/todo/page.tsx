@@ -26,7 +26,7 @@ const PREV_STATUS: Record<TodoStatus, TodoStatus> = {
   new: "new",
   in_progress: "new",
   done: "in_progress",
-  cancelled: "cancelled",
+  cancelled: "new",
 };
 
 const LONG_PRESS_MS = 500;
@@ -473,7 +473,7 @@ function TodoRow({
             todo.status === "new" && "bg-surface-pill text-text-secondary",
             todo.status === "in_progress" && "bg-blue-500/20 text-blue-300",
             todo.status === "done" && "bg-emerald-500/20 text-emerald-300",
-            todo.status === "cancelled" && "bg-surface-pill text-text-disabled"
+            todo.status === "cancelled" && "bg-red-500/20 text-red-400"
           )}
         >
           {statusLabel}
