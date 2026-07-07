@@ -104,7 +104,6 @@ export default function TodoPage() {
   const { todos } = useData();
   const [text, setText] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
-  const [actionMenuTodo, setActionMenuTodo] = useState<Todo | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [members, setMembers] = useState<UserProfile[]>([]);
   const [filterUserId, setFilterUserId] = useState<string | null>(null);
@@ -155,20 +154,6 @@ export default function TodoPage() {
     setTodoStatus(currentProject.id, todo.id, prev);
   };
 
-  const onSelectEdit = () => {
-    if (!actionMenuTodo) return;
-    setEditingId(actionMenuTodo.id);
-    setActionMenuTodo(null);
-  };
-
-  const onSelectDelete = () => {
-    if (!actionMenuTodo) return;
-    // Same optimistic pattern as onAdd: don't block closing the menu on the
-    // Firestore write's server-ack round-trip.
-    deleteTodo(currentProject.id, actionMenuTodo.id).catch(() => {});
-    setActionMenuTodo(null);
-  };
-
   const onSwipeDelete = (todo: Todo) => {
     deleteTodo(currentProject.id, todo.id).catch(() => {});
   };
@@ -210,40 +195,6 @@ export default function TodoPage() {
 
   return (
     <>
-      {actionMenuTodo && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-          onClick={() => setActionMenuTodo(null)}
-        >
-          <div
-            className="mx-6 w-full max-w-xs rounded-2xl bg-surface-card p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="mb-5 text-center text-sm font-semibold">{actionMenuTodo.text}</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActionMenuTodo(null)}
-                className="flex-1 rounded-xl bg-surface-pill py-2.5 text-sm font-semibold"
-              >
-                {t.project.cancel}
-              </button>
-              <button
-                onClick={onSelectEdit}
-                className="flex-1 rounded-xl bg-blue-500/20 py-2.5 text-sm font-semibold text-blue-300"
-              >
-                {t.todo.edit}
-              </button>
-              <button
-                onClick={onSelectDelete}
-                className="flex-1 rounded-xl bg-red-500/20 py-2.5 text-sm font-semibold text-red-400"
-              >
-                {t.todo.delete}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div ref={headerRef} className="sticky top-0 z-[1] bg-bg-base px-5 pt-4 pb-3">
         <div className="mb-3 flex items-center justify-between gap-2 pr-1">
           <h1 className="text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
@@ -339,7 +290,7 @@ export default function TodoPage() {
                   isEditing={editingId === todo.id}
                   onAdvance={() => advanceStatus(todo)}
                   onRevert={() => revertStatus(todo)}
-                  onOpenMenu={() => setActionMenuTodo(todo)}
+                  onEdit={() => setEditingId(todo.id)}
                   onSaveEdit={(nextText) => onSaveEdit(todo, nextText)}
                   onSwipeDelete={() => onSwipeDelete(todo)}
                 />
@@ -358,7 +309,7 @@ function TodoRow({
   isEditing,
   onAdvance,
   onRevert,
-  onOpenMenu,
+  onEdit,
   onSaveEdit,
   onSwipeDelete,
 }: {
@@ -367,13 +318,13 @@ function TodoRow({
   isEditing: boolean;
   onAdvance: () => void;
   onRevert: () => void;
-  onOpenMenu: () => void;
+  onEdit: () => void;
   onSaveEdit: (text: string) => void;
   onSwipeDelete: () => void;
 }) {
   const [editText, setEditText] = useState(todo.text);
   const inputRef = useRef<HTMLInputElement>(null);
-  const textHandlers = useTapAndHold(() => {}, onOpenMenu);
+  const textHandlers = useTapAndHold(() => {}, onEdit);
   const pillHandlers = useTapAndHold(onAdvance, onRevert);
 
   const onDragEnd = (_e: unknown, info: PanInfo) => {
