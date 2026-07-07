@@ -6,7 +6,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
-import { addTodo, deleteTodo, setTodoStatus, updateTodoText } from "@/lib/data/todos";
+import { addTodo, deleteTodo, restoreTodo, restoreTodoStatus, setTodoStatus, updateTodoText } from "@/lib/data/todos";
 import { getUserProfile } from "@/lib/data/users";
 import { useData } from "@/lib/context/DataContext";
 import { TextInput } from "@/components/ui/TextInput";
@@ -32,6 +32,13 @@ const PREV_STATUS: Record<TodoStatus, TodoStatus> = {
 const LONG_PRESS_MS = 500;
 const MOVE_CANCEL_PX = 10;
 const SWIPE_DELETE_PX = 150;
+const UNDO_STACK_LIMIT = 5;
+const UNDO_TTL_MS = 60_000;
+
+type UndoAction =
+  | { type: "delete"; todo: Todo }
+  | { type: "status"; todoId: string; prevStatus: TodoStatus; prevCompletedAt: number | null };
+type UndoEntry = UndoAction & { expiresAt: number };
 
 // New items are prepended (newest first) right below the sticky header, so
 // if the list is scrolled down, a freshly added item lands off-screen above
@@ -110,6 +117,7 @@ export default function TodoPage() {
   const [members, setMembers] = useState<UserProfile[]>([]);
   const [filterUserId, setFilterUserId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<TodoStatus | null>(null);
+  const [undoStack, setUndoStack] = useState<UndoEntry[]>([]);
   const headerRef = useRef<HTMLDivElement>(null);
   const memberIdsKey = currentProject?.memberIds.join(",") ?? "";
 
@@ -124,6 +132,16 @@ export default function TodoPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberIdsKey]);
+
+  // Undo entries expire 1 minute after the action they cover; sweep them out
+  // every second so the undo button disappears on its own once the last one
+  // lapses, rather than only pruning lazily on the next push/undo.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setUndoStack((prev) => prev.filter((entry) => entry.expiresAt > Date.now()));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (!currentProject) {
     return <EmptyState message={t.todo.selectProjectFirst} />;
@@ -144,19 +162,37 @@ export default function TodoPage() {
     scrollNearestScrollableToTop(headerRef.current);
   };
 
+  const pushUndo = (action: UndoAction) => {
+    setUndoStack((prev) => [...prev, { ...action, expiresAt: Date.now() + UNDO_TTL_MS }].slice(-UNDO_STACK_LIMIT));
+  };
+
+  const onUndo = () => {
+    const last = undoStack[undoStack.length - 1];
+    if (!last) return;
+    setUndoStack((prev) => prev.slice(0, -1));
+    if (last.type === "delete") {
+      restoreTodo(currentProject.id, last.todo).catch(() => {});
+    } else {
+      restoreTodoStatus(currentProject.id, last.todoId, last.prevStatus, last.prevCompletedAt).catch(() => {});
+    }
+  };
+
   const advanceStatus = (todo: Todo) => {
     const next = NEXT_STATUS[todo.status];
     if (next === todo.status) return;
+    pushUndo({ type: "status", todoId: todo.id, prevStatus: todo.status, prevCompletedAt: todo.completedAt });
     setTodoStatus(currentProject.id, todo.id, next);
   };
 
   const revertStatus = (todo: Todo) => {
     const prev = PREV_STATUS[todo.status];
     if (prev === todo.status) return;
+    pushUndo({ type: "status", todoId: todo.id, prevStatus: todo.status, prevCompletedAt: todo.completedAt });
     setTodoStatus(currentProject.id, todo.id, prev);
   };
 
   const onSwipeDelete = (todo: Todo) => {
+    pushUndo({ type: "delete", todo });
     deleteTodo(currentProject.id, todo.id).catch(() => {});
   };
 
@@ -165,6 +201,7 @@ export default function TodoPage() {
     // already-cancelled one back to new — deliberately duplicating the
     // long-press revert on the pill.
     const next = todo.status === "cancelled" ? "new" : "cancelled";
+    pushUndo({ type: "status", todoId: todo.id, prevStatus: todo.status, prevCompletedAt: todo.completedAt });
     setTodoStatus(currentProject.id, todo.id, next).catch(() => {});
   };
 
@@ -317,6 +354,15 @@ export default function TodoPage() {
           </ul>
         )}
       </div>
+
+      {undoStack.length > 0 && (
+        <button
+          onClick={onUndo}
+          className="fixed bottom-24 right-5 z-30 rounded-pill bg-surface-pill px-3 py-1.5 text-xs font-semibold text-text-secondary shadow-lg"
+        >
+          Ctrl+Z
+        </button>
+      )}
     </>
   );
 }
