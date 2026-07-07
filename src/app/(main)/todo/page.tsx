@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, type PanInfo } from "framer-motion";
+import { animate, AnimatePresence, motion, useMotionValue, type PanInfo } from "framer-motion";
 import { Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
@@ -419,12 +419,18 @@ function TodoRow({
   // gesture so it hands back off to native scrolling instead of continuing
   // to track horizontally. Reset on pointer release, ready for the next.
   const [verticalCancelled, setVerticalCancelled] = useState(false);
+  // Owned explicitly (rather than left to framer's internal drag tracking)
+  // so it can be snapped back to 0 on cancel — disabling `drag` mid-gesture
+  // stops further tracking but doesn't itself animate the row back, which
+  // left cancelled swipes visually stuck mid-slide.
+  const x = useMotionValue(0);
 
   const onDrag = (_e: unknown, info: PanInfo) => {
     if (Math.abs(info.offset.y) > VERTICAL_CANCEL_PX) {
       setVerticalCancelled(true);
       setDragDir(null);
       setArmed(false);
+      animate(x, 0, { type: "spring", stiffness: 500, damping: 40 });
       return;
     }
     setDragDir(info.offset.x > 0 ? "right" : info.offset.x < 0 ? "left" : null);
@@ -512,7 +518,7 @@ function TodoRow({
         onDragEnd={onDragEnd}
         onPointerUp={() => setVerticalCancelled(false)}
         onPointerCancel={() => setVerticalCancelled(false)}
-        style={{ touchAction: "pan-y", minHeight: lockedHeight ?? undefined }}
+        style={{ x, touchAction: "pan-y", minHeight: lockedHeight ?? undefined }}
         className="relative col-start-1 row-start-1 min-w-0 flex items-center gap-2.5 rounded-card bg-surface-card px-3 py-3"
       >
         <ColorDot color={todo.authorColor} />
