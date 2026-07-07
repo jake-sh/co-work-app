@@ -358,7 +358,7 @@ export default function TodoPage() {
       {undoStack.length > 0 && (
         <button
           onClick={onUndo}
-          className="fixed bottom-24 right-5 z-30 rounded-pill bg-surface-pill px-3 py-1.5 text-xs font-semibold text-text-secondary shadow-lg"
+          className="fixed bottom-20 left-1/2 z-30 -translate-x-1/2 rounded-pill bg-surface-pill px-3 py-1.5 text-xs font-semibold text-text-secondary shadow-lg"
         >
           Ctrl+Z
         </button>
