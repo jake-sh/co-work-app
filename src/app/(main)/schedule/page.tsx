@@ -177,7 +177,7 @@ export default function SchedulePage() {
                   {format(day, "d")}
                 </span>
                 {(holidayName || dayEvents.length > 0) && (
-                  <div className="mt-0.5 flex w-full flex-col items-center px-0.5 leading-none">
+                  <div className="mt-0.5 flex w-full flex-col items-center gap-0.5 px-0.5 leading-none">
                     {holidayName && (
                       <span className="w-full truncate text-center text-[8px] text-red-400">
                         {holidayName}
