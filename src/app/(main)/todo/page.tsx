@@ -245,7 +245,7 @@ export default function TodoPage() {
       )}
 
       <div ref={headerRef} className="sticky top-0 z-[1] bg-bg-base px-5 pt-4 pb-3">
-        <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="mb-3 flex items-center justify-between gap-2 pr-2">
           <h1 className="text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
             {t.todo.title}
           </h1>
