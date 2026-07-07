@@ -154,7 +154,7 @@ export default function SchedulePage() {
                 key={key}
                 onClick={() => setSelectedDate(key)}
                 className={clsx(
-                  "flex aspect-square flex-col items-center justify-center rounded-lg",
+                  "flex aspect-square flex-col items-center justify-start rounded-lg pt-1.5",
                   key === selectedDate && "bg-white text-black",
                   key !== selectedDate && key === today && "border border-white/50",
                   key !== selectedDate && isSameMonth(day, month) && "text-text-primary",
