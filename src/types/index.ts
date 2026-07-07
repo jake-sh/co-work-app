@@ -1,6 +1,6 @@
 export type Locale = "ko" | "en";
 
-export type TodoStatus = "new" | "in_progress" | "done";
+export type TodoStatus = "new" | "in_progress" | "done" | "cancelled";
 
 export interface UserProfile {
   uid: string;

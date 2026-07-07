@@ -64,6 +64,8 @@ const en: Dictionary = {
     statusNew: "New",
     statusInProgress: "Progress",
     statusDone: "Done",
+    statusCancelled: "Cancelled",
+    swipeCancel: "Cancel",
     empty: "No to-dos yet",
     selectProjectFirst: "Select a project first",
     edit: "Edit",
