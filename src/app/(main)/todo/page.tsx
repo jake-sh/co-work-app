@@ -360,7 +360,7 @@ function TodoRow({
       {/* Revealed as the row is swiped right; touch-action: pan-y on the row
           below lets native vertical scroll pass straight through, so only a
           confidently horizontal drag ever moves it. */}
-      <div className="absolute inset-0 flex items-center rounded-card bg-gray-500/20 px-4">
+      <div className="absolute inset-0 flex items-center rounded-card bg-[#141414] px-4">
         <Trash2 size={18} className={armed ? "text-red-400" : "text-gray-400"} />
       </div>
       <motion.div
@@ -385,7 +385,7 @@ function TodoRow({
                 inputRef.current?.blur();
               }
             }}
-            className="flex-1 bg-transparent text-sm text-text-primary outline-none"
+            className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none"
           />
         ) : (
           <span
