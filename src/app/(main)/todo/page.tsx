@@ -278,19 +278,28 @@ export default function TodoPage() {
         <div className="mb-3 flex items-center justify-between px-1 text-xs font-semibold text-text-secondary">
           <button onClick={() => toggleStatusFilter("new")} className="flex items-center gap-1">
             <span>New</span>
-            <span className={statusFilter === "new" ? "text-[#9900CC]" : "text-text-primary"}>
+            <span
+              className={statusFilter === "new" ? undefined : "text-text-primary"}
+              style={statusFilter === "new" ? { color: currentProject.color ?? "#9900CC" } : undefined}
+            >
               {newCount}
             </span>
           </button>
           <button onClick={() => toggleStatusFilter("in_progress")} className="flex items-center gap-1">
             <span>Progress</span>
-            <span className={statusFilter === "in_progress" ? "text-[#9900CC]" : "text-text-primary"}>
+            <span
+              className={statusFilter === "in_progress" ? undefined : "text-text-primary"}
+              style={statusFilter === "in_progress" ? { color: currentProject.color ?? "#9900CC" } : undefined}
+            >
               {inProgressCount}/{newCount + inProgressCount}
             </span>
           </button>
           <button onClick={() => toggleStatusFilter("done")} className="flex items-center gap-1">
             <span>Done</span>
-            <span className={statusFilter === "done" ? "text-[#9900CC]" : "text-text-primary"}>
+            <span
+              className={statusFilter === "done" ? undefined : "text-text-primary"}
+              style={statusFilter === "done" ? { color: currentProject.color ?? "#9900CC" } : undefined}
+            >
               {doneCount}/{totalCount}
             </span>
           </button>
