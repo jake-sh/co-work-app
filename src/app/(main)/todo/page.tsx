@@ -245,7 +245,7 @@ export default function TodoPage() {
       )}
 
       <div ref={headerRef} className="sticky top-0 z-[1] bg-bg-base px-5 pt-4 pb-3">
-        <div className="mb-3 flex items-center justify-between gap-2 pr-2">
+        <div className="mb-3 flex items-center justify-between gap-2 pr-1">
           <h1 className="text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
             {t.todo.title}
           </h1>
@@ -275,7 +275,7 @@ export default function TodoPage() {
           </div>
         </div>
 
-        <div className="mb-3 flex items-center justify-between px-2 text-xs font-semibold text-text-secondary">
+        <div className="mb-3 flex items-center justify-between px-1 text-xs font-semibold text-text-secondary">
           <button onClick={() => toggleStatusFilter("new")} className="flex items-center gap-1">
             <span>New</span>
             <span className={statusFilter === "new" ? "text-[#9900CC]" : "text-text-primary"}>
