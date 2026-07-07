@@ -332,7 +332,7 @@ function TodoRow({
   // input) and release the lock once editing ends.
   const [lockedHeight, setLockedHeight] = useState<number | null>(null);
   const rowRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const textHandlers = useTapAndHold(() => {}, () => {
     if (rowRef.current) setLockedHeight(rowRef.current.getBoundingClientRect().height);
     onEdit();
@@ -348,6 +348,15 @@ function TodoRow({
     setArmed(false);
   };
 
+  // Grow the textarea to fit its wrapped content instead of scrolling
+  // internally, so a multi-line todo keeps showing all of its lines while
+  // being edited.
+  const autoResize = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
     if (isEditing) {
@@ -355,6 +364,7 @@ function TodoRow({
       const input = inputRef.current;
       input?.focus();
       input?.setSelectionRange(input.value.length, input.value.length);
+      autoResize(input);
     } else {
       setLockedHeight(null);
     }
@@ -391,10 +401,13 @@ function TodoRow({
       >
         <ColorDot color={todo.authorColor} />
         {isEditing ? (
-          <input
+          <textarea
             ref={inputRef}
             value={editText}
-            onChange={(e) => setEditText(e.target.value)}
+            onChange={(e) => {
+              setEditText(e.target.value);
+              autoResize(e.target);
+            }}
             onBlur={() => onSaveEdit(editText)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -402,7 +415,8 @@ function TodoRow({
                 inputRef.current?.blur();
               }
             }}
-            className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none"
+            rows={1}
+            className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-sm text-text-primary outline-none"
           />
         ) : (
           <span
