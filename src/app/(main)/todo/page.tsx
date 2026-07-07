@@ -275,7 +275,7 @@ export default function TodoPage() {
           </div>
         </div>
 
-        <div className="mb-3 flex items-center justify-between text-xs font-semibold text-text-secondary">
+        <div className="mb-3 flex items-center justify-between px-2 text-xs font-semibold text-text-secondary">
           <button onClick={() => toggleStatusFilter("new")} className="flex items-center gap-1">
             <span>New</span>
             <span className={statusFilter === "new" ? "text-[#9900CC]" : "text-text-primary"}>
@@ -283,7 +283,7 @@ export default function TodoPage() {
             </span>
           </button>
           <button onClick={() => toggleStatusFilter("in_progress")} className="flex items-center gap-1">
-            <span>Inprogress</span>
+            <span>Progress</span>
             <span className={statusFilter === "in_progress" ? "text-[#9900CC]" : "text-text-primary"}>
               {inProgressCount}/{newCount + inProgressCount}
             </span>
