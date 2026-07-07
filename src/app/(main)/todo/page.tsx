@@ -450,15 +450,6 @@ function TodoRow({
     el.style.height = `${el.scrollHeight}px`;
   };
 
-  // Grow the textarea to fit its wrapped content instead of scrolling
-  // internally, so a multi-line todo keeps showing all of its lines while
-  // being edited.
-  const autoResize = (el: HTMLTextAreaElement | null) => {
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  };
-
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
     if (isEditing) {
