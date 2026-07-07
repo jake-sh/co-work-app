@@ -236,7 +236,7 @@ export default function TodoPage() {
           <h1 className="text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
             {t.todo.title}
           </h1>
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-[15px]">
             {members.map((m) => (
               <button
                 key={m.uid}
