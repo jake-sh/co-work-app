@@ -96,15 +96,15 @@ export default function MemoPage() {
   // ── Editor view (new / edit) ───────────────────────────────────────────────
   if (view === "new" || view === "edit") {
     return (
-      // Fixed full-screen overlay instead of a normal in-flow page: this
-      // opts out of the app's shared scrollable container, so the on-screen
-      // keyboard opening can't trigger a page-level "scroll focused element
-      // into view" that drags the header/save button off-screen. The header
-      // and title row stay put (shrink-0); only the body textarea below
-      // scrolls, and it does so internally on its own.
-      <div className="fixed inset-0 z-30 flex flex-col bg-bg-base">
+      // Header, title, and body all scroll together as one normal page —
+      // the goal isn't to pin the header separately, it's to stop the
+      // *automatic* jump-to-focused-input scroll that mobile browsers
+      // trigger when the keyboard opens. Passing preventScroll on focus
+      // asks the browser not to do that; the user can still scroll the
+      // page manually at any time, same as before.
+      <div className="flex h-full flex-col">
         {/* Header */}
-        <div className="shrink-0 flex items-center justify-between px-5 pt-4 pb-4">
+        <div className="flex items-center justify-between px-5 pt-4 pb-4">
           <button onClick={goBack} className="text-text-secondary">
             <ArrowLeft size={22} />
           </button>
@@ -121,11 +121,12 @@ export default function MemoPage() {
         </div>
 
         {/* Title input */}
-        <div className="relative shrink-0 px-5 pb-3">
+        <div className="relative px-5 pb-3">
           <TextInput
             placeholder={t.memo.titlePlaceholder}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            onFocus={(e) => e.currentTarget.focus({ preventScroll: true })}
           />
           {title && (
             <button
@@ -137,13 +138,14 @@ export default function MemoPage() {
           )}
         </div>
 
-        {/* Body textarea — fills remaining space and scrolls internally */}
-        <div className="min-h-0 flex-1 px-5 pb-5">
+        {/* Body textarea — fills remaining space */}
+        <div className="flex-1 px-5 pb-5">
           <TextArea
             placeholder={t.memo.bodyPlaceholder}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            className="h-full overflow-y-auto"
+            onFocus={(e) => e.currentTarget.focus({ preventScroll: true })}
+            className="h-full"
           />
         </div>
       </div>
