@@ -34,6 +34,21 @@ function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
+// A "M월 D일" / "M/D" mention has no year, so the year has to be inferred
+// from how far the date sits from today. A future date (or one within the
+// last ~2 months) almost certainly means this year — a recent reference like
+// "yesterday" or an upcoming plan. Only once it's further in the past than
+// that does it more plausibly mean "next year's" occurrence of that date
+// (e.g. mentioning "1월5일" in December).
+const PAST_ROLLOVER_THRESHOLD_DAYS = 60;
+
+function resolveYearlessDate(now: Date, month: number, day: number): Date {
+  const today = startOfDay(now);
+  const candidate = new Date(now.getFullYear(), month, day);
+  const daysBehind = Math.round((today.getTime() - candidate.getTime()) / 86_400_000);
+  return daysBehind > PAST_ROLLOVER_THRESHOLD_DAYS ? new Date(now.getFullYear() + 1, month, day) : candidate;
+}
+
 function parseTime(text: string): { value: string; raw: string } | null {
   let m = text.match(/(오전|오후|am|pm)\s?(\d{1,2})\s?시(?:\s?(\d{1,2})\s?분)?/i);
   if (m) {
@@ -101,13 +116,7 @@ export function parseScheduleFromText(text: string, now: Date = new Date()): Par
     if (m) {
       const month = parseInt(m[1], 10) - 1;
       const day = parseInt(m[2], 10);
-      // Always use the current year: this parses casual in-context date
-      // mentions in a memo/to-do ("7월5일 보고"), which almost always refer to
-      // a date near today — including ones that already just passed — not
-      // one a full year out. Rolling to next year for any date earlier than
-      // today (even yesterday) put auto-created events a year in the future,
-      // where they'd never be seen.
-      date = new Date(now.getFullYear(), month, day);
+      date = resolveYearlessDate(now, month, day);
       consumed.push(m[0]);
     }
   }
@@ -118,7 +127,7 @@ export function parseScheduleFromText(text: string, now: Date = new Date()): Par
       const month = parseInt(m[1], 10) - 1;
       const day = parseInt(m[2], 10);
       if (month >= 0 && month <= 11 && day >= 1 && day <= 31) {
-        date = new Date(now.getFullYear(), month, day);
+        date = resolveYearlessDate(now, month, day);
         consumed.push(m[0]);
       }
     }
