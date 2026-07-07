@@ -11,7 +11,10 @@ function memosCol(projectId: string) {
 export function deriveTitle(title: string, body: string): string {
   const trimmedTitle = title.trim();
   if (trimmedTitle) return trimmedTitle;
-  const tokens = body.trim().split(/\s+/).filter(Boolean);
+  // Only the first line stands in for the title — content after a line break
+  // is body detail, not part of what the title should summarize.
+  const firstLine = body.trim().split("\n")[0] ?? "";
+  const tokens = firstLine.trim().split(/\s+/).filter(Boolean);
   return tokens.slice(0, 5).join(" ") || "Untitled";
 }
 
