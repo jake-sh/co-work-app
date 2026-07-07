@@ -161,7 +161,11 @@ export default function TodoPage() {
   };
 
   const onSwipeCancel = (todo: Todo) => {
-    setTodoStatus(currentProject.id, todo.id, "cancelled").catch(() => {});
+    // Left-swipe is a cancel toggle: cancel an active todo, or restore an
+    // already-cancelled one back to new — deliberately duplicating the
+    // long-press revert on the pill.
+    const next = todo.status === "cancelled" ? "new" : "cancelled";
+    setTodoStatus(currentProject.id, todo.id, next).catch(() => {});
   };
 
   const onSaveEdit = (todo: Todo, nextText: string) => {
@@ -419,8 +423,19 @@ function TodoRow({
       )}
       {dragDir === "left" && (
         <div className="col-start-1 row-start-1 flex items-center justify-end rounded-card bg-[#141414] px-4">
-          <span className={clsx("text-xs font-semibold", armed ? "text-red-400" : "text-gray-400")}>
-            {t.todo.swipeCancel}
+          <span
+            className={clsx(
+              "text-xs font-semibold",
+              todo.status === "cancelled"
+                ? armed
+                  ? "text-yellow-400"
+                  : "text-gray-400"
+                : armed
+                  ? "text-red-400"
+                  : "text-gray-400"
+            )}
+          >
+            {todo.status === "cancelled" ? t.todo.swipeRestore : t.todo.swipeCancel}
           </span>
         </div>
       )}

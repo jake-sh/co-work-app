@@ -64,6 +64,7 @@ export interface Dictionary {
     statusDone: string;
     statusCancelled: string;
     swipeCancel: string;
+    swipeRestore: string;
     empty: string;
     selectProjectFirst: string;
     edit: string;
