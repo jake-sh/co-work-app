@@ -402,7 +402,7 @@ function TodoRow({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ type: "spring", stiffness: 400, damping: 32 }}
-      className="grid"
+      className="grid grid-cols-1"
     >
       {/* Revealed as the row is swiped right (delete, left-aligned trash) or
           left (cancel, right-aligned label); touch-action: pan-y on the row
@@ -432,7 +432,7 @@ function TodoRow({
         onDrag={onDrag}
         onDragEnd={onDragEnd}
         style={{ touchAction: "pan-y", minHeight: lockedHeight ?? undefined }}
-        className="relative col-start-1 row-start-1 flex items-center gap-2.5 rounded-card bg-surface-card px-3 py-3"
+        className="relative col-start-1 row-start-1 min-w-0 flex items-center gap-2.5 rounded-card bg-surface-card px-3 py-3"
       >
         <ColorDot color={todo.authorColor} />
         {isEditing ? (
