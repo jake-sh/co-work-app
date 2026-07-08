@@ -253,7 +253,12 @@ export default function ChatPage() {
           onChange={handleTextChange}
           rows={1}
           enterKeyHint="send"
-          className="min-h-[44px] max-h-[120px] overflow-y-auto"
+          // Trim the shared component's py-3 down (inline style beats the
+          // class) so a single-line input is the same 42px height as the
+          // send button (py-3 + 18px icon) instead of the taller ~46px the
+          // default padding + border produced.
+          style={{ paddingTop: 10, paddingBottom: 10 }}
+          className="min-h-[42px] max-h-[120px] overflow-y-auto"
         />
         <button
           type="submit"
