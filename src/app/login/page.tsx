@@ -32,8 +32,10 @@ export default function LoginPage() {
       // bug's root cause is still unconfirmed) — surface the Firebase error
       // code so the next report pins down which it actually is.
       const code = (err as { code?: string })?.code;
+      const message = (err as { message?: string })?.message;
       console.error("Login failed:", err);
-      setError(code ? `${t.auth.genericError} (${code})` : t.auth.genericError);
+      const detail = code ?? message;
+      setError(detail ? `${t.auth.genericError} (${detail})` : t.auth.genericError);
     } finally {
       setSubmitting(false);
     }
