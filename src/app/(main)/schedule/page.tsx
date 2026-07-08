@@ -37,8 +37,9 @@ const LABEL_COLORS = ["#9b9b9b", "#ef4444", "#f97316", "#eab308", "#22c55e", "#3
 
 function resolveColor(ev: ScheduleEvent): string {
   if (ev.labelColor) return ev.labelColor;
-  if (ev.title.includes("소장")) return "#f97316";
   if (ev.title.includes("팀장")) return "#3b82f6";
+  if (ev.title.includes("소장")) return "#eab308";
+  if (ev.title.includes("센터장")) return "#f97316";
   if (ev.title.includes("본부장")) return "#ef4444";
   if (/ceo|씨이오/i.test(ev.title)) return "#a855f7";
   return "#9b9b9b";
