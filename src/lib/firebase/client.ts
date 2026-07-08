@@ -1,5 +1,12 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import {
+  getAuth,
+  initializeAuth,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  inMemoryPersistence,
+} from "firebase/auth";
 import {
   getFirestore,
   initializeFirestore,
@@ -17,7 +24,21 @@ const firebaseConfig = {
 
 const isNewApp = !getApps().length;
 export const firebaseApp = isNewApp ? initializeApp(firebaseConfig) : getApp();
-export const auth = getAuth(firebaseApp);
+// getAuth() picks a single default persistence and hydrates it at init
+// time; if that first choice hits a hard storage failure (confirmed via a
+// DOMException 22 / QuotaExceededError under Safari Private Browsing,
+// where every Web Storage quota is capped at 0), the resulting Auth
+// instance stays broken for every later call on it — including manual
+// setPersistence()+retry attempts in signIn(), which kept failing with the
+// exact same error no matter what was retried. initializeAuth's explicit
+// persistence array is Firebase's own fallback mechanism for this: it
+// tries each in order at init and keeps the first that actually works,
+// with inMemoryPersistence guaranteeing there's always a working option.
+export const auth = isNewApp
+  ? initializeAuth(firebaseApp, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence],
+    })
+  : getAuth(firebaseApp);
 export const db = isNewApp
   ? initializeFirestore(firebaseApp, {
       // In-memory cache instead of the persistent (IndexedDB) cache. The
