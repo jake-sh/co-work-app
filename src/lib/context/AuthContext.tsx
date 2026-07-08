@@ -7,6 +7,7 @@ import {
   createUserWithEmailAndPassword,
   deleteUser as deleteFirebaseUser,
   EmailAuthProvider,
+  inMemoryPersistence,
   onAuthStateChanged,
   reauthenticateWithCredential,
   setPersistence,
@@ -25,13 +26,6 @@ import type { UserProfile } from "@/types";
 // synthetic address in a reserved, non-routable domain under the hood.
 function usernameToAuthEmail(username: string): string {
   return `${username.trim().toLowerCase()}@id.co-work.local`;
-}
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
-  ]);
 }
 
 interface AuthContextValue {
@@ -91,26 +85,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (username: string, password: string, rememberMe = true) => {
-    // browserLocalPersistence is IndexedDB-backed, the same layer that
-    // deadlocked Firestore entirely (the app got stuck on the loading
-    // screen) before it was moved to a memory-only cache. If IndexedDB is
-    // similarly unavailable/broken here, don't let "keep me logged in"
-    // block the sign-in itself — fall back to session-only persistence
-    // (sessionStorage, no IndexedDB) so login still succeeds.
+    const email = usernameToAuthEmail(username);
+    // Best-effort: setPersistence merely selects which storage Firebase
+    // *intends* to use, so a failure here doesn't necessarily mean the
+    // sign-in itself will fail — proceed regardless and let the retry
+    // below (which does) actually confirm it.
+    await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence).catch(
+      (err) => console.error("setPersistence failed:", err)
+    );
+
     try {
-      await withTimeout(
-        setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence),
-        3000
-      );
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      console.error("setPersistence failed, falling back to session persistence:", err);
-      try {
-        await setPersistence(auth, browserSessionPersistence);
-      } catch (fallbackErr) {
-        console.error("Session persistence also failed, signing in without it:", fallbackErr);
-      }
+      // Diagnosed via a DOMException code 22 (QuotaExceededError): Safari
+      // Private Browsing caps every Web Storage quota — localStorage,
+      // sessionStorage, and IndexedDB alike — at 0, so Firebase's attempt
+      // to actually persist the freshly signed-in session throws here even
+      // though setPersistence() above appeared to succeed. Retry once with
+      // memory-only persistence, which touches no storage API at all.
+      console.error("signIn failed, retrying with in-memory persistence:", err);
+      await setPersistence(auth, inMemoryPersistence);
+      await signInWithEmailAndPassword(auth, email, password);
     }
-    await signInWithEmailAndPassword(auth, usernameToAuthEmail(username), password);
   };
 
   const signOut = async () => {
