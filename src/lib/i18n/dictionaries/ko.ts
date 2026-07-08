@@ -14,6 +14,8 @@ const ko: Dictionary = {
     signup: "회원가입",
     username: "아이디",
     password: "비밀번호",
+    confirmPassword: "비밀번호 확인",
+    passwordMismatch: "비밀번호가 일치하지 않습니다.",
     displayName: "이름",
     loginButton: "로그인",
     signupButton: "가입하기",
