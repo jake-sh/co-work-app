@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { animate, AnimatePresence, motion, useMotionValue, type PanInfo } from "framer-motion";
+import { animate, AnimatePresence, motion, useMotionValue } from "framer-motion";
 import { Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
@@ -32,11 +32,9 @@ const PREV_STATUS: Record<TodoStatus, TodoStatus> = {
 const LONG_PRESS_MS = 500;
 const MOVE_CANCEL_PX = 10;
 const SWIPE_DELETE_PX = 150;
-// A ratio check alone still let framer's drag="x" keep translating the row
-// off raw pointer-x movement during a scroll. Trip-wire instead: the moment
-// vertical movement exceeds this, kill the drag outright (drag={false}) for
-// the rest of the gesture so the touch goes back to being a plain scroll.
-const VERTICAL_CANCEL_PX = 20;
+// Small ambiguous window before a gesture's axis is decided: whichever of
+// dx/dy first crosses this (dy checked first) wins the gesture outright.
+const AXIS_LOCK_PX = 10;
 const UNDO_STACK_LIMIT = 5;
 const UNDO_TTL_MS = 60_000;
 
@@ -414,34 +412,68 @@ function TodoRow({
     onEdit();
   });
   const pillHandlers = useTapAndHold(onAdvance, onRevert);
-  // Latches true the moment a drag's vertical movement crosses
-  // VERTICAL_CANCEL_PX, killing drag (drag={false}) for the rest of this
-  // gesture so it hands back off to native scrolling instead of continuing
-  // to track horizontally. Reset on pointer release, ready for the next.
-  const [verticalCancelled, setVerticalCancelled] = useState(false);
-  // Owned explicitly (rather than left to framer's internal drag tracking)
-  // so it can be snapped back to 0 on cancel — disabling `drag` mid-gesture
-  // stops further tracking but doesn't itself animate the row back, which
-  // left cancelled swipes visually stuck mid-slide.
+  // Row's x is owned directly (not framer's `drag`) so the gesture itself
+  // is fully custom: iOS Safari's native touch-action arbitration commits
+  // to "this is a scroll" much more eagerly than Android's on a diagonal
+  // touch, which was cancelling framer's drag after only a few pixels of
+  // movement regardless of how the drag prop/thresholds were tuned. Racing
+  // our own axis decision on raw pointer events, same as the swipe-safety
+  // logic already proven in another app, sidesteps that arbitration
+  // entirely instead of fighting it.
   const x = useMotionValue(0);
+  const gestureRef = useRef<{ startX: number; startY: number; axis: "horizontal" | "vertical" | null } | null>(null);
 
-  const onDrag = (_e: unknown, info: PanInfo) => {
-    if (Math.abs(info.offset.y) > VERTICAL_CANCEL_PX) {
-      setVerticalCancelled(true);
-      setDragDir(null);
-      setArmed(false);
-      animate(x, 0, { type: "spring", stiffness: 500, damping: 40 });
-      return;
-    }
-    setDragDir(info.offset.x > 0 ? "right" : info.offset.x < 0 ? "left" : null);
-    setArmed(Math.abs(info.offset.x) > SWIPE_DELETE_PX);
+  const snapBack = () => animate(x, 0, { type: "spring", stiffness: 500, damping: 40 });
+
+  const onRowPointerDown = (e: React.PointerEvent) => {
+    if (isEditing) return;
+    gestureRef.current = { startX: e.clientX, startY: e.clientY, axis: null };
   };
 
-  const onDragEnd = (_e: unknown, info: PanInfo) => {
-    if (!verticalCancelled) {
-      if (info.offset.x > SWIPE_DELETE_PX) onSwipeDelete();
-      else if (info.offset.x < -SWIPE_DELETE_PX) onSwipeCancel();
+  const onRowPointerMove = (e: React.PointerEvent) => {
+    const g = gestureRef.current;
+    if (!g) return;
+    const dx = e.clientX - g.startX;
+    const dy = e.clientY - g.startY;
+
+    if (g.axis === null) {
+      // Vertical wins outright the moment it crosses the (small) lock
+      // threshold, even if the horizontal component is currently larger —
+      // matches the reference implementation's dy-checked-first ordering.
+      if (Math.abs(dy) > AXIS_LOCK_PX) {
+        g.axis = "vertical";
+        gestureRef.current = null;
+        return;
+      }
+      if (Math.abs(dx) > AXIS_LOCK_PX) {
+        g.axis = "horizontal";
+      } else {
+        return;
+      }
     }
+
+    e.preventDefault();
+    x.set(dx);
+    setDragDir(dx > 0 ? "right" : dx < 0 ? "left" : null);
+    setArmed(Math.abs(dx) > SWIPE_DELETE_PX);
+  };
+
+  const onRowPointerUp = (e: React.PointerEvent) => {
+    const g = gestureRef.current;
+    gestureRef.current = null;
+    if (g?.axis === "horizontal") {
+      const dx = e.clientX - g.startX;
+      if (dx > SWIPE_DELETE_PX) onSwipeDelete();
+      else if (dx < -SWIPE_DELETE_PX) onSwipeCancel();
+    }
+    snapBack();
+    setArmed(false);
+    setDragDir(null);
+  };
+
+  const onRowPointerCancel = () => {
+    gestureRef.current = null;
+    snapBack();
     setArmed(false);
     setDragDir(null);
   };
@@ -511,13 +543,10 @@ function TodoRow({
       )}
       <motion.div
         ref={rowRef}
-        drag={isEditing || verticalCancelled ? false : "x"}
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={{ left: 1, right: 1 }}
-        onDrag={onDrag}
-        onDragEnd={onDragEnd}
-        onPointerUp={() => setVerticalCancelled(false)}
-        onPointerCancel={() => setVerticalCancelled(false)}
+        onPointerDown={onRowPointerDown}
+        onPointerMove={onRowPointerMove}
+        onPointerUp={onRowPointerUp}
+        onPointerCancel={onRowPointerCancel}
         style={{ x, touchAction: "pan-y", minHeight: lockedHeight ?? undefined }}
         className="relative col-start-1 row-start-1 min-w-0 flex items-center gap-2.5 rounded-card bg-surface-card px-3 py-3"
       >
