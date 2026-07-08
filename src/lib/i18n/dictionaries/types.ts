@@ -12,6 +12,8 @@ export interface Dictionary {
     signup: string;
     username: string;
     password: string;
+    confirmPassword: string;
+    passwordMismatch: string;
     displayName: string;
     loginButton: string;
     signupButton: string;

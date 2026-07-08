@@ -14,6 +14,8 @@ const en: Dictionary = {
     signup: "Sign Up",
     username: "ID",
     password: "Password",
+    confirmPassword: "Confirm Password",
+    passwordMismatch: "Passwords do not match.",
     displayName: "Name",
     loginButton: "Log In",
     signupButton: "Sign Up",

@@ -15,12 +15,17 @@ export default function SignupPage() {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (password !== confirmPassword) {
+      setError(t.auth.passwordMismatch);
+      return;
+    }
     setSubmitting(true);
     try {
       await signUp(displayName, username, password);
@@ -61,6 +66,14 @@ export default function SignupPage() {
           placeholder={t.auth.password}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          minLength={6}
+          required
+        />
+        <TextInput
+          type="password"
+          placeholder={t.auth.confirmPassword}
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
           minLength={6}
           required
         />
