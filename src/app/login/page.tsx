@@ -26,8 +26,14 @@ export default function LoginPage() {
     try {
       await signIn(username, password, rememberMe);
       router.replace("/project");
-    } catch {
-      setError(t.auth.genericError);
+    } catch (err) {
+      // The generic message alone gave no way to tell "wrong password" apart
+      // from a persistence/environment failure (the "keep me logged in"
+      // bug's root cause is still unconfirmed) — surface the Firebase error
+      // code so the next report pins down which it actually is.
+      const code = (err as { code?: string })?.code;
+      console.error("Login failed:", err);
+      setError(code ? `${t.auth.genericError} (${code})` : t.auth.genericError);
     } finally {
       setSubmitting(false);
     }

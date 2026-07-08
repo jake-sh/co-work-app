@@ -102,8 +102,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence),
         3000
       );
-    } catch {
-      await setPersistence(auth, browserSessionPersistence).catch(() => {});
+    } catch (err) {
+      console.error("setPersistence failed, falling back to session persistence:", err);
+      try {
+        await setPersistence(auth, browserSessionPersistence);
+      } catch (fallbackErr) {
+        console.error("Session persistence also failed, signing in without it:", fallbackErr);
+      }
     }
     await signInWithEmailAndPassword(auth, usernameToAuthEmail(username), password);
   };
