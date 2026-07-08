@@ -109,7 +109,10 @@ export async function addMemo(
     sharedWith: memberIds,
   });
 
-  await syncScheduleFromMemo(projectId, ref.id, `${title} ${body}`, authorId, authorColor, memberIds.length > 0);
+  // Join with a newline, not a space — parseSchedulesFromText treats each
+  // line independently, so a space here would fuse the title onto the
+  // body's first line and contaminate that line's derived event title.
+  await syncScheduleFromMemo(projectId, ref.id, `${title}\n${body}`, authorId, authorColor, memberIds.length > 0);
 }
 
 export async function updateMemo(
@@ -127,7 +130,7 @@ export async function updateMemo(
     body,
   });
 
-  await syncScheduleFromMemo(projectId, memoId, `${title} ${body}`, authorId, authorColor, isShared);
+  await syncScheduleFromMemo(projectId, memoId, `${title}\n${body}`, authorId, authorColor, isShared);
 }
 
 export async function deleteMemo(projectId: string, memoId: string) {
