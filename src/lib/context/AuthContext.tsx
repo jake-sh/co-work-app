@@ -27,6 +27,13 @@ function usernameToAuthEmail(username: string): string {
   return `${username.trim().toLowerCase()}@id.co-work.local`;
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
+  ]);
+}
+
 interface AuthContextValue {
   user: User | null;
   profile: UserProfile | null;
@@ -84,7 +91,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (username: string, password: string, rememberMe = true) => {
-    await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+    // browserLocalPersistence is IndexedDB-backed, the same layer that
+    // deadlocked Firestore entirely (the app got stuck on the loading
+    // screen) before it was moved to a memory-only cache. If IndexedDB is
+    // similarly unavailable/broken here, don't let "keep me logged in"
+    // block the sign-in itself — fall back to session-only persistence
+    // (sessionStorage, no IndexedDB) so login still succeeds.
+    try {
+      await withTimeout(
+        setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence),
+        3000
+      );
+    } catch {
+      await setPersistence(auth, browserSessionPersistence).catch(() => {});
+    }
     await signInWithEmailAndPassword(auth, usernameToAuthEmail(username), password);
   };
 
