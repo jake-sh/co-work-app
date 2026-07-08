@@ -252,7 +252,10 @@ export default function ChatPage() {
           value={text}
           onChange={handleTextChange}
           rows={1}
-          enterKeyHint="send"
+          // Enter inserts a newline here (sending is via the button), so
+          // hint the keyboard's return-key icon accordingly instead of
+          // showing "Send" for a key that doesn't send.
+          enterKeyHint="enter"
           // Trim the shared component's py-3 down (inline style beats the
           // class) so a single-line input is the same 42px height as the
           // send button (py-3 + 18px icon) instead of the taller ~46px the
