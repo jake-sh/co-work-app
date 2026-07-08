@@ -7,7 +7,6 @@ import {
   createUserWithEmailAndPassword,
   deleteUser as deleteFirebaseUser,
   EmailAuthProvider,
-  inMemoryPersistence,
   onAuthStateChanged,
   reauthenticateWithCredential,
   setPersistence,
@@ -85,28 +84,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (username: string, password: string, rememberMe = true) => {
-    const email = usernameToAuthEmail(username);
-    // Best-effort: setPersistence merely selects which storage Firebase
-    // *intends* to use, so a failure here doesn't necessarily mean the
-    // sign-in itself will fail — proceed regardless and let the retry
-    // below (which does) actually confirm it.
+    // Honor the "keep me logged in" toggle. Best-effort: the Auth instance
+    // already has a working persistence selected at init via initializeAuth's
+    // fallback chain (see firebase/client.ts), so if this fails in a
+    // storage-restricted browser (e.g. Safari Private Browsing) we just keep
+    // that fallback rather than blocking the sign-in.
     await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence).catch(
-      (err) => console.error("setPersistence failed:", err)
+      () => {}
     );
-
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      // Diagnosed via a DOMException code 22 (QuotaExceededError): Safari
-      // Private Browsing caps every Web Storage quota — localStorage,
-      // sessionStorage, and IndexedDB alike — at 0, so Firebase's attempt
-      // to actually persist the freshly signed-in session throws here even
-      // though setPersistence() above appeared to succeed. Retry once with
-      // memory-only persistence, which touches no storage API at all.
-      console.error("signIn failed, retrying with in-memory persistence:", err);
-      await setPersistence(auth, inMemoryPersistence);
-      await signInWithEmailAndPassword(auth, email, password);
-    }
+    await signInWithEmailAndPassword(auth, usernameToAuthEmail(username), password);
   };
 
   const signOut = async () => {
