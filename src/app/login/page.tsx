@@ -27,8 +27,16 @@ export default function LoginPage() {
     try {
       await signIn(username, password, rememberMe);
       router.replace("/project");
-    } catch {
-      setError(t.auth.genericError);
+    } catch (err) {
+      // Temporary diagnostic: the persistence-fallback theory from the
+      // previous two fixes didn't actually resolve the reported "keep me
+      // logged in" failure, so surface the real error again to find out
+      // what's actually being thrown this time instead of guessing further.
+      const code = (err as { code?: string })?.code;
+      const message = (err as { message?: string })?.message;
+      console.error("Login failed:", err);
+      const detail = code ?? message;
+      setError(detail ? `${t.auth.genericError} (${detail})` : t.auth.genericError);
     } finally {
       setSubmitting(false);
     }
