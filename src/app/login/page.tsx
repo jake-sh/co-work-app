@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,13 +46,22 @@ export default function LoginPage() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoCapitalize="none"
+          enterKeyHint="next"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              passwordRef.current?.focus();
+            }
+          }}
           required
         />
         <TextInput
+          ref={passwordRef}
           type="password"
           placeholder={t.auth.password}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          enterKeyHint="done"
           required
         />
         <div className="flex items-center gap-2">

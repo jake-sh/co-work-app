@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowLeft, Share2, Trash2, X } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/context/AuthContext";
@@ -26,6 +26,7 @@ export default function MemoPage() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [confirmDeleteMemo, setConfirmDeleteMemo] = useState<Memo | null>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   if (!currentProject) {
     return <EmptyState message={t.todo.selectProjectFirst} />;
@@ -127,6 +128,13 @@ export default function MemoPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onFocus={(e) => e.currentTarget.focus({ preventScroll: true })}
+            enterKeyHint="next"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                bodyRef.current?.focus();
+              }
+            }}
           />
           {title && (
             <button
@@ -141,10 +149,12 @@ export default function MemoPage() {
         {/* Body textarea — fills remaining space */}
         <div className="flex-1 px-5 pb-5">
           <TextArea
+            ref={bodyRef}
             placeholder={t.memo.bodyPlaceholder}
             value={body}
             onChange={(e) => setBody(e.target.value)}
             onFocus={(e) => e.currentTarget.focus({ preventScroll: true })}
+            enterKeyHint="enter"
             className="h-full"
           />
         </div>

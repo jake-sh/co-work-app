@@ -256,6 +256,10 @@ export default function SchedulePage() {
               placeholder={t.schedule.eventTitle}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              enterKeyHint="done"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && title.trim()) onAdd();
+              }}
             />
             <TextInput type="time" value={time} onChange={(e) => setTime(e.target.value)} />
             <Button onClick={onAdd} disabled={!title.trim()}>
@@ -278,6 +282,10 @@ export default function SchedulePage() {
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
                         placeholder={t.schedule.eventTitle}
+                        enterKeyHint="done"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && editTitle.trim()) saveEdit();
+                        }}
                       />
                       {ev.rangeId ? (
                         <p className="text-xs text-text-secondary">

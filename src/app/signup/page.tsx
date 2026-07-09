@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
@@ -18,6 +18,9 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,9 +52,17 @@ export default function SignupPage() {
           placeholder={t.auth.displayName}
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
+          enterKeyHint="next"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              usernameRef.current?.focus();
+            }
+          }}
           required
         />
         <TextInput
+          ref={usernameRef}
           type="text"
           placeholder={t.auth.username}
           value={username}
@@ -59,22 +70,39 @@ export default function SignupPage() {
           pattern="[a-zA-Z0-9_.]{4,20}"
           title="4-20 characters: letters, numbers, underscore, dot"
           autoCapitalize="none"
+          enterKeyHint="next"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              passwordRef.current?.focus();
+            }
+          }}
           required
         />
         <TextInput
+          ref={passwordRef}
           type="password"
           placeholder={t.auth.password}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           minLength={6}
+          enterKeyHint="next"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              confirmPasswordRef.current?.focus();
+            }
+          }}
           required
         />
         <TextInput
+          ref={confirmPasswordRef}
           type="password"
           placeholder={t.auth.confirmPassword}
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           minLength={6}
+          enterKeyHint="done"
           required
         />
         {error && <p className="text-sm text-red-400">{error}</p>}
