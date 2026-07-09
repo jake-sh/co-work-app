@@ -7,6 +7,7 @@ import {
   createUserWithEmailAndPassword,
   deleteUser as deleteFirebaseUser,
   EmailAuthProvider,
+  inMemoryPersistence,
   onAuthStateChanged,
   reauthenticateWithCredential,
   setPersistence,
@@ -84,14 +85,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (username: string, password: string, rememberMe = true) => {
-    // Honor the "keep me logged in" toggle. Best-effort: the Auth instance
-    // already has a working persistence selected at init via initializeAuth's
-    // fallback chain (see firebase/client.ts), so if this fails in a
-    // storage-restricted browser (e.g. Safari Private Browsing) we just keep
-    // that fallback rather than blocking the sign-in.
-    await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence).catch(
-      () => {}
-    );
+    // Honor the "keep me logged in" toggle. If this fails in a
+    // storage-restricted browser (e.g. Safari Private Browsing), simply
+    // swallowing the error and moving on isn't enough — a setPersistence
+    // call that fails partway through can leave the Auth instance without
+    // *any* cleanly-established persistence manager, which then makes the
+    // sign-in call below fail too. Explicitly fall back to inMemoryPersistence
+    // (which cannot fail — it touches no storage API) so the instance always
+    // has a definitively working persistence before signing in.
+    try {
+      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+    } catch (err) {
+      console.error("setPersistence failed, falling back to in-memory:", err);
+      await setPersistence(auth, inMemoryPersistence);
+    }
     await signInWithEmailAndPassword(auth, usernameToAuthEmail(username), password);
   };
 
