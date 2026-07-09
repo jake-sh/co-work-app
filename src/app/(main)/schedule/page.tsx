@@ -257,6 +257,7 @@ export default function SchedulePage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               enterKeyHint="done"
+              autoComplete="off"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && title.trim()) onAdd();
               }}
@@ -283,6 +284,7 @@ export default function SchedulePage() {
                         onChange={(e) => setEditTitle(e.target.value)}
                         placeholder={t.schedule.eventTitle}
                         enterKeyHint="done"
+                        autoComplete="off"
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && editTitle.trim()) saveEdit();
                         }}

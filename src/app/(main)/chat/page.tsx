@@ -252,6 +252,7 @@ export default function ChatPage() {
           value={text}
           onChange={handleTextChange}
           rows={1}
+          autoComplete="off"
           // Enter inserts a newline here (sending is via the button), so
           // hint the keyboard's return-key icon accordingly instead of
           // showing "Send" for a key that doesn't send.

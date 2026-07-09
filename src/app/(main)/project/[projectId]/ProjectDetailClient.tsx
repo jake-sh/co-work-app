@@ -284,6 +284,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           className="mb-4 text-xl font-bold"
           readOnly={!isPL}
           enterKeyHint="done"
+          autoComplete="off"
           onKeyDown={(e) => {
             if (e.key === "Enter") e.currentTarget.blur();
           }}
@@ -303,6 +304,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
             className="w-full"
             readOnly={!isPL}
             enterKeyHint="enter"
+            autoComplete="off"
           />
         </div>
 
@@ -320,7 +322,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
             {t.project.members} ({project.memberIds.length})
           </p>
           {isPL && (
-            <form onSubmit={onAddMember} className="flex gap-2">
+            <form onSubmit={onAddMember} className="flex gap-2" autoComplete="off">
               <TextInput
                 type="text"
                 placeholder={t.project.addMember}
@@ -328,6 +330,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
                 onChange={(e) => setMemberUsername(e.target.value)}
                 autoCapitalize="none"
                 enterKeyHint="done"
+                autoComplete="off"
               />
               <button
                 type="submit"
