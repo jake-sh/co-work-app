@@ -7,7 +7,7 @@ import { clsx } from "clsx";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { Button } from "@/components/ui/Button";
-import { TextInput } from "@/components/ui/TextInput";
+import { TextInput, SingleLineInput } from "@/components/ui/TextInput";
 
 export default function LoginPage() {
   const { signIn } = useAuth();
@@ -40,18 +40,14 @@ export default function LoginPage() {
         {t.auth.login}
       </h1>
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <TextInput
-          type="text"
+        <SingleLineInput
           placeholder={t.auth.username}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoCapitalize="none"
           enterKeyHint="next"
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              passwordRef.current?.focus();
-            }
+            if (e.key === "Enter") passwordRef.current?.focus();
           }}
           required
         />

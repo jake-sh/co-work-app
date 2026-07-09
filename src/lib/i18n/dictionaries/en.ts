@@ -25,6 +25,7 @@ const en: Dictionary = {
     colorAssigned: "You'll be assigned your own color on signup",
     genericError: "Something went wrong. Please try again.",
     usernameTaken: "This ID is already taken.",
+    usernameInvalid: "ID must be 4-20 characters: letters, numbers, underscore, dot.",
     autoLogin: "Keep me logged in",
   },
   project: {

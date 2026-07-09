@@ -21,7 +21,7 @@ import {
 import { PROJECT_COLOR_PALETTE } from "@/lib/colors";
 import { getUserProfile } from "@/lib/data/users";
 import { Button } from "@/components/ui/Button";
-import { TextInput, TextArea } from "@/components/ui/TextInput";
+import { TextInput, TextArea, SingleLineInput } from "@/components/ui/TextInput";
 import { ColorDot } from "@/components/ui/ColorDot";
 import type { UserProfile } from "@/types";
 
@@ -277,7 +277,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           </span>
         )}
 
-        <TextInput
+        <SingleLineInput
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={t.project.name}
@@ -323,14 +323,16 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           </p>
           {isPL && (
             <form onSubmit={onAddMember} className="flex gap-2" autoComplete="off">
-              <TextInput
-                type="text"
+              <SingleLineInput
                 placeholder={t.project.addMember}
                 value={memberUsername}
                 onChange={(e) => setMemberUsername(e.target.value)}
                 autoCapitalize="none"
                 enterKeyHint="done"
                 autoComplete="off"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.form?.requestSubmit();
+                }}
               />
               <button
                 type="submit"

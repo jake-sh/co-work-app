@@ -9,7 +9,7 @@ import { useI18n } from "@/lib/i18n/I18nContext";
 import { addMemo, deleteMemo, shareMemoWithMembers, unshareMemo, updateMemo } from "@/lib/data/memos";
 import { useData } from "@/lib/context/DataContext";
 import { Card } from "@/components/ui/Card";
-import { TextInput, TextArea } from "@/components/ui/TextInput";
+import { TextArea, SingleLineInput } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ColorDot } from "@/components/ui/ColorDot";
 import type { Memo } from "@/types";
@@ -123,7 +123,7 @@ export default function MemoPage() {
 
         {/* Title input */}
         <div className="relative px-5 pb-3">
-          <TextInput
+          <SingleLineInput
             placeholder={t.memo.titlePlaceholder}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -131,10 +131,7 @@ export default function MemoPage() {
             enterKeyHint="next"
             autoComplete="off"
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                bodyRef.current?.focus();
-              }
+              if (e.key === "Enter") bodyRef.current?.focus();
             }}
           />
           {title && (

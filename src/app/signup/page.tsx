@@ -6,7 +6,12 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { Button } from "@/components/ui/Button";
-import { TextInput } from "@/components/ui/TextInput";
+import { TextInput, SingleLineInput } from "@/components/ui/TextInput";
+
+// <textarea> (used for username to dodge Chrome's autofill bar) doesn't
+// support the native `pattern` attribute an <input> would use for this, so
+// the format is checked manually on submit instead.
+const USERNAME_PATTERN = /^[a-zA-Z0-9_.]{4,20}$/;
 
 export default function SignupPage() {
   const { signUp } = useAuth();
@@ -18,13 +23,17 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const usernameRef = useRef<HTMLInputElement>(null);
+  const usernameRef = useRef<HTMLTextAreaElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!USERNAME_PATTERN.test(username)) {
+      setError(t.auth.usernameInvalid);
+      return;
+    }
     if (password !== confirmPassword) {
       setError(t.auth.passwordMismatch);
       return;
@@ -48,34 +57,25 @@ export default function SignupPage() {
       </h1>
       <p className="mb-8 text-sm text-text-secondary">{t.auth.colorAssigned}</p>
       <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <TextInput
+        <SingleLineInput
           placeholder={t.auth.displayName}
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           enterKeyHint="next"
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              usernameRef.current?.focus();
-            }
+            if (e.key === "Enter") usernameRef.current?.focus();
           }}
           required
         />
-        <TextInput
+        <SingleLineInput
           ref={usernameRef}
-          type="text"
           placeholder={t.auth.username}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          pattern="[a-zA-Z0-9_.]{4,20}"
-          title="4-20 characters: letters, numbers, underscore, dot"
           autoCapitalize="none"
           enterKeyHint="next"
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              passwordRef.current?.focus();
-            }
+            if (e.key === "Enter") passwordRef.current?.focus();
           }}
           required
         />
