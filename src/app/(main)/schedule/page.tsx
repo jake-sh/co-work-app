@@ -29,7 +29,7 @@ import { getHolidayName } from "@/lib/holidays";
 import { useData } from "@/lib/context/DataContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { TextInput } from "@/components/ui/TextInput";
+import { TextInput, SingleLineInput } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import type { ScheduleEvent } from "@/types";
 
@@ -252,7 +252,7 @@ export default function SchedulePage() {
       <div className="px-5 pb-10">
         {adding && (
           <Card className="mt-3 flex flex-col gap-2">
-            <TextInput
+            <SingleLineInput
               placeholder={t.schedule.eventTitle}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -279,7 +279,7 @@ export default function SchedulePage() {
                 editingId === ev.id ? (
                   <li key={ev.id} className="rounded-card bg-surface-card px-4 py-3">
                     <div className="flex flex-col gap-2">
-                      <TextInput
+                      <SingleLineInput
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
                         placeholder={t.schedule.eventTitle}

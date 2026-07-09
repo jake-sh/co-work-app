@@ -8,7 +8,7 @@ import { MEMBER_COLOR_PALETTE } from "@/lib/colors";
 import { enablePush, disablePush } from "@/lib/messaging";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { TextInput } from "@/components/ui/TextInput";
+import { TextInput, SingleLineInput } from "@/components/ui/TextInput";
 import { clsx } from "clsx";
 
 export default function SettingsPage() {
@@ -262,7 +262,7 @@ export default function SettingsPage() {
         <div className="flex min-h-14 flex-col justify-center gap-3 py-1">
           <div className="flex items-center gap-3">
             <span className="shrink-0 text-sm text-text-secondary">{t.settings.nickname}</span>
-            <TextInput
+            <SingleLineInput
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               placeholder={profile?.displayName ?? ""}

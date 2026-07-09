@@ -9,7 +9,7 @@ import { useI18n } from "@/lib/i18n/I18nContext";
 import { addTodo, deleteTodo, restoreTodo, restoreTodoStatus, setTodoStatus, updateTodoText } from "@/lib/data/todos";
 import { getUserProfile } from "@/lib/data/users";
 import { useData } from "@/lib/context/DataContext";
-import { TextInput } from "@/components/ui/TextInput";
+import { SingleLineInput } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ColorDot } from "@/components/ui/ColorDot";
 import type { Todo, TodoStatus, UserProfile } from "@/types";
@@ -314,7 +314,7 @@ export default function TodoPage() {
         </div>
 
         <form onSubmit={onAdd} className="flex gap-2">
-          <TextInput
+          <SingleLineInput
             placeholder={t.todo.inputPlaceholder}
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -322,6 +322,9 @@ export default function TodoPage() {
             autoCorrect="off"
             autoCapitalize="off"
             enterKeyHint="done"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.form?.requestSubmit();
+            }}
           />
           <button
             type="submit"

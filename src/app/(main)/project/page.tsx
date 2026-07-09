@@ -13,7 +13,7 @@ import { getUserProfile } from "@/lib/data/users";
 import { PROJECT_COLOR_PALETTE } from "@/lib/colors";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { TextInput, TextArea } from "@/components/ui/TextInput";
+import { TextInput, TextArea, SingleLineInput } from "@/components/ui/TextInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ColorDot } from "@/components/ui/ColorDot";
 import type { Project, UserProfile } from "@/types";
@@ -130,7 +130,7 @@ export default function ProjectListPage() {
       <div className="px-5 pb-10">
         {creating && (
           <Card className="mb-6 flex flex-col gap-3">
-            <TextInput
+            <SingleLineInput
               placeholder={t.project.name}
               value={name}
               onChange={(e) => setName(e.target.value)}
