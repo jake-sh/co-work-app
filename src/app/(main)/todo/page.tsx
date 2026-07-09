@@ -321,6 +321,7 @@ export default function TodoPage() {
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
+            enterKeyHint="done"
           />
           <button
             type="submit"
@@ -566,6 +567,7 @@ function TodoRow({
                 inputRef.current?.blur();
               }
             }}
+            enterKeyHint="done"
             rows={1}
             className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-sm text-text-primary outline-none"
           />

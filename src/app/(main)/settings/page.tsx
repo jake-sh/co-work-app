@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, LogOut, User as UserIcon } from "lucide-react";
 import { useAuth, persistLocale } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
@@ -29,6 +29,7 @@ export default function SettingsPage() {
   const [deletePw, setDeletePw] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const newPwRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("cowork.fontScale");
@@ -140,13 +141,25 @@ export default function SettingsPage() {
                 value={currentPw}
                 onChange={(e) => setCurrentPw(e.target.value)}
                 autoComplete="current-password"
+                enterKeyHint="next"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    newPwRef.current?.focus();
+                  }
+                }}
               />
               <TextInput
+                ref={newPwRef}
                 type="password"
                 placeholder={t.settings.newPassword}
                 value={newPw}
                 onChange={(e) => setNewPw(e.target.value)}
                 autoComplete="new-password"
+                enterKeyHint="done"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && currentPw && newPw && !pwSubmitting) onChangePassword();
+                }}
               />
               {pwError && <p className="text-xs text-red-400">{pwError}</p>}
               {pwSaved && <p className="text-xs text-green-400">{t.settings.passwordChanged}</p>}
@@ -191,6 +204,10 @@ export default function SettingsPage() {
               value={deletePw}
               onChange={(e) => setDeletePw(e.target.value)}
               autoComplete="current-password"
+              enterKeyHint="done"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && deletePw && !deleteSubmitting) onDeleteAccount();
+              }}
             />
             {deleteError && <p className="mt-2 text-xs text-red-400">{deleteError}</p>}
             <div className="mt-4 flex gap-3">
@@ -250,6 +267,10 @@ export default function SettingsPage() {
               onChange={(e) => setNickname(e.target.value)}
               placeholder={profile?.displayName ?? ""}
               className="flex-1 !py-1.5"
+              enterKeyHint="done"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && nickname.trim()) onSaveNickname();
+              }}
             />
             <button
               onClick={onSaveNickname}

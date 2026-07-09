@@ -283,6 +283,10 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           placeholder={t.project.name}
           className="mb-4 text-xl font-bold"
           readOnly={!isPL}
+          enterKeyHint="done"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
         />
 
         <div>
@@ -298,6 +302,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
             rows={1}
             className="w-full"
             readOnly={!isPL}
+            enterKeyHint="enter"
           />
         </div>
 
@@ -322,6 +327,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
                 value={memberUsername}
                 onChange={(e) => setMemberUsername(e.target.value)}
                 autoCapitalize="none"
+                enterKeyHint="done"
               />
               <button
                 type="submit"

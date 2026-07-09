@@ -134,12 +134,17 @@ export default function ProjectListPage() {
               placeholder={t.project.name}
               value={name}
               onChange={(e) => setName(e.target.value)}
+              enterKeyHint="done"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+              }}
             />
             <TextArea
               placeholder={t.project.description}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
+              enterKeyHint="enter"
             />
             <div className="flex gap-2">
               <div className="flex-1">
