@@ -568,6 +568,7 @@ function TodoRow({
               }
             }}
             enterKeyHint="done"
+            autoComplete="off"
             rows={1}
             className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-sm text-text-primary outline-none"
           />

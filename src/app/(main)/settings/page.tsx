@@ -268,6 +268,7 @@ export default function SettingsPage() {
               placeholder={profile?.displayName ?? ""}
               className="flex-1 !py-1.5"
               enterKeyHint="done"
+              autoComplete="off"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && nickname.trim()) onSaveNickname();
               }}

@@ -135,6 +135,7 @@ export default function ProjectListPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               enterKeyHint="done"
+              autoComplete="off"
               onKeyDown={(e) => {
                 if (e.key === "Enter") e.currentTarget.blur();
               }}
@@ -145,6 +146,7 @@ export default function ProjectListPage() {
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               enterKeyHint="enter"
+              autoComplete="off"
             />
             <div className="flex gap-2">
               <div className="flex-1">

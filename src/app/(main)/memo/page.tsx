@@ -129,6 +129,7 @@ export default function MemoPage() {
             onChange={(e) => setTitle(e.target.value)}
             onFocus={(e) => e.currentTarget.focus({ preventScroll: true })}
             enterKeyHint="next"
+            autoComplete="off"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -155,6 +156,7 @@ export default function MemoPage() {
             onChange={(e) => setBody(e.target.value)}
             onFocus={(e) => e.currentTarget.focus({ preventScroll: true })}
             enterKeyHint="enter"
+            autoComplete="off"
             className="h-full"
           />
         </div>
