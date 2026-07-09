@@ -85,21 +85,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (username: string, password: string, rememberMe = true) => {
-    // Honor the "keep me logged in" toggle. If this fails in a
-    // storage-restricted browser (e.g. Safari Private Browsing), simply
-    // swallowing the error and moving on isn't enough — a setPersistence
-    // call that fails partway through can leave the Auth instance without
-    // *any* cleanly-established persistence manager, which then makes the
-    // sign-in call below fail too. Explicitly fall back to inMemoryPersistence
-    // (which cannot fail — it touches no storage API) so the instance always
-    // has a definitively working persistence before signing in.
+    const email = usernameToAuthEmail(username);
+    // Honor the "keep me logged in" toggle. setPersistence() itself just
+    // *records* which storage to use — it doesn't touch storage yet, so it
+    // resolves fine even when that storage is actually broken. The write
+    // only happens later, when signInWithEmailAndPassword succeeds and
+    // Firebase tries to persist the new session: that's where a
+    // QuotaExceededError (confirmed via its DOMException name — Safari
+    // Private Browsing caps every Web Storage quota at 0) actually surfaces.
+    // Retry once with inMemoryPersistence (touches no storage API, can't
+    // hit this) rather than blocking sign-in entirely.
+    await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence).catch(
+      () => {}
+    );
     try {
-      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      console.error("setPersistence failed, falling back to in-memory:", err);
+      if ((err as { name?: string })?.name !== "QuotaExceededError") throw err;
+      console.error("Sign-in failed persisting session (storage quota), retrying in-memory:", err);
       await setPersistence(auth, inMemoryPersistence);
+      await signInWithEmailAndPassword(auth, email, password);
     }
-    await signInWithEmailAndPassword(auth, usernameToAuthEmail(username), password);
   };
 
   const signOut = async () => {
