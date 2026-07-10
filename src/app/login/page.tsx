@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
@@ -8,6 +8,32 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { Button } from "@/components/ui/Button";
 import { TextInput, SingleLineInput } from "@/components/ui/TextInput";
+
+// Centered content doesn't reflow when the keyboard opens (the layout
+// viewport doesn't shrink, only the visual one), so a vertically-centered
+// form can end up partly hidden behind the keyboard with nothing to scroll
+// to reveal it. Switch to top-aligned only while the keyboard is open so
+// the fields stay reachable, and back to centered once it closes.
+const KEYBOARD_HEIGHT_THRESHOLD = 200;
+
+function useKeyboardOpen(): boolean {
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => setKeyboardOpen(window.innerHeight - vv.height > KEYBOARD_HEIGHT_THRESHOLD);
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+
+  return keyboardOpen;
+}
 
 export default function LoginPage() {
   const { signIn } = useAuth();
@@ -19,6 +45,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const keyboardOpen = useKeyboardOpen();
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +70,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col justify-center px-6 py-10">
+    <div
+      className={clsx(
+        "flex flex-1 flex-col overflow-y-auto px-6 py-10",
+        keyboardOpen ? "justify-start" : "justify-center"
+      )}
+    >
       <h1 className="mb-8 text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
         {t.auth.login}
       </h1>
