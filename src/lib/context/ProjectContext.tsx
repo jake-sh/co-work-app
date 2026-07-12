@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { subscribeUserProjects } from "@/lib/data/projects";
 import type { Project } from "@/types";
@@ -55,13 +55,20 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [user]);
 
-  const setCurrentProjectId = (id: string | null) => {
+  // Stable reference: consumers (e.g. ProjectDetailClient) depend on this
+  // function identity in their own effects to sync the URL's projectId into
+  // context. A fresh closure on every render made those effects re-fire on
+  // any unrelated context update — including this function's own call while
+  // switching projects — briefly resetting currentProjectId back to the
+  // page's still-stale projectId prop before navigation caught up, which
+  // showed up as the active tab's color bar flickering back before settling.
+  const setCurrentProjectId = useCallback((id: string | null) => {
     setCurrentProjectIdState(id);
     if (typeof window !== "undefined") {
       if (id) window.localStorage.setItem(STORAGE_KEY, id);
       else window.localStorage.removeItem(STORAGE_KEY);
     }
-  };
+  }, []);
 
   const currentProject = useMemo(
     () => projects.find((p) => p.id === currentProjectId) ?? null,
@@ -70,7 +77,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<ProjectContextValue>(
     () => ({ projects, currentProjectId, currentProject, setCurrentProjectId, loading }),
-    [projects, currentProjectId, currentProject, loading]
+    [projects, currentProjectId, currentProject, setCurrentProjectId, loading]
   );
 
   return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
