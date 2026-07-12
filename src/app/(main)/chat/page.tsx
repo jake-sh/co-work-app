@@ -32,7 +32,7 @@ export default function ChatPage() {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [formHeight, setFormHeight] = useState(56);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -115,8 +115,7 @@ export default function ChatPage() {
     e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
   };
 
-  const onSend = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSend = async () => {
     const trimmed = text.trim();
     if (!profile || !trimmed) return;
     // Reset and refocus before await so keyboard never dismisses
@@ -235,10 +234,13 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Fixed form — sits just above bottom nav when keyboard closed, just above keyboard when open */}
-      <form
+      {/* Fixed row (not a <form> — chat is the only focusable field on this
+          page, and a <form> made iOS Safari's keyboard accessory bar treat
+          Done as a submit action; a plain row + button onClick sidesteps
+          that) — sits just above bottom nav when keyboard closed, just
+          above keyboard when open */}
+      <div
         ref={formRef}
-        onSubmit={onSend}
         className="fixed inset-x-0 z-10 flex items-end gap-2 bg-bg-base px-5 py-2"
         style={{
           bottom: keyboardOpen
@@ -265,12 +267,13 @@ export default function ChatPage() {
           className="min-h-[42px] max-h-[120px] overflow-y-auto"
         />
         <button
-          type="submit"
+          type="button"
+          onClick={onSend}
           className="flex shrink-0 items-center justify-center rounded-xl bg-surface-pill px-3 py-3"
         >
           <Send size={18} />
         </button>
-      </form>
+      </div>
     </>
   );
 }

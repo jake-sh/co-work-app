@@ -150,8 +150,7 @@ export default function TodoPage() {
     return <EmptyState message={t.todo.selectProjectFirst} />;
   }
 
-  const onAdd = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onAdd = () => {
     if (!profile || !text.trim()) return;
     setAddError(null);
     // Clear the field immediately and fire the write in the background. The
@@ -313,7 +312,10 @@ export default function TodoPage() {
           </button>
         </div>
 
-        <form onSubmit={onAdd} className="flex gap-2">
+        {/* Not a <form> — this input is the only focusable field on the page
+            outside an active row edit, and a <form> made iOS Safari's
+            keyboard accessory bar treat Done as a submit action. */}
+        <div className="flex gap-2">
           <SingleLineInput
             placeholder={t.todo.inputPlaceholder}
             value={text}
@@ -323,16 +325,17 @@ export default function TodoPage() {
             autoCapitalize="off"
             enterKeyHint="done"
             onKeyDown={(e) => {
-              if (e.key === "Enter") e.currentTarget.form?.requestSubmit();
+              if (e.key === "Enter") onAdd();
             }}
           />
           <button
-            type="submit"
+            type="button"
+            onClick={onAdd}
             className="flex shrink-0 items-center justify-center rounded-xl bg-surface-pill px-3"
           >
             <Plus size={18} />
           </button>
-        </form>
+        </div>
         {addError && <p className="mt-2 text-xs text-red-400">{addError}</p>}
       </div>
 
