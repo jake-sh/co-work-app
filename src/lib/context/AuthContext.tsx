@@ -2,11 +2,11 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
-  browserLocalPersistence,
   browserSessionPersistence,
   createUserWithEmailAndPassword,
   deleteUser as deleteFirebaseUser,
   EmailAuthProvider,
+  indexedDBLocalPersistence,
   inMemoryPersistence,
   onAuthStateChanged,
   reauthenticateWithCredential,
@@ -86,16 +86,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (username: string, password: string, rememberMe = true) => {
     const email = usernameToAuthEmail(username);
-    // Honor the "keep me logged in" toggle. setPersistence() itself just
-    // *records* which storage to use — it doesn't touch storage yet, so it
-    // resolves fine even when that storage is actually broken. The write
-    // only happens later, when signInWithEmailAndPassword succeeds and
-    // Firebase tries to persist the new session: that's where a
-    // QuotaExceededError (confirmed via its DOMException name — Safari
-    // Private Browsing caps every Web Storage quota at 0) actually surfaces.
-    // Retry once with inMemoryPersistence (touches no storage API, can't
-    // hit this) rather than blocking sign-in entirely.
-    await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence).catch(
+    // Honor the "keep me logged in" toggle. Uses indexedDBLocalPersistence,
+    // not browserLocalPersistence (localStorage) — they're separate storage
+    // backends, and firebase/client.ts's initializeAuth tries
+    // indexedDBLocalPersistence *first* when restoring a session on app
+    // launch. Writing to browserLocalPersistence here meant "keep me logged
+    // in" silently didn't survive a restart: sign-in succeeded and looked
+    // fine in the moment, but the session was saved to a storage location
+    // the next launch never checked. setPersistence() itself just *records*
+    // which storage to use — it doesn't touch storage yet, so it resolves
+    // fine even when that storage is actually broken. The write only
+    // happens later, when signInWithEmailAndPassword succeeds and Firebase
+    // tries to persist the new session: that's where a QuotaExceededError
+    // (confirmed via its DOMException name — Safari Private Browsing caps
+    // every Web Storage quota at 0) actually surfaces. Retry once with
+    // inMemoryPersistence (touches no storage API, can't hit this) rather
+    // than blocking sign-in entirely.
+    await setPersistence(auth, rememberMe ? indexedDBLocalPersistence : browserSessionPersistence).catch(
       () => {}
     );
     try {
