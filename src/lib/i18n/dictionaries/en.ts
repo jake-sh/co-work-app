@@ -139,6 +139,11 @@ const en: Dictionary = {
     back: "Back",
     confirm: "OK",
   },
+  shareTarget: {
+    title: "Select a project to save to",
+    empty: "No projects to save to",
+    cancel: "Cancel",
+  },
 };
 
 export default en;

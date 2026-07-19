@@ -137,4 +137,9 @@ export interface Dictionary {
     back: string;
     confirm: string;
   };
+  shareTarget: {
+    title: string;
+    empty: string;
+    cancel: string;
+  };
 }
