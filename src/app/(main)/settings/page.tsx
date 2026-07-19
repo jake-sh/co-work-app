@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, LogOut, Moon, Sun, User as UserIcon } from "lucide-react";
+import { Check, ChevronDown, LogOut, User as UserIcon } from "lucide-react";
 import { useAuth, persistLocale } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { MEMBER_COLOR_PALETTE } from "@/lib/colors";
@@ -334,21 +334,19 @@ export default function SettingsPage() {
             <button
               onClick={() => onSelectTheme("dark")}
               className={clsx(
-                "flex items-center gap-1 rounded-pill px-3 py-1.5 text-sm font-semibold transition-colors",
+                "flex h-7 items-center rounded-pill px-3 text-sm font-semibold transition-colors",
                 theme === "dark" ? "bg-accent text-accent-content" : "text-text-secondary"
               )}
             >
-              <Moon size={14} />
               {t.settings.dark}
             </button>
             <button
               onClick={() => onSelectTheme("light")}
               className={clsx(
-                "flex items-center gap-1 rounded-pill px-3 py-1.5 text-sm font-semibold transition-colors",
+                "flex h-7 items-center rounded-pill px-3 text-sm font-semibold transition-colors",
                 theme === "light" ? "bg-accent text-accent-content" : "text-text-secondary"
               )}
             >
-              <Sun size={14} />
               {t.settings.light}
             </button>
           </div>
