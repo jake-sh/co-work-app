@@ -57,11 +57,11 @@ function ShareTargetContent() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm rounded-t-2xl bg-surface-card p-5 sm:rounded-2xl"
+        className="mx-6 w-full max-w-xs rounded-2xl bg-surface-card p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <p className="mb-4 text-center text-sm font-semibold">{t.shareTarget.title}</p>
