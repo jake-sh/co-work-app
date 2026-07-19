@@ -139,6 +139,11 @@ const ko: Dictionary = {
     back: "뒤로",
     confirm: "확인",
   },
+  shareTarget: {
+    title: "저장할 프로젝트 선택",
+    empty: "저장할 프로젝트가 없습니다",
+    cancel: "취소",
+  },
 };
 
 export default ko;

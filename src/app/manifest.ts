@@ -9,6 +9,17 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     background_color: "#0b0b0b",
     theme_color: "#0b0b0b",
+    // GET-based (no files) so the target route is a plain navigable page —
+    // shared text/links land as query params, no multipart POST handler needed.
+    share_target: {
+      action: "/share-target",
+      method: "GET",
+      params: {
+        title: "title",
+        text: "text",
+        url: "url",
+      },
+    },
     icons: [
       {
         src: "/icon-192.png",
