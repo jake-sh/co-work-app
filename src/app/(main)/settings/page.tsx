@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, LogOut, User as UserIcon } from "lucide-react";
+import { Check, ChevronDown, LogOut, Moon, Sun, User as UserIcon } from "lucide-react";
 import { useAuth, persistLocale } from "@/lib/context/AuthContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { MEMBER_COLOR_PALETTE } from "@/lib/colors";
@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [nickname, setNickname] = useState(() => profile?.nickname ?? "");
   const [nicknameSaved, setNicknameSaved] = useState(false);
   const [fontScale, setFontScale] = useState<"S" | "M" | "L">("S");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [pwModalOpen, setPwModalOpen] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -37,11 +38,29 @@ export default function SettingsPage() {
     if (saved === "S" || saved === "M" || saved === "L") setFontScale(saved);
   }, []);
 
+  useEffect(() => {
+    const saved = localStorage.getItem("cowork.theme");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (saved === "light") setTheme("light");
+  }, []);
+
   const onSelectFontScale = (scale: "S" | "M" | "L") => {
     setFontScale(scale);
     localStorage.setItem("cowork.fontScale", scale);
     const offset = { S: "0px", M: "2px", L: "4px" }[scale];
     document.documentElement.style.setProperty("--app-font-offset", offset);
+  };
+
+  const onSelectTheme = (next: "dark" | "light") => {
+    setTheme(next);
+    localStorage.setItem("cowork.theme", next);
+    if (next === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+    const meta = document.querySelector('meta[name="theme-color"]');
+    meta?.setAttribute("content", next === "light" ? "#f5f5f7" : "#0b0b0b");
   };
 
   const onSaveNickname = async () => {
@@ -310,17 +329,45 @@ export default function SettingsPage() {
 
       <Card className="mb-6 flex flex-col !py-1">
         <div className="flex min-h-14 items-center justify-between">
+          <span className="text-sm text-text-secondary">{t.settings.theme}</span>
+          <div className="flex gap-1 rounded-pill bg-surface-pill p-0.5">
+            <button
+              onClick={() => onSelectTheme("dark")}
+              className={clsx(
+                "flex items-center gap-1 rounded-pill px-3 py-1.5 text-sm font-semibold transition-colors",
+                theme === "dark" ? "bg-accent text-accent-content" : "text-text-secondary"
+              )}
+            >
+              <Moon size={14} />
+              {t.settings.dark}
+            </button>
+            <button
+              onClick={() => onSelectTheme("light")}
+              className={clsx(
+                "flex items-center gap-1 rounded-pill px-3 py-1.5 text-sm font-semibold transition-colors",
+                theme === "light" ? "bg-accent text-accent-content" : "text-text-secondary"
+              )}
+            >
+              <Sun size={14} />
+              {t.settings.light}
+            </button>
+          </div>
+        </div>
+
+        <div className="mx-1 h-px bg-border-divider" />
+
+        <div className="flex min-h-14 items-center justify-between">
           <span className="text-sm text-text-secondary">{t.settings.memoDefaultShared}</span>
           <button
             onClick={() => updateMemoDefaultShared(!(profile?.memoDefaultShared ?? true))}
             className={clsx(
               "relative h-6 w-10 rounded-full transition-colors",
-              (profile?.memoDefaultShared ?? true) ? "bg-white" : "bg-surface-pill"
+              (profile?.memoDefaultShared ?? true) ? "bg-accent" : "bg-surface-pill"
             )}
           >
             <span
               className={clsx(
-                "absolute top-1 h-4 w-4 rounded-full bg-black transition-transform",
+                "absolute top-1 h-4 w-4 rounded-full bg-accent-content transition-transform",
                 (profile?.memoDefaultShared ?? true) ? "left-5" : "left-1"
               )}
             />
@@ -335,12 +382,12 @@ export default function SettingsPage() {
             onClick={onToggleNotifications}
             className={clsx(
               "relative h-6 w-10 rounded-full transition-colors",
-              (profile?.notificationsEnabled ?? true) ? "bg-white" : "bg-surface-pill"
+              (profile?.notificationsEnabled ?? true) ? "bg-accent" : "bg-surface-pill"
             )}
           >
             <span
               className={clsx(
-                "absolute top-1 h-4 w-4 rounded-full bg-black transition-transform",
+                "absolute top-1 h-4 w-4 rounded-full bg-accent-content transition-transform",
                 (profile?.notificationsEnabled ?? true) ? "left-5" : "left-1"
               )}
             />
@@ -358,7 +405,7 @@ export default function SettingsPage() {
                 onClick={() => onSelectFontScale(s)}
                 className={clsx(
                   "h-7 w-8 rounded-pill text-sm font-semibold transition-colors",
-                  fontScale === s ? "bg-white text-black" : "text-text-secondary"
+                  fontScale === s ? "bg-accent text-accent-content" : "text-text-secondary"
                 )}
               >
                 {s}
@@ -405,7 +452,7 @@ export default function SettingsPage() {
 
       <button
         onClick={() => signOut()}
-        className="flex w-full items-center gap-3 rounded-card bg-surface-card px-4 py-3.5 text-sm text-white"
+        className="flex w-full items-center gap-3 rounded-card bg-surface-card px-4 py-3.5 text-sm text-text-primary"
       >
         <LogOut size={18} />
         {t.settings.signOut}

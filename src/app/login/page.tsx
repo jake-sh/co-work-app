@@ -108,12 +108,12 @@ export default function LoginPage() {
             onClick={() => setRememberMe((v) => !v)}
             className={clsx(
               "relative h-6 w-10 shrink-0 rounded-full transition-colors",
-              rememberMe ? "bg-white" : "bg-surface-pill"
+              rememberMe ? "bg-accent" : "bg-surface-pill"
             )}
           >
             <span
               className={clsx(
-                "absolute top-1 h-4 w-4 rounded-full bg-black transition-transform",
+                "absolute top-1 h-4 w-4 rounded-full bg-accent-content transition-transform",
                 rememberMe ? "left-5" : "left-1"
               )}
             />
