@@ -212,7 +212,7 @@ export default function ChatPage() {
                     className={clsx(
                       "max-w-[75%] px-3.5 py-2 text-sm whitespace-pre-wrap break-words",
                       isMine
-                        ? "rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl rounded-br-sm bg-white text-black"
+                        ? "rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl rounded-br-sm bg-accent text-accent-content"
                         : "rounded-tr-2xl rounded-bl-2xl rounded-br-2xl rounded-tl-sm bg-surface-card text-text-primary",
                     )}
                   >

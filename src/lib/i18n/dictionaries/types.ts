@@ -122,6 +122,9 @@ export interface Dictionary {
     passwordChanged: string;
     passwordError: string;
     preferences: string;
+    theme: string;
+    dark: string;
+    light: string;
     nickname: string;
     colorCode: string;
     memoDefaultShared: string;
