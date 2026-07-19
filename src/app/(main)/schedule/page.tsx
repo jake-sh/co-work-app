@@ -153,8 +153,8 @@ export default function SchedulePage() {
   return (
     <>
       <div className="sticky top-0 z-[1] bg-bg-base px-5 pt-4 pb-3">
-        <h1 className="mb-4 text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
-          {t.schedule.title}
+        <h1 className="mb-4 truncate text-3xl font-semibold" style={{ fontFamily: "var(--font-titillium)" }}>
+          {currentProject.name} {t.schedule.title}
         </h1>
 
         <div className="mb-3 flex items-center justify-between">
