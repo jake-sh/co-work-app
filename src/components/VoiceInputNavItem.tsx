@@ -36,71 +36,18 @@ function getSpeechRecognitionCtor(): (new () => SpeechRecognitionLike) | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-// Draggable position, persisted per-device (mirrors the fontScale/theme
-// preferences pattern elsewhere in Settings). The button is free to float
-// anywhere on screen so it can be moved off whatever it's currently
-// overlapping (e.g. chat's send button).
-const POSITION_STORAGE_KEY = "cowork.voiceFabPosition";
-const BUTTON_SIZE = 56; // h-14 / w-14
-const DRAG_THRESHOLD = 6;
-// Placed well above the bottom nav / chat input row by default so it
-// doesn't start out overlapping the send button; the user can drag it
-// anywhere from there.
-const DEFAULT_BOTTOM_OFFSET = 180;
-const DEFAULT_RIGHT_OFFSET = 20;
-
-interface Position {
-  x: number;
-  y: number;
-}
-
-function clampToViewport(pos: Position): Position {
-  const maxX = Math.max(0, window.innerWidth - BUTTON_SIZE);
-  const maxY = Math.max(0, window.innerHeight - BUTTON_SIZE);
-  return {
-    x: Math.min(Math.max(pos.x, 0), maxX),
-    y: Math.min(Math.max(pos.y, 0), maxY),
-  };
-}
-
-function getDefaultPosition(): Position {
-  return clampToViewport({
-    x: window.innerWidth - BUTTON_SIZE - DEFAULT_RIGHT_OFFSET,
-    y: window.innerHeight - BUTTON_SIZE - DEFAULT_BOTTOM_OFFSET,
-  });
-}
-
-export function VoiceInputFab() {
+// Lives as the 4th of 7 BottomNav items (between memo and schedule) instead
+// of a free-floating draggable button — that avoided overlapping other UI
+// (e.g. chat's send button) only by letting the user drag it out of the way;
+// a dedicated nav slot sidesteps the collision entirely.
+export function VoiceInputNavItem() {
   const { profile } = useAuth();
   const { currentProject } = useProjects();
   const { t } = useI18n();
   const [status, setStatus] = useState<Status>("idle");
   const [toast, setToast] = useState<{ memos: string[]; todos: string[]; events: string[] } | null>(null);
-  const [position, setPosition] = useState<Position | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const dragRef = useRef<{ pointerX: number; pointerY: number; originX: number; originY: number; moved: boolean } | null>(null);
-
-  useEffect(() => {
-    let initial: Position | null = null;
-    try {
-      const saved = localStorage.getItem(POSITION_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (typeof parsed.x === "number" && typeof parsed.y === "number") {
-          initial = clampToViewport(parsed);
-        }
-      }
-    } catch {
-      // ignore malformed storage
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPosition(initial ?? getDefaultPosition());
-
-    const onResize = () => setPosition((p) => (p ? clampToViewport(p) : p));
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
 
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -121,7 +68,7 @@ export function VoiceInputFab() {
       .filter(Boolean);
     setToast({ memos, todos, events });
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = setTimeout(() => setToast(null), 7000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 5000);
   }, []);
 
   const onTranscript = useCallback(
@@ -165,7 +112,7 @@ export function VoiceInputFab() {
     [currentProject, profile, showToast]
   );
 
-  const startListening = () => {
+  const onClick = () => {
     if (status === "listening") {
       recognitionRef.current?.stop();
       return;
@@ -210,50 +157,7 @@ export function VoiceInputFab() {
     recognition.start();
   };
 
-  const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (!position) return;
-    dragRef.current = {
-      pointerX: e.clientX,
-      pointerY: e.clientY,
-      originX: position.x,
-      originY: position.y,
-      moved: false,
-    };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const dx = e.clientX - drag.pointerX;
-    const dy = e.clientY - drag.pointerY;
-    if (!drag.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
-    drag.moved = true;
-    setPosition(clampToViewport({ x: drag.originX + dx, y: drag.originY + dy }));
-  };
-
-  const onPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const drag = dragRef.current;
-    dragRef.current = null;
-    if (!drag) return;
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    if (drag.moved) {
-      setPosition((p) => {
-        if (p) {
-          try {
-            localStorage.setItem(POSITION_STORAGE_KEY, JSON.stringify(p));
-          } catch {
-            // ignore storage failures (e.g. private browsing quota)
-          }
-        }
-        return p;
-      });
-    } else {
-      startListening();
-    }
-  };
-
-  if (!(profile?.voiceInputEnabled ?? false) || !currentProject || !position) return null;
+  if (!(profile?.voiceInputEnabled ?? false) || !currentProject) return null;
 
   return (
     <>
@@ -282,29 +186,32 @@ export function VoiceInputFab() {
           </ul>
         </div>
       )}
-      <button
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        aria-label={t.voiceInput.label}
-        title={status === "error" ? t.voiceInput.error : undefined}
-        style={{ left: position.x, top: position.y, touchAction: "none" }}
-        className={clsx(
-          "fixed z-30 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-colors",
-          status === "listening" && "bg-red-500/50 text-white",
-          status === "error" && "bg-red-500/50 text-red-400",
-          (status === "idle" || status === "processing") && "bg-accent/50 text-accent-content"
-        )}
-      >
-        {status === "processing" ? (
-          <Loader2 size={22} className="animate-spin" />
-        ) : status === "error" ? (
-          <MicOff size={22} />
-        ) : (
-          <Mic size={22} className={status === "listening" ? "animate-pulse" : undefined} />
-        )}
-      </button>
+      <li className="flex-1">
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={t.voiceInput.label}
+          title={status === "error" ? t.voiceInput.error : undefined}
+          className="flex w-full flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-nav-inactive"
+        >
+          <span
+            className={clsx(
+              "flex h-11 w-11 items-center justify-center rounded-full",
+              (status === "listening" || status === "error") && "bg-red-500 text-white",
+              (status === "idle" || status === "processing") && "bg-accent text-accent-content"
+            )}
+          >
+            {status === "processing" ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : status === "error" ? (
+              <MicOff size={18} />
+            ) : (
+              <Mic size={18} className={status === "listening" ? "animate-pulse" : undefined} />
+            )}
+          </span>
+          <span>{t.nav.ai}</span>
+        </button>
+      </li>
     </>
   );
 }

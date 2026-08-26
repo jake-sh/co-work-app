@@ -5,6 +5,7 @@ const ko: Dictionary = {
     project: "프로젝트",
     todo: "할일",
     memo: "메모",
+    ai: "AI",
     schedule: "일정",
     chat: "채팅",
     settings: "설정",

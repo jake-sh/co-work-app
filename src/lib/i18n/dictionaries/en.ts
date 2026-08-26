@@ -5,6 +5,7 @@ const en: Dictionary = {
     project: "Project",
     todo: "To-Do",
     memo: "Memo",
+    ai: "AI",
     schedule: "Schedule",
     chat: "Chat",
     settings: "Settings",
