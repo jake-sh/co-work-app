@@ -79,20 +79,32 @@ export const sendChatNotification = onDocumentCreated(
 const anthropicApiKey = defineSecret("ANTHROPIC_API_KEY");
 
 interface VoiceInputItem {
-  type: "memo" | "todo";
+  type: "memo" | "todo" | "event";
   title?: string;
   body?: string;
   text?: string;
+  date?: string;
+  time?: string | null;
 }
 
-const VOICE_INPUT_SYSTEM_PROMPT = `You turn one dictated voice utterance (Korean or English) into one or more app entries for a team collaboration app. Each entry is either:
-- a "memo": a freeform note. Has "title" (short) and "body" (the detail).
-- a "todo": a short actionable task. Has "text".
+function buildVoiceInputSystemPrompt(): string {
+  const now = new Date();
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(now); // YYYY-MM-DD
+  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Seoul", weekday: "long" }).format(now);
 
-A single utterance may describe several distinct action items — split those into one todo per item. Plain informational statements with no action become a single memo. Preserve the speaker's original wording; do not add information that wasn't said.
+  return `You turn one dictated voice utterance (Korean or English) into one or more app entries for a team collaboration app. Each entry is exactly one of:
+
+- "event": something tied to a specific date/time — a meeting, appointment, deadline, trip. Has "title" (short), "date" (YYYY-MM-DD, resolved from relative expressions like "내일"/"다음주 화요일"/"tomorrow" using today's date below), and "time" (HH:mm 24-hour, or null if no time was said).
+- "todo": an actionable task with no specific date/time attached — something to get done, but not scheduled to a moment. Has "text".
+- "memo": a freeform note that isn't an action item — information to remember, an idea, a record of something. Has "title" (short) and "body" (the detail).
+
+Today is ${today} (${weekday}), Asia/Seoul time — use this to resolve any relative date the speaker mentions.
+
+A single utterance may describe several distinct items — split those into one entry per item (e.g. "다음주 화요일 3시 회의 있고 보고서 작성해야해" → one "event" for the meeting + one "todo" for the report). If a task also has a specific date/time, classify it as "event", not "todo". Preserve the speaker's original wording in title/body/text; do not add information that wasn't said, and do not invent a date/time that wasn't mentioned.
 
 Respond with ONLY a JSON object matching this shape, no other text, no markdown code fence:
-{"items": [{"type": "memo", "title": "...", "body": "..."}, {"type": "todo", "text": "..."}]}`;
+{"items": [{"type": "event", "title": "...", "date": "YYYY-MM-DD", "time": "HH:mm"}, {"type": "todo", "text": "..."}, {"type": "memo", "title": "...", "body": "..."}]}`;
+}
 
 // Turns one dictated sentence into memo/todo entries via Claude Haiku — cheap
 // and fast enough for this (short input, short structured output), so there's
@@ -114,7 +126,7 @@ export const structureVoiceInput = onCall(
     const response = await anthropic.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 1024,
-      system: VOICE_INPUT_SYSTEM_PROMPT,
+      system: buildVoiceInputSystemPrompt(),
       messages: [{ role: "user", content: text.trim() }],
     });
 
@@ -134,12 +146,12 @@ export const structureVoiceInput = onCall(
     }
 
     const items = Array.isArray(parsed.items)
-      ? parsed.items.filter(
-          (item): item is VoiceInputItem =>
-            !!item &&
-            typeof item === "object" &&
-            (item.type === "memo" || item.type === "todo")
-        )
+      ? parsed.items.filter((item): item is VoiceInputItem => {
+          if (!item || typeof item !== "object") return false;
+          const i = item as Partial<VoiceInputItem>;
+          if (i.type === "event") return typeof i.title === "string" && typeof i.date === "string";
+          return i.type === "memo" || i.type === "todo";
+        })
       : [];
     return { items };
   }
