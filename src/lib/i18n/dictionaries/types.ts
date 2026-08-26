@@ -3,7 +3,6 @@ export interface Dictionary {
     project: string;
     todo: string;
     memo: string;
-    ai: string;
     schedule: string;
     chat: string;
     settings: string;

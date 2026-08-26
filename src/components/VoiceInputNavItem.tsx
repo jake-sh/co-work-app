@@ -260,11 +260,11 @@ export function VoiceInputNavItem() {
           aria-label={t.voiceInput.label}
           title={status === "error" ? t.voiceInput.error : undefined}
           style={{ touchAction: "none" }}
-          className="flex w-full flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-nav-inactive"
+          className="flex h-full w-full flex-col items-center justify-center text-nav-inactive"
         >
           <span
             className={clsx(
-              "flex h-11 w-11 items-center justify-center rounded-full",
+              "flex h-10 w-10 items-center justify-center rounded-full",
               (status === "listening" || status === "error") && "bg-red-500 text-white",
               (status === "idle" || status === "processing") && "bg-accent text-accent-content"
             )}
@@ -277,7 +277,6 @@ export function VoiceInputNavItem() {
               <Mic size={18} className={status === "listening" ? "animate-pulse" : undefined} />
             )}
           </span>
-          <span>{t.nav.ai}</span>
         </button>
       </li>
     </>
