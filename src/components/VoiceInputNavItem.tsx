@@ -125,7 +125,7 @@ export function VoiceInputNavItem() {
     [currentProject, profile, showToast]
   );
 
-  const startListening = (continuous: boolean) => {
+  const startListening = () => {
     const Ctor = getSpeechRecognitionCtor();
     if (!Ctor) {
       setStatus("error");
@@ -140,46 +140,32 @@ export function VoiceInputNavItem() {
     // switching the app to English made Korean speech get forced through
     // English recognition instead.
     recognition.lang = "ko-KR";
-    recognition.continuous = continuous;
+    // Always continuous: listening starts the instant the button is
+    // pressed (see onPointerDown), so whether this turns into a quick tap
+    // or a long hold is only decided later, at release time.
+    recognition.continuous = true;
     recognition.interimResults = false;
 
-    if (continuous) {
-      // Held mode: browser fires onresult per finished segment (not the
-      // full transcript each time), so accumulate across calls and only
-      // hand it off once the user taps again to stop.
+    // Browser fires onresult per finished segment (not the full transcript
+    // each time), so accumulate across calls and only hand it off once
+    // listening actually stops.
+    accumulatedTextRef.current = "";
+    recognition.onresult = (event) => {
+      let text = "";
+      for (let i = event.resultIndex ?? 0; i < event.results.length; i++) {
+        text += event.results[i]?.[0]?.transcript ?? "";
+      }
+      accumulatedTextRef.current += text;
+    };
+    recognition.onend = () => {
+      const text = accumulatedTextRef.current.trim();
       accumulatedTextRef.current = "";
-      recognition.onresult = (event) => {
-        let text = "";
-        for (let i = event.resultIndex ?? 0; i < event.results.length; i++) {
-          text += event.results[i]?.[0]?.transcript ?? "";
-        }
-        accumulatedTextRef.current += text;
-      };
-      recognition.onend = () => {
-        const text = accumulatedTextRef.current.trim();
-        accumulatedTextRef.current = "";
-        if (text) {
-          onTranscript(text);
-        } else {
-          setStatus("idle");
-        }
-      };
-    } else {
-      recognition.onresult = (event) => {
-        const transcript = event.results[0]?.[0]?.transcript?.trim() ?? "";
-        if (transcript) {
-          onTranscript(transcript);
-        } else {
-          setStatus("idle");
-        }
-      };
-      recognition.onend = () => {
-        // Only idle out on end if nothing else has already moved the state
-        // forward (e.g. onresult already kicked off "processing").
-        setStatus((s) => (s === "listening" ? "idle" : s));
-      };
-    }
-
+      if (text) {
+        onTranscript(text);
+      } else {
+        setStatus("idle");
+      }
+    };
     recognition.onerror = () => {
       setStatus("error");
       setTimeout(() => setStatus("idle"), 2500);
@@ -187,6 +173,20 @@ export function VoiceInputNavItem() {
     recognitionRef.current = recognition;
     setStatus("listening");
     recognition.start();
+  };
+
+  // Shared by pointer up/cancel/leave: the press has ended. If it ended
+  // before the long-press threshold, that's a push-to-talk tap — stop
+  // immediately. Past the threshold, listening keeps going until the user
+  // taps the button again (handled in onPointerDown's "listening" branch).
+  const endPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    if (!longPressFiredRef.current) {
+      recognitionRef.current?.stop();
+    }
   };
 
   const onPointerDown = () => {
@@ -197,28 +197,21 @@ export function VoiceInputNavItem() {
     }
     if (status !== "idle") return;
 
+    // Start listening immediately so no speech is lost while the long-press
+    // threshold is still being timed.
     longPressFiredRef.current = false;
+    startListening();
     longPressTimerRef.current = setTimeout(() => {
       longPressFiredRef.current = true;
-      startListening(true);
     }, LONG_PRESS_MS);
   };
 
   const onPointerUp = () => {
-    if (!longPressTimerRef.current) return;
-    clearTimeout(longPressTimerRef.current);
-    longPressTimerRef.current = null;
-    if (!longPressFiredRef.current) {
-      // Released before the long-press threshold — treat as a normal tap.
-      startListening(false);
-    }
+    endPress();
   };
 
   const onPointerCancel = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
+    endPress();
   };
 
   if (!(profile?.voiceInputEnabled ?? false) || !currentProject) return null;
