@@ -359,17 +359,20 @@ export function VoiceInputNavItem() {
         >
           <span
             className={clsx(
-              "flex h-10 w-10 items-center justify-center rounded-full",
+              // 15% larger than a plain circle (40px) and nudged up via
+              // relative positioning — purely visual, so it pokes out above
+              // the nav's top divider without affecting the row's height.
+              "relative -top-4 flex h-[46px] w-[46px] items-center justify-center rounded-full",
               (status === "listening" || status === "error") && "bg-red-500 text-white",
               (status === "idle" || status === "processing") && "bg-accent text-accent-content"
             )}
           >
             {status === "processing" ? (
-              <Loader2 size={18} className="animate-spin" />
+              <Loader2 size={22} className="animate-spin" />
             ) : status === "error" ? (
-              <MicOff size={18} />
+              <MicOff size={22} />
             ) : (
-              <Mic size={18} className={status === "listening" ? "animate-pulse" : undefined} />
+              <Mic size={22} className={status === "listening" ? "animate-pulse" : undefined} />
             )}
           </span>
         </button>
