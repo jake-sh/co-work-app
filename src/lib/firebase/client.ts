@@ -13,6 +13,7 @@ import {
   memoryLocalCache,
 } from "firebase/firestore";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
+import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -53,6 +54,7 @@ export const db = isNewApp
       localCache: memoryLocalCache(),
     })
   : getFirestore(firebaseApp);
+export const functions = getFunctions(firebaseApp);
 
 // App Check proves a Firestore/Auth request came from this app itself, not
 // a script replaying a stolen credential straight against Firebase. It's

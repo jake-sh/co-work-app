@@ -131,6 +131,7 @@ const ko: Dictionary = {
     colorCode: "내 색상",
     memoDefaultShared: "신규 메모 기본 공유",
     notifications: "알림",
+    voiceInput: "음성 입력",
     fontSize: "글자 크기",
     signOut: "로그아웃",
     deleteAccount: "계정 삭제",
@@ -146,6 +147,17 @@ const ko: Dictionary = {
     title: "저장할 프로젝트 선택",
     empty: "저장할 프로젝트가 없습니다",
     cancel: "취소",
+  },
+  voiceInput: {
+    label: "음성으로 입력",
+    listening: "듣고 있어요...",
+    processing: "정리하는 중...",
+    notSupported: "이 브라우저는 음성 입력을 지원하지 않습니다",
+    micDenied: "마이크 권한이 필요합니다",
+    error: "음성 입력을 처리하지 못했습니다",
+    addedTitle: "추가됨",
+    memoLabel: "메모",
+    todoLabel: "투두",
   },
 };
 

@@ -131,6 +131,7 @@ const en: Dictionary = {
     colorCode: "My color",
     memoDefaultShared: "Share new memos by default",
     notifications: "Notifications",
+    voiceInput: "Voice input",
     fontSize: "Font size",
     signOut: "Sign Out",
     deleteAccount: "Delete Account",
@@ -146,6 +147,17 @@ const en: Dictionary = {
     title: "Select a project to save to",
     empty: "No projects to save to",
     cancel: "Cancel",
+  },
+  voiceInput: {
+    label: "Speak to add",
+    listening: "Listening...",
+    processing: "Sorting it out...",
+    notSupported: "This browser doesn't support voice input",
+    micDenied: "Microphone permission is needed",
+    error: "Couldn't process the voice input",
+    addedTitle: "Added",
+    memoLabel: "memo",
+    todoLabel: "to-do",
   },
 };
 

@@ -129,6 +129,7 @@ export interface Dictionary {
     colorCode: string;
     memoDefaultShared: string;
     notifications: string;
+    voiceInput: string;
     fontSize: string;
     signOut: string;
     deleteAccount: string;
@@ -144,5 +145,16 @@ export interface Dictionary {
     title: string;
     empty: string;
     cancel: string;
+  };
+  voiceInput: {
+    label: string;
+    listening: string;
+    processing: string;
+    notSupported: string;
+    micDenied: string;
+    error: string;
+    addedTitle: string;
+    memoLabel: string;
+    todoLabel: string;
   };
 }

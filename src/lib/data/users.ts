@@ -46,6 +46,10 @@ export async function updateNotificationsEnabled(uid: string, value: boolean) {
   await updateDoc(doc(db, "users", uid), { notificationsEnabled: value });
 }
 
+export async function updateVoiceInputEnabled(uid: string, value: boolean) {
+  await updateDoc(doc(db, "users", uid), { voiceInputEnabled: value });
+}
+
 // FCM registration tokens are stored one-per-doc under the user so a single
 // account can receive push on multiple devices. The token string is the doc id.
 export async function saveFcmToken(uid: string, token: string) {
