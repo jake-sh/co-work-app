@@ -99,7 +99,8 @@ Respond with ONLY a JSON object matching this shape, no other text, no markdown 
 // no reason to reach for a larger model. Runs server-side so the Anthropic
 // API key never reaches the client.
 export const structureVoiceInput = onCall(
-  { secrets: [anthropicApiKey] },
+  // Same region as sendChatNotification, closer to this app's users.
+  { secrets: [anthropicApiKey], region: "asia-northeast3" },
   async (request): Promise<{ items: VoiceInputItem[] }> => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Sign-in required.");

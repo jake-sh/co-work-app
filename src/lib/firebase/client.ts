@@ -54,7 +54,8 @@ export const db = isNewApp
       localCache: memoryLocalCache(),
     })
   : getFirestore(firebaseApp);
-export const functions = getFunctions(firebaseApp);
+// Must match structureVoiceInput's region in functions/src/index.ts.
+export const functions = getFunctions(firebaseApp, "asia-northeast3");
 
 // App Check proves a Firestore/Auth request came from this app itself, not
 // a script replaying a stolen credential straight against Firebase. It's
