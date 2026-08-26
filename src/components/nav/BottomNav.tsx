@@ -81,7 +81,9 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-20 border-t border-border-divider bg-bg-base pb-[env(safe-area-inset-bottom)]">
-      <ul className="flex">
+      {/* Fixed height so the enlarged voice-input circle (which pokes above
+          this row via relative positioning) can never stretch the bar. */}
+      <ul className="flex h-[61px]">
         {beforeItems.map(renderItem)}
         <VoiceInputNavItem />
         {afterItems.map(renderItem)}
