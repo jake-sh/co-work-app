@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { clsx } from "clsx";
-import { CheckSquare, Loader2, Mic, MicOff, StickyNote } from "lucide-react";
+import { CalendarDays, CheckSquare, Loader2, Mic, MicOff, StickyNote } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import { structureVoiceInput, type VoiceInputItem } from "@/lib/data/voiceInput";
 import { addMemo } from "@/lib/data/memos";
 import { addTodo } from "@/lib/data/todos";
+import { addEvent } from "@/lib/data/schedule";
 
 type Status = "idle" | "listening" | "processing" | "error";
 
@@ -74,7 +75,7 @@ export function VoiceInputFab() {
   const { currentProject } = useProjects();
   const { t } = useI18n();
   const [status, setStatus] = useState<Status>("idle");
-  const [toast, setToast] = useState<{ memos: string[]; todos: string[] } | null>(null);
+  const [toast, setToast] = useState<{ memos: string[]; todos: string[]; events: string[] } | null>(null);
   const [position, setPosition] = useState<Position | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -114,7 +115,11 @@ export function VoiceInputFab() {
       .filter((i) => i.type === "todo")
       .map((i) => i.text || "")
       .filter(Boolean);
-    setToast({ memos, todos });
+    const events = items
+      .filter((i) => i.type === "event")
+      .map((i) => (i.time ? `${i.date} ${i.time} ${i.title ?? ""}` : `${i.date} ${i.title ?? ""}`).trim())
+      .filter(Boolean);
+    setToast({ memos, todos, events });
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setToast(null), 5000);
   }, []);
@@ -139,6 +144,15 @@ export function VoiceInputFab() {
             );
           } else if (item.type === "todo" && item.text) {
             await addTodo(currentProject.id, item.text, profile.uid, profile.displayName, profile.colorCode);
+          } else if (item.type === "event" && item.title && item.date) {
+            await addEvent(
+              currentProject.id,
+              item.title,
+              item.date,
+              item.time ?? null,
+              profile.uid,
+              profile.colorCode
+            );
           }
         }
         if (items.length > 0) showToast(items);
@@ -243,10 +257,16 @@ export function VoiceInputFab() {
 
   return (
     <>
-      {toast && (toast.memos.length > 0 || toast.todos.length > 0) && (
+      {toast && (toast.memos.length > 0 || toast.todos.length > 0 || toast.events.length > 0) && (
         <div className="fixed inset-x-5 bottom-24 z-30 rounded-2xl bg-surface-card px-4 py-3 shadow-lg">
           <p className="mb-1.5 text-xs font-semibold text-text-secondary">{t.voiceInput.addedTitle}</p>
           <ul className="flex flex-col gap-1 text-sm">
+            {toast.events.map((event, i) => (
+              <li key={`event-${i}`} className="flex items-center gap-2">
+                <CalendarDays size={14} className="shrink-0 text-text-secondary" />
+                <span className="truncate">{event}</span>
+              </li>
+            ))}
             {toast.memos.map((memo, i) => (
               <li key={`memo-${i}`} className="flex items-center gap-2">
                 <StickyNote size={14} className="shrink-0 text-text-secondary" />
