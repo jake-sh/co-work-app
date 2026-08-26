@@ -16,16 +16,25 @@ type Status = "idle" | "listening" | "processing" | "error";
 // Minimal shape of the Web Speech API this component needs — not in
 // TypeScript's DOM lib (and only the webkit-prefixed constructor exists in
 // most browsers), so declared locally rather than guessed as a global.
+interface SpeechRecognitionResultListLike {
+  length: number;
+  [i: number]: { [i: number]: { transcript: string } };
+}
 interface SpeechRecognitionLike extends EventTarget {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
   start(): void;
   stop(): void;
-  onresult: ((event: { results: { [i: number]: { [i: number]: { transcript: string } } } }) => void) | null;
+  onresult: ((event: { results: SpeechRecognitionResultListLike; resultIndex?: number }) => void) | null;
   onerror: ((event: { error: string }) => void) | null;
   onend: (() => void) | null;
 }
+
+// Tap = listen once, auto-stop on silence (unchanged default behavior).
+// Hold for this long = switch to "keeps listening through pauses" mode,
+// which only stops when the user taps again.
+const LONG_PRESS_MS = 2000;
 
 function getSpeechRecognitionCtor(): (new () => SpeechRecognitionLike) | null {
   if (typeof window === "undefined") return null;
@@ -48,9 +57,13 @@ export function VoiceInputNavItem() {
   const [toast, setToast] = useState<{ memos: string[]; todos: string[]; events: string[] } | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFiredRef = useRef(false);
+  const accumulatedTextRef = useRef("");
 
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
   }, []);
 
   const showToast = useCallback((items: VoiceInputItem[]) => {
@@ -112,13 +125,7 @@ export function VoiceInputNavItem() {
     [currentProject, profile, showToast]
   );
 
-  const onClick = () => {
-    if (status === "listening") {
-      recognitionRef.current?.stop();
-      return;
-    }
-    if (status !== "idle") return;
-
+  const startListening = (continuous: boolean) => {
     const Ctor = getSpeechRecognitionCtor();
     if (!Ctor) {
       setStatus("error");
@@ -133,28 +140,85 @@ export function VoiceInputNavItem() {
     // switching the app to English made Korean speech get forced through
     // English recognition instead.
     recognition.lang = "ko-KR";
-    recognition.continuous = false;
+    recognition.continuous = continuous;
     recognition.interimResults = false;
-    recognition.onresult = (event) => {
-      const transcript = event.results[0]?.[0]?.transcript?.trim() ?? "";
-      if (transcript) {
-        onTranscript(transcript);
-      } else {
-        setStatus("idle");
-      }
-    };
+
+    if (continuous) {
+      // Held mode: browser fires onresult per finished segment (not the
+      // full transcript each time), so accumulate across calls and only
+      // hand it off once the user taps again to stop.
+      accumulatedTextRef.current = "";
+      recognition.onresult = (event) => {
+        let text = "";
+        for (let i = event.resultIndex ?? 0; i < event.results.length; i++) {
+          text += event.results[i]?.[0]?.transcript ?? "";
+        }
+        accumulatedTextRef.current += text;
+      };
+      recognition.onend = () => {
+        const text = accumulatedTextRef.current.trim();
+        accumulatedTextRef.current = "";
+        if (text) {
+          onTranscript(text);
+        } else {
+          setStatus("idle");
+        }
+      };
+    } else {
+      recognition.onresult = (event) => {
+        const transcript = event.results[0]?.[0]?.transcript?.trim() ?? "";
+        if (transcript) {
+          onTranscript(transcript);
+        } else {
+          setStatus("idle");
+        }
+      };
+      recognition.onend = () => {
+        // Only idle out on end if nothing else has already moved the state
+        // forward (e.g. onresult already kicked off "processing").
+        setStatus((s) => (s === "listening" ? "idle" : s));
+      };
+    }
+
     recognition.onerror = () => {
       setStatus("error");
       setTimeout(() => setStatus("idle"), 2500);
     };
-    recognition.onend = () => {
-      // Only idle out on end if nothing else has already moved the state
-      // forward (e.g. onresult already kicked off "processing").
-      setStatus((s) => (s === "listening" ? "idle" : s));
-    };
     recognitionRef.current = recognition;
     setStatus("listening");
     recognition.start();
+  };
+
+  const onPointerDown = () => {
+    if (status === "listening") {
+      // Re-tap while listening (tap or held) always stops immediately.
+      recognitionRef.current?.stop();
+      return;
+    }
+    if (status !== "idle") return;
+
+    longPressFiredRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      longPressFiredRef.current = true;
+      startListening(true);
+    }, LONG_PRESS_MS);
+  };
+
+  const onPointerUp = () => {
+    if (!longPressTimerRef.current) return;
+    clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = null;
+    if (!longPressFiredRef.current) {
+      // Released before the long-press threshold — treat as a normal tap.
+      startListening(false);
+    }
+  };
+
+  const onPointerCancel = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
   };
 
   if (!(profile?.voiceInputEnabled ?? false) || !currentProject) return null;
@@ -189,9 +253,13 @@ export function VoiceInputNavItem() {
       <li className="flex-1">
         <button
           type="button"
-          onClick={onClick}
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerCancel}
+          onPointerLeave={onPointerCancel}
           aria-label={t.voiceInput.label}
           title={status === "error" ? t.voiceInput.error : undefined}
+          style={{ touchAction: "none" }}
           className="flex w-full flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-nav-inactive"
         >
           <span
