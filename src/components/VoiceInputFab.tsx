@@ -121,7 +121,7 @@ export function VoiceInputFab() {
       .filter(Boolean);
     setToast({ memos, todos, events });
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = setTimeout(() => setToast(null), 5000);
+    toastTimerRef.current = setTimeout(() => setToast(null), 7000);
   }, []);
 
   const onTranscript = useCallback(
@@ -258,24 +258,24 @@ export function VoiceInputFab() {
   return (
     <>
       {toast && (toast.memos.length > 0 || toast.todos.length > 0 || toast.events.length > 0) && (
-        <div className="fixed inset-x-5 bottom-24 z-30 rounded-2xl bg-surface-card px-4 py-3 shadow-lg">
-          <p className="mb-1.5 text-xs font-semibold text-text-secondary">{t.voiceInput.addedTitle}</p>
+        <div className="fixed inset-x-5 bottom-24 z-30 text-voice-toast">
+          <p className="mb-1.5 text-xs font-semibold">{t.voiceInput.addedTitle}</p>
           <ul className="flex flex-col gap-1 text-sm">
             {toast.events.map((event, i) => (
               <li key={`event-${i}`} className="flex items-center gap-2">
-                <CalendarDays size={14} className="shrink-0 text-text-secondary" />
+                <CalendarDays size={14} className="shrink-0" />
                 <span className="truncate">{event}</span>
               </li>
             ))}
             {toast.memos.map((memo, i) => (
               <li key={`memo-${i}`} className="flex items-center gap-2">
-                <StickyNote size={14} className="shrink-0 text-text-secondary" />
+                <StickyNote size={14} className="shrink-0" />
                 <span className="truncate">{memo}</span>
               </li>
             ))}
             {toast.todos.map((todo, i) => (
               <li key={`todo-${i}`} className="flex items-center gap-2">
-                <CheckSquare size={14} className="shrink-0 text-text-secondary" />
+                <CheckSquare size={14} className="shrink-0" />
                 <span className="truncate">{todo}</span>
               </li>
             ))}
