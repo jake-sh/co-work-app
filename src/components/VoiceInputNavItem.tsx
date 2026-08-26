@@ -388,6 +388,12 @@ export function VoiceInputNavItem() {
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerCancel}
+          // Android Chrome fires `contextmenu` on a ~500ms-ish hold and, if
+          // it isn't prevented, cancels the in-progress touch (pointercancel)
+          // to show its native menu — which was cutting the long-press mode
+          // short well before our own 2s threshold. Same fix the todo list's
+          // press-and-hold already uses (see useTapAndHold in todo/page.tsx).
+          onContextMenu={(e) => e.preventDefault()}
           aria-label={t.voiceInput.label}
           title={status === "error" ? t.voiceInput.error : undefined}
           style={{ touchAction: "none" }}
