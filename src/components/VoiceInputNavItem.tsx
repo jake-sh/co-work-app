@@ -67,6 +67,11 @@ function getAudioCtxCtor(): (new () => AudioContext) | null {
   return window.AudioContext ?? w.webkitAudioContext ?? null;
 }
 
+interface CueVoice {
+  osc: OscillatorNode;
+  gain: GainNode;
+}
+
 function scheduleCueVoice(
   ctx: AudioContext,
   master: GainNode,
@@ -76,8 +81,9 @@ function scheduleCueVoice(
   peakGain: number,
   filterHz: number,
   detuneCents: number
-) {
+): CueVoice[] {
   const cents = detuneCents ? [-detuneCents, detuneCents] : [0];
+  const voices: CueVoice[] = [];
   cents.forEach((c, idx) => {
     const osc = ctx.createOscillator();
     osc.type = "sine";
@@ -108,8 +114,14 @@ function scheduleCueVoice(
 
     osc.start(startTime);
     osc.stop(startTime + dur + 0.05);
+    voices.push({ osc, gain });
   });
+  return voices;
 }
+
+// How long a duck-out fade takes when a new cue interrupts a still-ringing
+// one — short enough to feel instant, long enough to avoid an audible click.
+const CUE_DUCK_SEC = 0.03;
 
 // Lives as the 4th of 7 BottomNav items (between memo and schedule) instead
 // of a free-floating draggable button — that avoided overlapping other UI
@@ -128,6 +140,7 @@ export function VoiceInputNavItem() {
   const accumulatedTextRef = useRef("");
   const audioCtxRef = useRef<AudioContext | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
+  const activeCueVoicesRef = useRef<CueVoice[]>([]);
 
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -150,12 +163,29 @@ export function VoiceInputNavItem() {
     if (ctx.state === "suspended") ctx.resume();
 
     const now = ctx.currentTime;
-    scheduleCueVoice(ctx, master, now, spec.freq, spec.dur, spec.peak, spec.filterHz, spec.detune);
+
+    // A fast tap can trigger start then stop within a few hundred ms, well
+    // before the previous cue's tail has finished ringing — without this,
+    // the two chimes overlap into a dissonant clash instead of sounding
+    // like two distinct sounds. Cut whatever's still playing short first.
+    for (const voice of activeCueVoicesRef.current) {
+      voice.gain.gain.cancelScheduledValues(now);
+      voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
+      voice.gain.gain.linearRampToValueAtTime(0.0001, now + CUE_DUCK_SEC);
+      try {
+        voice.osc.stop(now + CUE_DUCK_SEC);
+      } catch {
+        // Already stopped/ended — nothing to duck.
+      }
+    }
+
+    const voices = scheduleCueVoice(ctx, master, now, spec.freq, spec.dur, spec.peak, spec.filterHz, spec.detune);
     for (let i = 1; i <= spec.tail.taps; i++) {
       const tapGain = spec.peak * Math.pow(spec.tail.decay, i);
       const tapFilter = spec.filterHz * Math.pow(0.6, i);
-      scheduleCueVoice(ctx, master, now + spec.tail.gap * i, spec.freq, spec.dur * 1.3, tapGain, tapFilter, spec.detune * 0.6);
+      voices.push(...scheduleCueVoice(ctx, master, now + spec.tail.gap * i, spec.freq, spec.dur * 1.3, tapGain, tapFilter, spec.detune * 0.6));
     }
+    activeCueVoicesRef.current = voices;
   }, []);
 
   const showToast = useCallback((items: VoiceInputItem[]) => {
