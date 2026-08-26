@@ -12,6 +12,7 @@ import {
   initializeFirestore,
   memoryLocalCache,
 } from "firebase/firestore";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -52,3 +53,25 @@ export const db = isNewApp
       localCache: memoryLocalCache(),
     })
   : getFirestore(firebaseApp);
+
+// App Check proves a Firestore/Auth request came from this app itself, not
+// a script replaying a stolen credential straight against Firebase. It's
+// opt-in here: without NEXT_PUBLIC_FIREBASE_APPCHECK_SITE_KEY set this is a
+// no-op and the app behaves exactly as before (see .env.local.example for
+// how to obtain the key and turn on enforcement in the Firebase console).
+// Also skipped server-side, since it depends on window/document to run
+// reCAPTCHA.
+const appCheckSiteKey = process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_SITE_KEY;
+if (isNewApp && typeof window !== "undefined" && appCheckSiteKey) {
+  if (process.env.NODE_ENV === "development") {
+    // reCAPTCHA can't verify localhost, so local dev instead registers this
+    // browser as a trusted debug client: run the app once, copy the token
+    // Firebase logs to the console, and add it under Firebase console >
+    // App Check > Apps > (this app) > Manage debug tokens.
+    (window as typeof window & { FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean | string }).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
+  initializeAppCheck(firebaseApp, {
+    provider: new ReCaptchaV3Provider(appCheckSiteKey),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
