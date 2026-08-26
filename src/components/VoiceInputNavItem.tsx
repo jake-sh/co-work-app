@@ -359,24 +359,27 @@ export function VoiceInputNavItem() {
         >
           <span
             className={clsx(
-              // 15% larger than a plain circle (40px), nudged up just enough
-              // (9.5px) that the icon inside lands at the same vertical
-              // center as the other nav icons (10px top padding + half of a
-              // 22px icon = 21px from the row's top) — the size difference
-              // alone then pokes the circle's top edge above the divider.
-              // A relative offset is purely visual, so the row's fixed
-              // height in BottomNav is unaffected either way.
-              "relative -top-2.5 flex h-[46px] w-[46px] items-center justify-center rounded-full",
+              // 51px circle (was 46px, +10%) with a 24px icon (was 22px,
+              // +10%) inside, nudged up 10px. That -10px offset is what
+              // lands the icon's center at the same vertical position as
+              // the other nav icons (10px top padding + half of a 22px
+              // icon = 21px from the row's top) — since it's derived from
+              // the row's own height, not the circle's, it stays correct
+              // no matter how big the circle gets. The larger circle just
+              // pokes further above the divider as a side effect of its
+              // size. A relative offset is purely visual, so the row's
+              // fixed height in BottomNav is unaffected either way.
+              "relative -top-2.5 flex h-[51px] w-[51px] items-center justify-center rounded-full",
               (status === "listening" || status === "error") && "bg-red-500 text-white",
               (status === "idle" || status === "processing") && "bg-accent text-accent-content"
             )}
           >
             {status === "processing" ? (
-              <Loader2 size={22} className="animate-spin" />
+              <Loader2 size={24} className="animate-spin" />
             ) : status === "error" ? (
-              <MicOff size={22} />
+              <MicOff size={24} />
             ) : (
-              <Mic size={22} className={status === "listening" ? "animate-pulse" : undefined} />
+              <Mic size={24} className={status === "listening" ? "animate-pulse" : undefined} />
             )}
           </span>
         </button>
