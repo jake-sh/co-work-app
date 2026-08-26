@@ -72,7 +72,7 @@ function getDefaultPosition(): Position {
 export function VoiceInputFab() {
   const { profile } = useAuth();
   const { currentProject } = useProjects();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [status, setStatus] = useState<Status>("idle");
   const [toast, setToast] = useState<{ memos: string[]; todos: string[] } | null>(null);
   const [position, setPosition] = useState<Position | null>(null);
@@ -166,7 +166,12 @@ export function VoiceInputFab() {
     }
 
     const recognition = new Ctor();
-    recognition.lang = locale === "ko" ? "ko-KR" : "en-US";
+    // Always Korean regardless of the app's UI language — dictated notes are
+    // almost always spoken in Korean (often with the odd English word mixed
+    // in, e.g. "다음주 gui수정"), and tying this to the UI language meant
+    // switching the app to English made Korean speech get forced through
+    // English recognition instead.
+    recognition.lang = "ko-KR";
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.onresult = (event) => {
