@@ -7,7 +7,6 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { BottomNav } from "@/components/nav/BottomNav";
 import { ProjectTabBar } from "@/components/nav/ProjectTabBar";
 import { PushTokenSync } from "@/components/PushTokenSync";
-import { VoiceInputFab } from "@/components/VoiceInputFab";
 import { DataProvider } from "@/lib/context/DataContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
 
@@ -39,7 +38,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           {children}
         </motion.div>
         <BottomNav />
-        <VoiceInputFab />
       </div>
     </DataProvider>
   );
