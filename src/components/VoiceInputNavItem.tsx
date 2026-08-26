@@ -359,10 +359,14 @@ export function VoiceInputNavItem() {
         >
           <span
             className={clsx(
-              // 15% larger than a plain circle (40px) and nudged up via
-              // relative positioning — purely visual, so it pokes out above
-              // the nav's top divider without affecting the row's height.
-              "relative -top-4 flex h-[46px] w-[46px] items-center justify-center rounded-full",
+              // 15% larger than a plain circle (40px), nudged up just enough
+              // (9.5px) that the icon inside lands at the same vertical
+              // center as the other nav icons (10px top padding + half of a
+              // 22px icon = 21px from the row's top) — the size difference
+              // alone then pokes the circle's top edge above the divider.
+              // A relative offset is purely visual, so the row's fixed
+              // height in BottomNav is unaffected either way.
+              "relative -top-2.5 flex h-[46px] w-[46px] items-center justify-center rounded-full",
               (status === "listening" || status === "error") && "bg-red-500 text-white",
               (status === "idle" || status === "processing") && "bg-accent text-accent-content"
             )}
