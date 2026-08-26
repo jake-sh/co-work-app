@@ -18,7 +18,7 @@ import {
   type User,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
-import { createUserProfile, deleteUserProfile, getUserProfile, updateUserColor, updateUserLocale, updateUserNickname, updateMemoDefaultShared, updateNotificationsEnabled } from "@/lib/data/users";
+import { createUserProfile, deleteUserProfile, getUserProfile, updateUserColor, updateUserLocale, updateUserNickname, updateMemoDefaultShared, updateNotificationsEnabled, updateVoiceInputEnabled } from "@/lib/data/users";
 import { useI18n } from "@/lib/i18n/I18nContext";
 import type { UserProfile } from "@/types";
 
@@ -39,6 +39,7 @@ interface AuthContextValue {
   updateNickname: (nickname: string) => Promise<void>;
   updateMemoDefaultShared: (value: boolean) => Promise<void>;
   updateNotificationsEnabled: (value: boolean) => Promise<void>;
+  updateVoiceInputEnabled: (value: boolean) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   deleteAccount: (currentPassword: string) => Promise<void>;
 }
@@ -145,6 +146,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await updateNotificationsEnabled(user.uid, value);
   };
 
+  const updateVoiceInputEnabledFn = async (value: boolean) => {
+    if (!user) return;
+    // Optimistic: flip the UI immediately, then persist.
+    setProfile((prev) => (prev ? { ...prev, voiceInputEnabled: value } : prev));
+    await updateVoiceInputEnabled(user.uid, value);
+  };
+
   const changePassword = async (currentPassword: string, newPassword: string) => {
     if (!user || !user.email) throw new Error("NO_USER");
     // Firebase requires a recent login to change the password; reauthenticate
@@ -176,6 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       updateNickname,
       updateMemoDefaultShared: updateMemoDefaultSharedFn,
       updateNotificationsEnabled: updateNotificationsEnabledFn,
+      updateVoiceInputEnabled: updateVoiceInputEnabledFn,
       changePassword,
       deleteAccount,
     }),

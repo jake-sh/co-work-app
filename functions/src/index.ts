@@ -1,7 +1,10 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { defineSecret } from "firebase-functions/params";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
+import Anthropic from "@anthropic-ai/sdk";
 
 initializeApp();
 const db = getFirestore();
@@ -70,5 +73,73 @@ export const sendChatNotification = onDocumentCreated(
       }
     });
     await Promise.all(deletions);
+  }
+);
+
+const anthropicApiKey = defineSecret("ANTHROPIC_API_KEY");
+
+interface VoiceInputItem {
+  type: "memo" | "todo";
+  title?: string;
+  body?: string;
+  text?: string;
+}
+
+const VOICE_INPUT_SYSTEM_PROMPT = `You turn one dictated voice utterance (Korean or English) into one or more app entries for a team collaboration app. Each entry is either:
+- a "memo": a freeform note. Has "title" (short) and "body" (the detail).
+- a "todo": a short actionable task. Has "text".
+
+A single utterance may describe several distinct action items — split those into one todo per item. Plain informational statements with no action become a single memo. Preserve the speaker's original wording; do not add information that wasn't said.
+
+Respond with ONLY a JSON object matching this shape, no other text, no markdown code fence:
+{"items": [{"type": "memo", "title": "...", "body": "..."}, {"type": "todo", "text": "..."}]}`;
+
+// Turns one dictated sentence into memo/todo entries via Claude Haiku — cheap
+// and fast enough for this (short input, short structured output), so there's
+// no reason to reach for a larger model. Runs server-side so the Anthropic
+// API key never reaches the client.
+export const structureVoiceInput = onCall(
+  { secrets: [anthropicApiKey] },
+  async (request): Promise<{ items: VoiceInputItem[] }> => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign-in required.");
+    }
+    const text = request.data?.text;
+    if (typeof text !== "string" || !text.trim()) {
+      throw new HttpsError("invalid-argument", "text is required.");
+    }
+
+    const anthropic = new Anthropic({ apiKey: anthropicApiKey.value() });
+    const response = await anthropic.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 1024,
+      system: VOICE_INPUT_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: text.trim() }],
+    });
+
+    const block = response.content.find((b) => b.type === "text");
+    if (!block || block.type !== "text") {
+      throw new HttpsError("internal", "No response from model.");
+    }
+
+    let parsed: { items?: unknown };
+    try {
+      // The model is instructed to return only JSON; strip an accidental
+      // markdown code fence defensively before parsing.
+      const jsonText = block.text.trim().replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+      parsed = JSON.parse(jsonText);
+    } catch {
+      throw new HttpsError("internal", "Could not parse model response.");
+    }
+
+    const items = Array.isArray(parsed.items)
+      ? parsed.items.filter(
+          (item): item is VoiceInputItem =>
+            !!item &&
+            typeof item === "object" &&
+            (item.type === "memo" || item.type === "todo")
+        )
+      : [];
+    return { items };
   }
 );

@@ -9,6 +9,7 @@ export interface UserProfile {
   nickname?: string;
   memoDefaultShared?: boolean;
   notificationsEnabled?: boolean;
+  voiceInputEnabled?: boolean;
   colorCode: string;
   locale: Locale;
   createdAt: number;
