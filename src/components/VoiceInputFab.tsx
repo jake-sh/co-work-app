@@ -267,9 +267,9 @@ export function VoiceInputFab() {
         style={{ left: position.x, top: position.y, touchAction: "none" }}
         className={clsx(
           "fixed z-30 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-colors",
-          status === "listening" && "bg-red-500 text-white",
-          status === "error" && "bg-red-500/30 text-red-400",
-          (status === "idle" || status === "processing") && "bg-accent text-accent-content"
+          status === "listening" && "bg-red-500/50 text-white",
+          status === "error" && "bg-red-500/50 text-red-400",
+          (status === "idle" || status === "processing") && "bg-accent/50 text-accent-content"
         )}
       >
         {status === "processing" ? (
