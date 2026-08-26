@@ -294,33 +294,40 @@ export function VoiceInputNavItem() {
     };
     recognitionRef.current = recognition;
     setStatus("listening");
-    playCue(START_CUE);
     recognition.start();
+    playCue(START_CUE);
   };
 
-  // Shared by pointer up/cancel/leave: the press has ended. If it ended
-  // before the long-press threshold, that's a push-to-talk tap — stop
-  // immediately. Past the threshold, listening keeps going until the user
-  // taps the button again (handled in onPointerDown's "listening" branch).
+  // Shared by pointer up/cancel: the press has ended. If it ended before
+  // the long-press threshold, that's a push-to-talk tap — stop immediately.
+  // Past the threshold, listening keeps going until the user taps the
+  // button again (handled in onPointerDown's "listening" branch).
   const endPress = () => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
     if (!longPressFiredRef.current) {
-      playCue(STOP_CUE);
       recognitionRef.current?.stop();
+      playCue(STOP_CUE);
     }
   };
 
-  const onPointerDown = () => {
+  const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (status === "listening") {
       // Re-tap while listening (tap or held) always stops immediately.
-      playCue(STOP_CUE);
       recognitionRef.current?.stop();
+      playCue(STOP_CUE);
       return;
     }
     if (status !== "idle") return;
+
+    // Capture the pointer so pointerup/pointercancel keep targeting this
+    // button even if the finger drifts off it mid-hold (very easy to do on
+    // a ~50px nav icon while dictating) — without this, that drift fired a
+    // spurious pointerleave that stopped the recording almost immediately,
+    // breaking both quick taps and sustained long-press listening.
+    e.currentTarget.setPointerCapture(e.pointerId);
 
     // Start listening immediately so no speech is lost while the long-press
     // threshold is still being timed.
@@ -381,7 +388,6 @@ export function VoiceInputNavItem() {
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerCancel}
-          onPointerLeave={onPointerCancel}
           aria-label={t.voiceInput.label}
           title={status === "error" ? t.voiceInput.error : undefined}
           style={{ touchAction: "none" }}
