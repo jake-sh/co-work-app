@@ -125,7 +125,7 @@ export function VoiceInputNavItem() {
     [currentProject, profile, showToast]
   );
 
-  const startListening = (continuous: boolean) => {
+  const startListening = () => {
     const Ctor = getSpeechRecognitionCtor();
     if (!Ctor) {
       setStatus("error");
@@ -140,46 +140,32 @@ export function VoiceInputNavItem() {
     // switching the app to English made Korean speech get forced through
     // English recognition instead.
     recognition.lang = "ko-KR";
-    recognition.continuous = continuous;
+    // Always continuous: listening starts the instant the button is
+    // pressed (see onPointerDown), so whether this turns into a quick tap
+    // or a long hold is only decided later, at release time.
+    recognition.continuous = true;
     recognition.interimResults = false;
 
-    if (continuous) {
-      // Held mode: browser fires onresult per finished segment (not the
-      // full transcript each time), so accumulate across calls and only
-      // hand it off once the user taps again to stop.
+    // Browser fires onresult per finished segment (not the full transcript
+    // each time), so accumulate across calls and only hand it off once
+    // listening actually stops.
+    accumulatedTextRef.current = "";
+    recognition.onresult = (event) => {
+      let text = "";
+      for (let i = event.resultIndex ?? 0; i < event.results.length; i++) {
+        text += event.results[i]?.[0]?.transcript ?? "";
+      }
+      accumulatedTextRef.current += text;
+    };
+    recognition.onend = () => {
+      const text = accumulatedTextRef.current.trim();
       accumulatedTextRef.current = "";
-      recognition.onresult = (event) => {
-        let text = "";
-        for (let i = event.resultIndex ?? 0; i < event.results.length; i++) {
-          text += event.results[i]?.[0]?.transcript ?? "";
-        }
-        accumulatedTextRef.current += text;
-      };
-      recognition.onend = () => {
-        const text = accumulatedTextRef.current.trim();
-        accumulatedTextRef.current = "";
-        if (text) {
-          onTranscript(text);
-        } else {
-          setStatus("idle");
-        }
-      };
-    } else {
-      recognition.onresult = (event) => {
-        const transcript = event.results[0]?.[0]?.transcript?.trim() ?? "";
-        if (transcript) {
-          onTranscript(transcript);
-        } else {
-          setStatus("idle");
-        }
-      };
-      recognition.onend = () => {
-        // Only idle out on end if nothing else has already moved the state
-        // forward (e.g. onresult already kicked off "processing").
-        setStatus((s) => (s === "listening" ? "idle" : s));
-      };
-    }
-
+      if (text) {
+        onTranscript(text);
+      } else {
+        setStatus("idle");
+      }
+    };
     recognition.onerror = () => {
       setStatus("error");
       setTimeout(() => setStatus("idle"), 2500);
@@ -187,6 +173,20 @@ export function VoiceInputNavItem() {
     recognitionRef.current = recognition;
     setStatus("listening");
     recognition.start();
+  };
+
+  // Shared by pointer up/cancel/leave: the press has ended. If it ended
+  // before the long-press threshold, that's a push-to-talk tap — stop
+  // immediately. Past the threshold, listening keeps going until the user
+  // taps the button again (handled in onPointerDown's "listening" branch).
+  const endPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    if (!longPressFiredRef.current) {
+      recognitionRef.current?.stop();
+    }
   };
 
   const onPointerDown = () => {
@@ -197,28 +197,21 @@ export function VoiceInputNavItem() {
     }
     if (status !== "idle") return;
 
+    // Start listening immediately so no speech is lost while the long-press
+    // threshold is still being timed.
     longPressFiredRef.current = false;
+    startListening();
     longPressTimerRef.current = setTimeout(() => {
       longPressFiredRef.current = true;
-      startListening(true);
     }, LONG_PRESS_MS);
   };
 
   const onPointerUp = () => {
-    if (!longPressTimerRef.current) return;
-    clearTimeout(longPressTimerRef.current);
-    longPressTimerRef.current = null;
-    if (!longPressFiredRef.current) {
-      // Released before the long-press threshold — treat as a normal tap.
-      startListening(false);
-    }
+    endPress();
   };
 
   const onPointerCancel = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
+    endPress();
   };
 
   if (!(profile?.voiceInputEnabled ?? false) || !currentProject) return null;
@@ -226,23 +219,30 @@ export function VoiceInputNavItem() {
   return (
     <>
       {toast && (toast.memos.length > 0 || toast.todos.length > 0 || toast.events.length > 0) && (
-        <div className="fixed inset-x-5 bottom-24 z-30 text-voice-toast">
+        // Sits just above BottomNav's top divider: 61px is that nav row's
+        // measured height (icon + label + padding), +1px for the divider
+        // itself, +8px of breathing room, plus the device's safe-area inset
+        // since the nav pads for that too.
+        <div
+          className="fixed inset-x-5 z-30 flex flex-col items-center text-center text-voice-toast"
+          style={{ bottom: "calc(70px + env(safe-area-inset-bottom, 0px))" }}
+        >
           <p className="mb-1.5 text-xs font-semibold">{t.voiceInput.addedTitle}</p>
-          <ul className="flex flex-col gap-1 text-sm">
+          <ul className="flex w-full flex-col items-center gap-1 text-sm">
             {toast.events.map((event, i) => (
-              <li key={`event-${i}`} className="flex items-center gap-2">
+              <li key={`event-${i}`} className="flex max-w-full items-center gap-2">
                 <CalendarDays size={14} className="shrink-0" />
                 <span className="truncate">{event}</span>
               </li>
             ))}
             {toast.memos.map((memo, i) => (
-              <li key={`memo-${i}`} className="flex items-center gap-2">
+              <li key={`memo-${i}`} className="flex max-w-full items-center gap-2">
                 <StickyNote size={14} className="shrink-0" />
                 <span className="truncate">{memo}</span>
               </li>
             ))}
             {toast.todos.map((todo, i) => (
-              <li key={`todo-${i}`} className="flex items-center gap-2">
+              <li key={`todo-${i}`} className="flex max-w-full items-center gap-2">
                 <CheckSquare size={14} className="shrink-0" />
                 <span className="truncate">{todo}</span>
               </li>
