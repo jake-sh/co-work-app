@@ -45,6 +45,72 @@ function getSpeechRecognitionCtor(): (new () => SpeechRecognitionLike) | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+// "Music box ping" cue — a soft sine tone with slight unison detune
+// (the faint natural mistuning of real music-box tines) and a lowpass
+// filter that darkens as the note decays, plus two quiet echo taps for a
+// short tail. Start is a fifth above stop so the two are easy to tell apart.
+interface CueSpec {
+  freq: number;
+  filterHz: number;
+  detune: number;
+  dur: number;
+  peak: number;
+  tail: { taps: number; gap: number; decay: number };
+}
+const CUE_TAIL = { taps: 2, gap: 0.1, decay: 0.3 };
+const START_CUE: CueSpec = { freq: 1175, filterHz: 4000, detune: 3, dur: 0.18, peak: 0.42, tail: CUE_TAIL };
+const STOP_CUE: CueSpec = { freq: 880, filterHz: 4000, detune: 3, dur: 0.18, peak: 0.42, tail: CUE_TAIL };
+
+function getAudioCtxCtor(): (new () => AudioContext) | null {
+  if (typeof window === "undefined") return null;
+  const w = window as typeof window & { webkitAudioContext?: new () => AudioContext };
+  return window.AudioContext ?? w.webkitAudioContext ?? null;
+}
+
+function scheduleCueVoice(
+  ctx: AudioContext,
+  master: GainNode,
+  startTime: number,
+  freq: number,
+  dur: number,
+  peakGain: number,
+  filterHz: number,
+  detuneCents: number
+) {
+  const cents = detuneCents ? [-detuneCents, detuneCents] : [0];
+  cents.forEach((c, idx) => {
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, startTime);
+    osc.detune.setValueAtTime(c, startTime);
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(filterHz, startTime);
+    filter.frequency.exponentialRampToValueAtTime(Math.max(300, filterHz * 0.45), startTime + dur);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(peakGain / cents.length, startTime + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + dur);
+
+    osc.connect(filter);
+    filter.connect(gain);
+
+    if (cents.length > 1) {
+      const pan = ctx.createStereoPanner();
+      pan.pan.value = idx === 0 ? -0.18 : 0.18;
+      gain.connect(pan);
+      pan.connect(master);
+    } else {
+      gain.connect(master);
+    }
+
+    osc.start(startTime);
+    osc.stop(startTime + dur + 0.05);
+  });
+}
+
 // Lives as the 4th of 7 BottomNav items (between memo and schedule) instead
 // of a free-floating draggable button — that avoided overlapping other UI
 // (e.g. chat's send button) only by letting the user drag it out of the way;
@@ -60,10 +126,36 @@ export function VoiceInputNavItem() {
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef(false);
   const accumulatedTextRef = useRef("");
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
 
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    audioCtxRef.current?.close();
+  }, []);
+
+  const playCue = useCallback((spec: CueSpec) => {
+    const Ctor = getAudioCtxCtor();
+    if (!Ctor) return;
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new Ctor();
+      masterGainRef.current = audioCtxRef.current.createGain();
+      masterGainRef.current.gain.value = 0.9;
+      masterGainRef.current.connect(audioCtxRef.current.destination);
+    }
+    const ctx = audioCtxRef.current;
+    const master = masterGainRef.current;
+    if (!master) return;
+    if (ctx.state === "suspended") ctx.resume();
+
+    const now = ctx.currentTime;
+    scheduleCueVoice(ctx, master, now, spec.freq, spec.dur, spec.peak, spec.filterHz, spec.detune);
+    for (let i = 1; i <= spec.tail.taps; i++) {
+      const tapGain = spec.peak * Math.pow(spec.tail.decay, i);
+      const tapFilter = spec.filterHz * Math.pow(0.6, i);
+      scheduleCueVoice(ctx, master, now + spec.tail.gap * i, spec.freq, spec.dur * 1.3, tapGain, tapFilter, spec.detune * 0.6);
+    }
   }, []);
 
   const showToast = useCallback((items: VoiceInputItem[]) => {
@@ -172,6 +264,7 @@ export function VoiceInputNavItem() {
     };
     recognitionRef.current = recognition;
     setStatus("listening");
+    playCue(START_CUE);
     recognition.start();
   };
 
@@ -185,6 +278,7 @@ export function VoiceInputNavItem() {
       longPressTimerRef.current = null;
     }
     if (!longPressFiredRef.current) {
+      playCue(STOP_CUE);
       recognitionRef.current?.stop();
     }
   };
@@ -192,6 +286,7 @@ export function VoiceInputNavItem() {
   const onPointerDown = () => {
     if (status === "listening") {
       // Re-tap while listening (tap or held) always stops immediately.
+      playCue(STOP_CUE);
       recognitionRef.current?.stop();
       return;
     }
