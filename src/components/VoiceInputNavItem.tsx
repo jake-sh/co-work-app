@@ -154,6 +154,15 @@ export function VoiceInputNavItem() {
   const masterGainRef = useRef<GainNode | null>(null);
   const activeCueVoicesRef = useRef<CueVoice[]>([]);
 
+  // TEMPORARY: on-screen event log to pin down a still-open Android Chrome
+  // bug (mic stopping early). Remove once confirmed fixed on a real device.
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const pressStartRef = useRef(0);
+  const logEvent = (label: string) => {
+    const ms = Math.round(performance.now() - pressStartRef.current);
+    setDebugLog((prev) => [...prev.slice(-9), `${label} @${ms}ms`]);
+  };
+
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
@@ -259,13 +268,18 @@ export function VoiceInputNavItem() {
     [currentProject, profile, showToast]
   );
 
-  const startListening = () => {
+  // Android Chrome's `continuous: true` isn't actually continuous — its
+  // recognizer still ends itself after a few hundred ms to ~1s of silence,
+  // firing onend/onerror well before the user has let go. Wiring those
+  // straight to "finalize and stop" (as this used to) meant every press,
+  // however long held, got cut short at that point instead of at the
+  // user's actual release — this is what made sustained mode impossible.
+  // The fix: while the press is still engaged, treat that as an internal
+  // hiccup and silently start a fresh recognition instance rather than
+  // tearing the session down, so listening across the pause.
+  const createRecognition = (): SpeechRecognitionLike | null => {
     const Ctor = getSpeechRecognitionCtor();
-    if (!Ctor) {
-      setStatus("error");
-      setTimeout(() => setStatus("idle"), 2500);
-      return;
-    }
+    if (!Ctor) return null;
 
     const recognition = new Ctor();
     // Always Korean regardless of the app's UI language — dictated notes are
@@ -274,16 +288,12 @@ export function VoiceInputNavItem() {
     // switching the app to English made Korean speech get forced through
     // English recognition instead.
     recognition.lang = "ko-KR";
-    // Always continuous: listening starts the instant the button is
-    // pressed (see onPointerDown), so whether this turns into a quick tap
-    // or a long hold is only decided later, at release time.
     recognition.continuous = true;
     recognition.interimResults = false;
 
     // Browser fires onresult per finished segment (not the full transcript
-    // each time), so accumulate across calls and only hand it off once
-    // listening actually stops.
-    accumulatedTextRef.current = "";
+    // each time), so accumulate across calls — and across silent restarts —
+    // and only hand it off once the press genuinely ends.
     recognition.onresult = (event) => {
       let text = "";
       for (let i = event.resultIndex ?? 0; i < event.results.length; i++) {
@@ -292,11 +302,16 @@ export function VoiceInputNavItem() {
       accumulatedTextRef.current += text;
     };
     recognition.onend = () => {
-      // Normally already reset by whatever told the recognition to stop
-      // (endPress, the re-tap-to-stop branch, or onerror) — but if the
-      // browser itself ends a sustained session on its own (e.g. a
-      // max-duration cap), this is the only signal we get, so reset here
-      // too rather than leaving the button thinking it's still engaged.
+      logEvent("onend");
+      if (engagedRef.current) {
+        const next = createRecognition();
+        if (next) {
+          recognitionRef.current = next;
+          next.start();
+          logEvent("silent-restart");
+          return;
+        }
+      }
       resetPressState();
       const text = accumulatedTextRef.current.trim();
       accumulatedTextRef.current = "";
@@ -306,11 +321,37 @@ export function VoiceInputNavItem() {
         setStatus("idle");
       }
     };
-    recognition.onerror = () => {
+    recognition.onerror = (event) => {
+      logEvent(`onerror:${event.error}`);
+      // "no-speech" is the same silence-timeout behavior as onend, just
+      // reported as an error on some Android versions instead of a clean
+      // end — restart silently there too rather than surfacing it as a
+      // real failure. Any other error (permission denied, no mic, etc.)
+      // is a genuine failure and should stop and show the error state.
+      if (engagedRef.current && event.error === "no-speech") {
+        const next = createRecognition();
+        if (next) {
+          recognitionRef.current = next;
+          next.start();
+          logEvent("silent-restart");
+          return;
+        }
+      }
       resetPressState();
       setStatus("error");
       setTimeout(() => setStatus("idle"), 2500);
     };
+    return recognition;
+  };
+
+  const startListening = () => {
+    const recognition = createRecognition();
+    if (!recognition) {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 2500);
+      return;
+    }
+    accumulatedTextRef.current = "";
     recognitionRef.current = recognition;
     setStatus("listening");
     recognition.start();
@@ -334,6 +375,7 @@ export function VoiceInputNavItem() {
   // Past the threshold, listening keeps going until the user taps the
   // button again (handled in onPointerDown's "already engaged" branch).
   const endPress = () => {
+    logEvent("up");
     if (longPressFiredRef.current) return;
     resetPressState();
     recognitionRef.current?.stop();
@@ -346,6 +388,7 @@ export function VoiceInputNavItem() {
       // Checked via a ref (not the `status` state) so this can't miss a
       // second pointerdown that lands before React has re-rendered with
       // the "listening" status from the first one.
+      logEvent("down(retap→stop)");
       resetPressState();
       recognitionRef.current?.stop();
       playCue(STOP_CUE);
@@ -353,12 +396,15 @@ export function VoiceInputNavItem() {
     }
     if (status !== "idle") return;
 
-    // Capture the pointer so pointerup/pointercancel keep targeting this
-    // button even if the finger drifts off it mid-hold (very easy to do on
-    // a ~50px nav icon while dictating) — without this, that drift fired a
-    // spurious pointerleave that stopped the recording almost immediately,
-    // breaking both quick taps and sustained long-press listening.
+    // Capture the pointer so pointerup keeps targeting this button even if
+    // the finger drifts off it mid-hold (very easy to do on a ~50px nav
+    // icon while dictating) — without this, that drift fired a spurious
+    // pointerleave that stopped the recording almost immediately, breaking
+    // both quick taps and sustained long-press listening.
     e.currentTarget.setPointerCapture(e.pointerId);
+
+    pressStartRef.current = performance.now();
+    logEvent("down");
 
     // Start listening immediately so no speech is lost while the long-press
     // threshold is still being timed.
@@ -369,6 +415,7 @@ export function VoiceInputNavItem() {
       longPressFiredRef.current = true;
       setSustained(true);
       playCue(SUSTAIN_CUE);
+      logEvent("sustain-armed");
     }, LONG_PRESS_MS);
   };
 
@@ -376,14 +423,31 @@ export function VoiceInputNavItem() {
     endPress();
   };
 
+  // Deliberately does NOT stop the recording. Android Chrome can fire
+  // pointercancel on its own mid-hold (system gesture arbitration, the
+  // native long-press affordance, etc.) well before the user has actually
+  // let go — treating that as a release was cutting presses short at a
+  // point unrelated to when the finger actually lifted. Genuine
+  // interruptions (permission revoked, app backgrounded hard enough to
+  // kill the mic) still surface through recognition.onerror instead.
   const onPointerCancel = () => {
-    endPress();
+    logEvent("cancel(ignored)");
   };
 
   if (!(profile?.voiceInputEnabled ?? false) || !currentProject) return null;
 
   return (
     <>
+      {/* TEMPORARY: see the debugLog declaration above — remove this block
+          together with it once the Android Chrome cutoff bug is confirmed
+          fixed on a real device. */}
+      {debugLog.length > 0 && (
+        <div className="fixed inset-x-2 top-2 z-40 rounded-md bg-black/85 p-2 font-mono text-[10px] leading-tight text-white">
+          {debugLog.map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </div>
+      )}
       {toast && (toast.memos.length > 0 || toast.todos.length > 0 || toast.events.length > 0) && (
         // Sits just above BottomNav's top divider: 61px is that nav row's
         // measured height (icon + label + padding), +1px for the divider
