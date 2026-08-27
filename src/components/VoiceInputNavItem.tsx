@@ -376,7 +376,12 @@ export function VoiceInputNavItem() {
   // button again (handled in onPointerDown's "already engaged" branch).
   const endPress = () => {
     logEvent("up");
-    if (longPressFiredRef.current) return;
+    // !engagedRef.current covers the pointerup that trails a re-tap-to-stop
+    // gesture — that tap already stopped things via onPointerDown's
+    // "already engaged" branch, so this is a redundant echo of the same
+    // gesture, not a new release to act on (it was double-firing stop()
+    // and the stop chime a moment apart before this check existed).
+    if (!engagedRef.current || longPressFiredRef.current) return;
     resetPressState();
     recognitionRef.current?.stop();
     playCue(STOP_CUE);
