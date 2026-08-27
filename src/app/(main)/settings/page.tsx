@@ -448,6 +448,8 @@ export default function SettingsPage() {
         </div>
       </Card>
 
+      <p className="mb-2 px-1 text-xs font-semibold text-text-secondary">{t.settings.voiceInput}</p>
+
       <Card className="mb-6 flex flex-col !py-1">
         <div className="flex min-h-14 items-center justify-between">
           <span className="text-sm text-text-secondary">{t.settings.voiceInput}</span>
