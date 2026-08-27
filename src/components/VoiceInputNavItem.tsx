@@ -177,14 +177,9 @@ export function VoiceInputNavItem() {
   const masterGainRef = useRef<GainNode | null>(null);
   const activeCueVoicesRef = useRef<CueVoice[]>([]);
 
-  // TEMPORARY: on-screen event log to pin down a still-open Android Chrome
-  // bug (mic stopping early). Remove once confirmed fixed on a real device.
-  const [debugLog, setDebugLog] = useState<string[]>([]);
+  // Marks when the current press started, so endPress can tell how long
+  // it's been held (see MIN_LISTEN_MS).
   const pressStartRef = useRef(0);
-  const logEvent = (label: string) => {
-    const ms = Math.round(performance.now() - pressStartRef.current);
-    setDebugLog((prev) => [...prev.slice(-9), `${label} @${ms}ms`]);
-  };
 
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -333,7 +328,6 @@ export function VoiceInputNavItem() {
     restartCountRef.current += 1;
     recognitionRef.current = next;
     next.start();
-    logEvent(`silent-restart#${restartCountRef.current}`);
     return true;
   };
 
@@ -366,7 +360,6 @@ export function VoiceInputNavItem() {
       accumulatedTextRef.current += text;
     };
     recognition.onend = () => {
-      logEvent("onend");
       if (attemptSilentRestart()) return;
       resetPressState();
       const text = accumulatedTextRef.current.trim();
@@ -378,7 +371,6 @@ export function VoiceInputNavItem() {
       }
     };
     recognition.onerror = (event) => {
-      logEvent(`onerror:${event.error}`);
       if (!FATAL_RECOGNITION_ERRORS.has(event.error) && attemptSilentRestart()) return;
       resetPressState();
       setStatus("error");
@@ -424,7 +416,6 @@ export function VoiceInputNavItem() {
   // "keep going after release" mode. A press released earlier than that
   // keeps listening until the minimum window is up instead (see below).
   const endPress = () => {
-    logEvent("up");
     // Covers the pointerup that trails a re-tap-to-stop gesture — that tap
     // already stopped things via onPointerDown's "already engaged" branch,
     // so this is a redundant echo of the same gesture, not a new release
@@ -443,7 +434,6 @@ export function VoiceInputNavItem() {
         // Could have been superseded by a re-tap in the meantime — only
         // finalize if this press is still the live one.
         if (!engagedRef.current) return;
-        logEvent("min-listen-stop");
         finalizeStop();
       }, MIN_LISTEN_MS - elapsed);
       return;
@@ -457,7 +447,6 @@ export function VoiceInputNavItem() {
       // Checked via a ref (not the `status` state) so this can't miss a
       // second pointerdown that lands before React has re-rendered with
       // the "listening" status from the first one.
-      logEvent("down(retap→stop)");
       finalizeStop();
       return;
     }
@@ -470,7 +459,6 @@ export function VoiceInputNavItem() {
     e.currentTarget.setPointerCapture(e.pointerId);
 
     pressStartRef.current = performance.now();
-    logEvent("down");
 
     // Start listening immediately so no speech is lost.
     engagedRef.current = true;
@@ -488,24 +476,12 @@ export function VoiceInputNavItem() {
   // point unrelated to when the finger actually lifted. Genuine
   // interruptions (permission revoked, app backgrounded hard enough to
   // kill the mic) still surface through recognition.onerror instead.
-  const onPointerCancel = () => {
-    logEvent("cancel(ignored)");
-  };
+  const onPointerCancel = () => {};
 
   if (!(profile?.voiceInputEnabled ?? false) || !currentProject) return null;
 
   return (
     <>
-      {/* TEMPORARY: see the debugLog declaration above — remove this block
-          together with it once the Android Chrome cutoff bug is confirmed
-          fixed on a real device. */}
-      {debugLog.length > 0 && (
-        <div className="fixed inset-x-2 top-2 z-40 rounded-md bg-black/85 p-2 font-mono text-[10px] leading-tight text-white">
-          {debugLog.map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
-        </div>
-      )}
       {toast && (toast.memos.length > 0 || toast.todos.length > 0 || toast.events.length > 0) && (
         // Sits just above BottomNav's top divider: 61px is that nav row's
         // measured height (icon + label + padding), +1px for the divider
