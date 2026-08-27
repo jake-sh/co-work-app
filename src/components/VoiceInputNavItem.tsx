@@ -36,6 +36,15 @@ interface SpeechRecognitionLike extends EventTarget {
 // which only stops when the user taps again.
 const LONG_PRESS_MS = 2000;
 
+// Recognition errors treated as real, unretriable failures — everything
+// else (known benign strings like "no-speech"/"aborted" and any not seen
+// yet) is assumed recoverable while the press is still engaged, and gets
+// silently restarted instead of surfaced. See createRecognition below.
+const FATAL_RECOGNITION_ERRORS = new Set(["not-allowed", "audio-capture"]);
+// Caps consecutive silent restarts with no real speech result in between,
+// in case something makes every restart fail/abort immediately in a loop.
+const MAX_SILENT_RESTARTS = 20;
+
 function getSpeechRecognitionCtor(): (new () => SpeechRecognitionLike) | null {
   if (typeof window === "undefined") return null;
   const w = window as typeof window & {
@@ -160,6 +169,10 @@ export function VoiceInputNavItem() {
   // which only updates on React's next render — a ref can't ever be stale
   // if a second pointerdown somehow lands before that render happens.
   const engagedRef = useRef(false);
+  // Counts consecutive silent restarts (see createRecognition below) with
+  // no real speech result in between, so a pathological loop (start
+  // failing/aborting immediately, over and over) can't spin forever.
+  const restartCountRef = useRef(0);
   const accumulatedTextRef = useRef("");
   const audioCtxRef = useRef<AudioContext | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
@@ -293,13 +306,25 @@ export function VoiceInputNavItem() {
 
   // Android Chrome's `continuous: true` isn't actually continuous — its
   // recognizer still ends itself after a few hundred ms to ~1s of silence,
-  // firing onend/onerror well before the user has let go. Wiring those
-  // straight to "finalize and stop" (as this used to) meant every press,
-  // however long held, got cut short at that point instead of at the
-  // user's actual release — this is what made sustained mode impossible.
-  // The fix: while the press is still engaged, treat that as an internal
-  // hiccup and silently start a fresh recognition instance rather than
-  // tearing the session down, so listening across the pause.
+  // firing onend or onerror well before the user has let go, and the exact
+  // error string it uses for this varies ("no-speech", "aborted", and
+  // maybe others not seen yet). Wiring those straight to "finalize and
+  // stop" (as this used to) meant every press, however long held, got cut
+  // short at that point instead of at the user's actual release — this is
+  // what made sustained mode impossible. The fix: while the press is still
+  // engaged, treat any of these as an internal hiccup and silently start a
+  // fresh recognition instance rather than tearing the session down.
+  const attemptSilentRestart = (): boolean => {
+    if (!engagedRef.current || restartCountRef.current >= MAX_SILENT_RESTARTS) return false;
+    const next = createRecognition();
+    if (!next) return false;
+    restartCountRef.current += 1;
+    recognitionRef.current = next;
+    next.start();
+    logEvent(`silent-restart#${restartCountRef.current}`);
+    return true;
+  };
+
   const createRecognition = (): SpeechRecognitionLike | null => {
     const Ctor = getSpeechRecognitionCtor();
     if (!Ctor) return null;
@@ -318,6 +343,10 @@ export function VoiceInputNavItem() {
     // each time), so accumulate across calls — and across silent restarts —
     // and only hand it off once the press genuinely ends.
     recognition.onresult = (event) => {
+      // A real result means this recognizer instance is genuinely working,
+      // not stuck in some failing-immediately loop — don't let restarts
+      // from earlier in a long dictation count against the retry cap.
+      restartCountRef.current = 0;
       let text = "";
       for (let i = event.resultIndex ?? 0; i < event.results.length; i++) {
         text += event.results[i]?.[0]?.transcript ?? "";
@@ -326,15 +355,7 @@ export function VoiceInputNavItem() {
     };
     recognition.onend = () => {
       logEvent("onend");
-      if (engagedRef.current) {
-        const next = createRecognition();
-        if (next) {
-          recognitionRef.current = next;
-          next.start();
-          logEvent("silent-restart");
-          return;
-        }
-      }
+      if (attemptSilentRestart()) return;
       resetPressState();
       const text = accumulatedTextRef.current.trim();
       accumulatedTextRef.current = "";
@@ -346,20 +367,7 @@ export function VoiceInputNavItem() {
     };
     recognition.onerror = (event) => {
       logEvent(`onerror:${event.error}`);
-      // "no-speech" is the same silence-timeout behavior as onend, just
-      // reported as an error on some Android versions instead of a clean
-      // end — restart silently there too rather than surfacing it as a
-      // real failure. Any other error (permission denied, no mic, etc.)
-      // is a genuine failure and should stop and show the error state.
-      if (engagedRef.current && event.error === "no-speech") {
-        const next = createRecognition();
-        if (next) {
-          recognitionRef.current = next;
-          next.start();
-          logEvent("silent-restart");
-          return;
-        }
-      }
+      if (!FATAL_RECOGNITION_ERRORS.has(event.error) && attemptSilentRestart()) return;
       resetPressState();
       setStatus("error");
       setTimeout(() => setStatus("idle"), 2500);
@@ -374,6 +382,7 @@ export function VoiceInputNavItem() {
       setTimeout(() => setStatus("idle"), 2500);
       return;
     }
+    restartCountRef.current = 0;
     accumulatedTextRef.current = "";
     recognitionRef.current = recognition;
     setStatus("listening");
