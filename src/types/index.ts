@@ -10,6 +10,10 @@ export interface UserProfile {
   memoDefaultShared?: boolean;
   notificationsEnabled?: boolean;
   voiceInputEnabled?: boolean;
+  // When true, the mic's start/stop cues use a short vibration instead of a
+  // sound (falls back to sound on devices without the Vibration API, e.g.
+  // iOS Safari, rather than giving no feedback at all).
+  voiceInputVibrate?: boolean;
   colorCode: string;
   locale: Locale;
   createdAt: number;

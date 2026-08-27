@@ -130,6 +130,7 @@ export interface Dictionary {
     memoDefaultShared: string;
     notifications: string;
     voiceInput: string;
+    voiceInputVibrate: string;
     fontSize: string;
     signOut: string;
     deleteAccount: string;

@@ -32,13 +32,14 @@ interface SpeechRecognitionLike extends EventTarget {
   onend: (() => void) | null;
 }
 
-// A quick, genuine click can release in well under a second — too fast
-// for the user to have said anything yet. Below this, releasing doesn't
-// stop right away; listening continues until this much time has passed
-// from the press, giving a short click enough room to actually be heard.
-// A press held longer than this simply stops the moment it's released —
-// there's no separate "long press" mode or threshold to cross.
-const MIN_LISTEN_MS = 2500;
+// After release, listening doesn't stop right away — it keeps going until
+// this long has passed with no new speech recognized. A natural mid-
+// sentence pause won't trip it (speech pushes the deadline back out each
+// time), but stops promptly once the user's actually done talking. Also
+// acts as the effective minimum listen time for a quick click that hasn't
+// said anything yet, since the clock only starts counting from the last
+// real speech (or the press itself, if none).
+const SILENCE_TIMEOUT_MS = 2000;
 
 // Recognition errors treated as real, unretriable failures — everything
 // else (known benign strings like "no-speech"/"aborted" and any not seen
@@ -73,6 +74,15 @@ interface CueSpec {
 const CUE_TAIL = { taps: 2, gap: 0.1, decay: 0.3 };
 const START_CUE: CueSpec = { freq: 1175, filterHz: 4000, detune: 3, dur: 0.18, peak: 0.42, tail: CUE_TAIL };
 const STOP_CUE: CueSpec = { freq: 880, filterHz: 4000, detune: 3, dur: 0.18, peak: 0.42, tail: CUE_TAIL };
+// Single short pulse for start, two quick pulses for stop — the same
+// "start vs. stop feels different" idea as the chimes' pitch, translated
+// to touch instead of sound.
+const START_VIBRATE: number | number[] = 30;
+const STOP_VIBRATE: number | number[] = [20, 30, 20];
+
+function canVibrate(): boolean {
+  return typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
+}
 
 function getAudioCtxCtor(): (new () => AudioContext) | null {
   if (typeof window === "undefined") return null;
@@ -160,9 +170,12 @@ export function VoiceInputNavItem() {
   const [toast, setToast] = useState<{ memos: string[]; todos: string[]; events: string[] } | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Pending "finish out the minimum listen time" timer — set when the
-  // finger lifts before MIN_LISTEN_MS has elapsed (see endPress).
-  const minListenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Pending "check if it's time to auto-stop yet" timer, active only after
+  // release (see endPress/scheduleAutoStop).
+  const autoStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Timestamp of the last real speech segment recognized (or the press
+  // start, if none yet) — the silence clock counts from here.
+  const lastSpeechAtRef = useRef(0);
   // Whether we're currently in an active press-to-listen session. Checked
   // (and updated) synchronously via a ref rather than the `status` state,
   // which only updates on React's next render — a ref can't ever be stale
@@ -177,13 +190,9 @@ export function VoiceInputNavItem() {
   const masterGainRef = useRef<GainNode | null>(null);
   const activeCueVoicesRef = useRef<CueVoice[]>([]);
 
-  // Marks when the current press started, so endPress can tell how long
-  // it's been held (see MIN_LISTEN_MS).
-  const pressStartRef = useRef(0);
-
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    if (minListenTimerRef.current) clearTimeout(minListenTimerRef.current);
+    if (autoStopTimerRef.current) clearTimeout(autoStopTimerRef.current);
     audioCtxRef.current?.close();
   }, []);
 
@@ -238,6 +247,20 @@ export function VoiceInputNavItem() {
       schedule();
     }
   }, []);
+
+  // Start/stop feedback: vibration when the user's opted into it and the
+  // device actually supports it, otherwise the chime — never nothing, so
+  // there's always some confirmation the button registered.
+  const signal = useCallback(
+    (cue: CueSpec, vibratePattern: number | number[]) => {
+      if ((profile?.voiceInputVibrate ?? false) && canVibrate()) {
+        navigator.vibrate(vibratePattern);
+        return;
+      }
+      playCue(cue);
+    },
+    [profile?.voiceInputVibrate, playCue]
+  );
 
   const showToast = useCallback((items: VoiceInputItem[]) => {
     const memos = items
@@ -357,6 +380,10 @@ export function VoiceInputNavItem() {
       for (let i = event.resultIndex ?? 0; i < event.results.length; i++) {
         text += event.results[i]?.[0]?.transcript ?? "";
       }
+      // Push the silence deadline out — see scheduleAutoStop. Only matters
+      // once the press has ended (that's the only time it's scheduled),
+      // but harmless to update unconditionally.
+      if (text) lastSpeechAtRef.current = performance.now();
       accumulatedTextRef.current += text;
     };
     recognition.onend = () => {
@@ -391,16 +418,16 @@ export function VoiceInputNavItem() {
     recognitionRef.current = recognition;
     setStatus("listening");
     recognition.start();
-    playCue(START_CUE);
+    signal(START_CUE, START_VIBRATE);
   };
 
   // Clears every bit of state tied to an in-progress press, however it
   // ends (release, re-tap-to-stop, or a recognition error).
   const resetPressState = () => {
     engagedRef.current = false;
-    if (minListenTimerRef.current) {
-      clearTimeout(minListenTimerRef.current);
-      minListenTimerRef.current = null;
+    if (autoStopTimerRef.current) {
+      clearTimeout(autoStopTimerRef.current);
+      autoStopTimerRef.current = null;
     }
   };
 
@@ -408,13 +435,41 @@ export function VoiceInputNavItem() {
   const finalizeStop = () => {
     resetPressState();
     recognitionRef.current?.stop();
-    playCue(STOP_CUE);
+    signal(STOP_CUE, STOP_VIBRATE);
   };
 
-  // Shared by pointer up/cancel: the press has ended. A press held past
-  // MIN_LISTEN_MS stops the moment it's released — there's no separate
-  // "keep going after release" mode. A press released earlier than that
-  // keeps listening until the minimum window is up instead (see below).
+  // Checks whether SILENCE_TIMEOUT_MS has passed since the last real
+  // speech; if not, reschedules itself for whenever it will have. Since it
+  // always re-reads lastSpeechAtRef at fire time, a new speech segment
+  // that arrives while a check is already pending just pushes the
+  // deadline out — the pending timer fires early, sees it's not time yet,
+  // and reschedules for the new deadline. No need to touch this from
+  // onresult directly.
+  const scheduleAutoStop = () => {
+    if (autoStopTimerRef.current) {
+      clearTimeout(autoStopTimerRef.current);
+      autoStopTimerRef.current = null;
+    }
+    // Only ever invoked from a pointer event handler or its own setTimeout
+    // callback, never during render — safe despite the impure call.
+    // eslint-disable-next-line react-hooks/purity
+    const remaining = lastSpeechAtRef.current + SILENCE_TIMEOUT_MS - performance.now();
+    if (remaining <= 0) {
+      finalizeStop();
+      return;
+    }
+    autoStopTimerRef.current = setTimeout(() => {
+      autoStopTimerRef.current = null;
+      // Could have been superseded by a re-tap in the meantime — only
+      // proceed if this press is still the live one.
+      if (!engagedRef.current) return;
+      scheduleAutoStop();
+    }, remaining);
+  };
+
+  // Shared by pointer up/cancel: the press has ended, but listening
+  // doesn't stop immediately — it keeps going until SILENCE_TIMEOUT_MS has
+  // passed with no new speech (see scheduleAutoStop).
   const endPress = () => {
     // Covers the pointerup that trails a re-tap-to-stop gesture — that tap
     // already stopped things via onPointerDown's "already engaged" branch,
@@ -422,23 +477,7 @@ export function VoiceInputNavItem() {
     // to act on (it was double-firing stop() and the stop chime a moment
     // apart before this check existed).
     if (!engagedRef.current) return;
-
-    const elapsed = performance.now() - pressStartRef.current;
-    if (elapsed < MIN_LISTEN_MS) {
-      // A genuine quick click can release in well under a second — too
-      // fast to have said anything yet. Keep listening for the rest of
-      // the minimum window instead of cutting off the instant the finger
-      // lifts, so a normal click actually has time to capture speech.
-      minListenTimerRef.current = setTimeout(() => {
-        minListenTimerRef.current = null;
-        // Could have been superseded by a re-tap in the meantime — only
-        // finalize if this press is still the live one.
-        if (!engagedRef.current) return;
-        finalizeStop();
-      }, MIN_LISTEN_MS - elapsed);
-      return;
-    }
-    finalizeStop();
+    scheduleAutoStop();
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -458,7 +497,7 @@ export function VoiceInputNavItem() {
     // pointerleave that stopped the recording almost immediately.
     e.currentTarget.setPointerCapture(e.pointerId);
 
-    pressStartRef.current = performance.now();
+    lastSpeechAtRef.current = performance.now();
 
     // Start listening immediately so no speech is lost.
     engagedRef.current = true;
