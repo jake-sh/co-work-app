@@ -73,7 +73,14 @@ function getAudioCtxCtor(): (new () => AudioContext) | null {
 
 interface CueVoice {
   osc: OscillatorNode;
-  gain: GainNode;
+  // A separate gain stage the voice's own envelope never touches, purely
+  // for ducking (see CUE_DUCK_SEC below). Ducking used to fight the
+  // envelope's own exponential ramp directly via cancelScheduledValues,
+  // which some browsers don't resume smoothly from — the value can snap
+  // rather than continue from where it was, producing an audible click.
+  // This node starts at a known, untouched 1 and is the only thing ducking
+  // ever adjusts, so there's never a curve to interrupt.
+  duckGain: GainNode;
 }
 
 function scheduleCueVoice(
@@ -104,21 +111,25 @@ function scheduleCueVoice(
     gain.gain.linearRampToValueAtTime(peakGain / cents.length, startTime + 0.018);
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + dur);
 
+    const duckGain = ctx.createGain();
+    duckGain.gain.setValueAtTime(1, startTime);
+
     osc.connect(filter);
     filter.connect(gain);
+    gain.connect(duckGain);
 
     if (cents.length > 1) {
       const pan = ctx.createStereoPanner();
       pan.pan.value = idx === 0 ? -0.18 : 0.18;
-      gain.connect(pan);
+      duckGain.connect(pan);
       pan.connect(master);
     } else {
-      gain.connect(master);
+      duckGain.connect(master);
     }
 
     osc.start(startTime);
     osc.stop(startTime + dur + 0.05);
-    voices.push({ osc, gain });
+    voices.push({ osc, duckGain });
   });
   return voices;
 }
@@ -181,32 +192,44 @@ export function VoiceInputNavItem() {
     const ctx = audioCtxRef.current;
     const master = masterGainRef.current;
     if (!master) return;
-    if (ctx.state === "suspended") ctx.resume();
 
-    const now = ctx.currentTime;
+    const schedule = () => {
+      const now = ctx.currentTime;
 
-    // A fast tap can trigger start then stop within a few hundred ms, well
-    // before the previous cue's tail has finished ringing — without this,
-    // the two chimes overlap into a dissonant clash instead of sounding
-    // like two distinct sounds. Cut whatever's still playing short first.
-    for (const voice of activeCueVoicesRef.current) {
-      voice.gain.gain.cancelScheduledValues(now);
-      voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
-      voice.gain.gain.linearRampToValueAtTime(0.0001, now + CUE_DUCK_SEC);
-      try {
-        voice.osc.stop(now + CUE_DUCK_SEC);
-      } catch {
-        // Already stopped/ended — nothing to duck.
+      // A fast tap can trigger start then stop within a few hundred ms,
+      // well before the previous cue's tail has finished ringing — without
+      // this, the two chimes overlap into a dissonant clash instead of
+      // sounding like two distinct sounds. Cut whatever's still playing
+      // short first, via each voice's untouched duckGain stage.
+      for (const voice of activeCueVoicesRef.current) {
+        voice.duckGain.gain.setValueAtTime(1, now);
+        voice.duckGain.gain.linearRampToValueAtTime(0, now + CUE_DUCK_SEC);
+        try {
+          voice.osc.stop(now + CUE_DUCK_SEC);
+        } catch {
+          // Already stopped/ended — nothing to duck.
+        }
       }
-    }
 
-    const voices = scheduleCueVoice(ctx, master, now, spec.freq, spec.dur, spec.peak, spec.filterHz, spec.detune);
-    for (let i = 1; i <= spec.tail.taps; i++) {
-      const tapGain = spec.peak * Math.pow(spec.tail.decay, i);
-      const tapFilter = spec.filterHz * Math.pow(0.6, i);
-      voices.push(...scheduleCueVoice(ctx, master, now + spec.tail.gap * i, spec.freq, spec.dur * 1.3, tapGain, tapFilter, spec.detune * 0.6));
+      const voices = scheduleCueVoice(ctx, master, now, spec.freq, spec.dur, spec.peak, spec.filterHz, spec.detune);
+      for (let i = 1; i <= spec.tail.taps; i++) {
+        const tapGain = spec.peak * Math.pow(spec.tail.decay, i);
+        const tapFilter = spec.filterHz * Math.pow(0.6, i);
+        voices.push(...scheduleCueVoice(ctx, master, now + spec.tail.gap * i, spec.freq, spec.dur * 1.3, tapGain, tapFilter, spec.detune * 0.6));
+      }
+      activeCueVoicesRef.current = voices;
+    };
+
+    // Some browsers auto-suspend an idle AudioContext; scheduling sound
+    // against one that's still "suspended" (resume() hasn't actually
+    // finished yet) is a plausible source of the irregular pop reported
+    // alongside cue playback — wait for a genuine "running" state first
+    // rather than firing the moment resume() is merely requested.
+    if (ctx.state === "suspended") {
+      ctx.resume().then(schedule);
+    } else {
+      schedule();
     }
-    activeCueVoicesRef.current = voices;
   }, []);
 
   const showToast = useCallback((items: VoiceInputItem[]) => {
