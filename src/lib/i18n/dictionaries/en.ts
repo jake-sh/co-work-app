@@ -132,6 +132,7 @@ const en: Dictionary = {
     memoDefaultShared: "Share new memos by default",
     notifications: "Notifications",
     voiceInput: "Voice input",
+    voiceInputVibrate: "Vibrate instead of chime",
     fontSize: "Font size",
     signOut: "Sign Out",
     deleteAccount: "Delete Account",

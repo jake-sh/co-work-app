@@ -12,7 +12,7 @@ import { TextInput, SingleLineInput } from "@/components/ui/TextInput";
 import { clsx } from "clsx";
 
 export default function SettingsPage() {
-  const { profile, signOut, updateColorCode, updateNickname, updateMemoDefaultShared, updateNotificationsEnabled, updateVoiceInputEnabled, changePassword, deleteAccount } = useAuth();
+  const { profile, signOut, updateColorCode, updateNickname, updateMemoDefaultShared, updateNotificationsEnabled, updateVoiceInputEnabled, updateVoiceInputVibrate, changePassword, deleteAccount } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
@@ -411,6 +411,30 @@ export default function SettingsPage() {
             />
           </button>
         </div>
+
+        {(profile?.voiceInputEnabled ?? false) && (
+          <>
+            <div className="mx-1 h-px bg-border-divider" />
+
+            <div className="flex min-h-14 items-center justify-between">
+              <span className="text-sm text-text-secondary">{t.settings.voiceInputVibrate}</span>
+              <button
+                onClick={() => updateVoiceInputVibrate(!(profile?.voiceInputVibrate ?? false))}
+                className={clsx(
+                  "relative h-6 w-10 rounded-full transition-colors",
+                  (profile?.voiceInputVibrate ?? false) ? "bg-accent" : "bg-surface-pill"
+                )}
+              >
+                <span
+                  className={clsx(
+                    "absolute top-1 h-4 w-4 rounded-full bg-accent-content transition-transform",
+                    (profile?.voiceInputVibrate ?? false) ? "left-5" : "left-1"
+                  )}
+                />
+              </button>
+            </div>
+          </>
+        )}
 
         <div className="mx-1 h-px bg-border-divider" />
 

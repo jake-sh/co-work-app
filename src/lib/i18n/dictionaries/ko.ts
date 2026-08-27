@@ -132,6 +132,7 @@ const ko: Dictionary = {
     memoDefaultShared: "신규 메모 기본 공유",
     notifications: "알림",
     voiceInput: "음성 입력",
+    voiceInputVibrate: "효과음 대신 진동",
     fontSize: "글자 크기",
     signOut: "로그아웃",
     deleteAccount: "계정 삭제",
