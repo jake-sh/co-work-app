@@ -470,22 +470,23 @@ export default function SettingsPage() {
 
       <button
         onClick={() => signOut()}
-        className="flex w-full items-center gap-3 rounded-card bg-surface-card px-4 py-3.5 text-sm text-text-primary"
+        className="flex w-full items-center justify-between gap-3 rounded-card bg-surface-card px-4 py-3.5 text-sm text-text-primary"
       >
-        <LogOut size={18} />
-        {t.settings.signOut}
+        <span className="flex items-center gap-3">
+          <LogOut size={18} />
+          {t.settings.signOut}
+        </span>
+        {process.env.NEXT_PUBLIC_APP_VERSION && (
+          <span className="text-xs text-text-secondary">{process.env.NEXT_PUBLIC_APP_VERSION}</span>
+        )}
       </button>
 
       <button
         onClick={() => setDeleteModalOpen(true)}
-        className="mt-6 w-full text-center text-xs text-red-400"
+        className="my-6 w-full text-center text-xs text-red-400"
       >
         {t.settings.deleteAccount}
       </button>
-
-      {process.env.NEXT_PUBLIC_APP_VERSION && (
-        <p className="my-6 text-center text-xs text-text-secondary">{process.env.NEXT_PUBLIC_APP_VERSION}</p>
-      )}
     </div>
   );
 }
