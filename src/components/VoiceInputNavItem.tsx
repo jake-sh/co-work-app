@@ -216,7 +216,10 @@ export function VoiceInputNavItem() {
 
   const playCue = useCallback((spec: CueSpec) => {
     const Ctor = getAudioCtxCtor();
-    if (!Ctor) return;
+    if (!Ctor) {
+      logEvent("playCue:no-ctor");
+      return;
+    }
     if (!audioCtxRef.current) {
       audioCtxRef.current = new Ctor();
       masterGainRef.current = audioCtxRef.current.createGain();
@@ -225,9 +228,14 @@ export function VoiceInputNavItem() {
     }
     const ctx = audioCtxRef.current;
     const master = masterGainRef.current;
-    if (!master) return;
+    if (!master) {
+      logEvent("playCue:no-master");
+      return;
+    }
+    logEvent(`playCue:state=${ctx.state}`);
 
     const schedule = () => {
+      logEvent(`playCue:schedule(state=${ctx.state})`);
       const now = ctx.currentTime;
 
       // A fast tap can trigger start then stop within a few hundred ms,
@@ -260,7 +268,7 @@ export function VoiceInputNavItem() {
     // alongside cue playback — wait for a genuine "running" state first
     // rather than firing the moment resume() is merely requested.
     if (ctx.state === "suspended") {
-      ctx.resume().then(schedule);
+      ctx.resume().then(schedule).catch(() => logEvent("playCue:resume-rejected"));
     } else {
       schedule();
     }
@@ -271,7 +279,9 @@ export function VoiceInputNavItem() {
   // there's always some confirmation the button registered.
   const signal = useCallback(
     (cue: CueSpec, vibratePattern: number | number[]) => {
-      if (profile?.voiceInputVibrate ?? false) {
+      const vibrateOn = profile?.voiceInputVibrate ?? false;
+      logEvent(`signal(vibrateOn=${vibrateOn},canVibrate=${canVibrate()})`);
+      if (vibrateOn) {
         try {
           // navigator.vibrate() can exist but still fail — either by
           // returning false (e.g. called outside a direct user-gesture
@@ -279,11 +289,17 @@ export function VoiceInputNavItem() {
           // always is) or, on some devices/browsers, by throwing instead
           // of returning false. Either way, fall through to the chime
           // rather than leaving the user with no feedback at all.
-          if (canVibrate() && navigator.vibrate(vibratePattern)) return;
-        } catch {
+          if (canVibrate()) {
+            const ok = navigator.vibrate(vibratePattern);
+            logEvent(`signal:vibrate-returned=${ok}`);
+            if (ok) return;
+          }
+        } catch (err) {
+          logEvent(`signal:vibrate-threw:${String(err)}`);
           // Falls through to playCue below.
         }
       }
+      logEvent("signal:playCue");
       playCue(cue);
     },
     [profile?.voiceInputVibrate, playCue]
