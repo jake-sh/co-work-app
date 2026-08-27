@@ -60,6 +60,10 @@ interface CueSpec {
 const CUE_TAIL = { taps: 2, gap: 0.1, decay: 0.3 };
 const START_CUE: CueSpec = { freq: 1175, filterHz: 4000, detune: 3, dur: 0.18, peak: 0.42, tail: CUE_TAIL };
 const STOP_CUE: CueSpec = { freq: 880, filterHz: 4000, detune: 3, dur: 0.18, peak: 0.42, tail: CUE_TAIL };
+// A brief, distinct tick played the instant the long-press threshold is
+// crossed while still held — confirms "sustained mode is on, safe to let
+// go now" audibly, separate from the start/stop chimes.
+const SUSTAIN_CUE: CueSpec = { freq: 1568, filterHz: 4500, detune: 0, dur: 0.05, peak: 0.35, tail: { taps: 0, gap: 0, decay: 0 } };
 
 function getAudioCtxCtor(): (new () => AudioContext) | null {
   if (typeof window === "undefined") return null;
@@ -132,11 +136,19 @@ export function VoiceInputNavItem() {
   const { currentProject } = useProjects();
   const { t } = useI18n();
   const [status, setStatus] = useState<Status>("idle");
+  // True once a held press has crossed the long-press threshold — the icon
+  // stops pulsing to visually confirm "locked on, safe to let go".
+  const [sustained, setSustained] = useState(false);
   const [toast, setToast] = useState<{ memos: string[]; todos: string[]; events: string[] } | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef(false);
+  // Whether we're currently in an active press-to-listen session. Checked
+  // (and updated) synchronously via a ref rather than the `status` state,
+  // which only updates on React's next render — a ref can't ever be stale
+  // if a second pointerdown somehow lands before that render happens.
+  const engagedRef = useRef(false);
   const accumulatedTextRef = useRef("");
   const audioCtxRef = useRef<AudioContext | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
@@ -280,6 +292,12 @@ export function VoiceInputNavItem() {
       accumulatedTextRef.current += text;
     };
     recognition.onend = () => {
+      // Normally already reset by whatever told the recognition to stop
+      // (endPress, the re-tap-to-stop branch, or onerror) — but if the
+      // browser itself ends a sustained session on its own (e.g. a
+      // max-duration cap), this is the only signal we get, so reset here
+      // too rather than leaving the button thinking it's still engaged.
+      resetPressState();
       const text = accumulatedTextRef.current.trim();
       accumulatedTextRef.current = "";
       if (text) {
@@ -289,6 +307,7 @@ export function VoiceInputNavItem() {
       }
     };
     recognition.onerror = () => {
+      resetPressState();
       setStatus("error");
       setTimeout(() => setStatus("idle"), 2500);
     };
@@ -298,24 +317,36 @@ export function VoiceInputNavItem() {
     playCue(START_CUE);
   };
 
-  // Shared by pointer up/cancel: the press has ended. If it ended before
-  // the long-press threshold, that's a push-to-talk tap — stop immediately.
-  // Past the threshold, listening keeps going until the user taps the
-  // button again (handled in onPointerDown's "listening" branch).
-  const endPress = () => {
+  // Clears every bit of state tied to an in-progress press, however it
+  // ends (early release, re-tap after sustain, or a recognition error).
+  const resetPressState = () => {
+    engagedRef.current = false;
+    longPressFiredRef.current = false;
+    setSustained(false);
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
-    if (!longPressFiredRef.current) {
-      recognitionRef.current?.stop();
-      playCue(STOP_CUE);
-    }
+  };
+
+  // Shared by pointer up/cancel: the press has ended. If it ended before
+  // the long-press threshold, that's a push-to-talk tap — stop immediately.
+  // Past the threshold, listening keeps going until the user taps the
+  // button again (handled in onPointerDown's "already engaged" branch).
+  const endPress = () => {
+    if (longPressFiredRef.current) return;
+    resetPressState();
+    recognitionRef.current?.stop();
+    playCue(STOP_CUE);
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (status === "listening") {
-      // Re-tap while listening (tap or held) always stops immediately.
+    if (engagedRef.current) {
+      // Already listening from an earlier pointerdown — stop immediately.
+      // Checked via a ref (not the `status` state) so this can't miss a
+      // second pointerdown that lands before React has re-rendered with
+      // the "listening" status from the first one.
+      resetPressState();
       recognitionRef.current?.stop();
       playCue(STOP_CUE);
       return;
@@ -331,10 +362,13 @@ export function VoiceInputNavItem() {
 
     // Start listening immediately so no speech is lost while the long-press
     // threshold is still being timed.
+    engagedRef.current = true;
     longPressFiredRef.current = false;
     startListening();
     longPressTimerRef.current = setTimeout(() => {
       longPressFiredRef.current = true;
+      setSustained(true);
+      playCue(SUSTAIN_CUE);
     }, LONG_PRESS_MS);
   };
 
@@ -417,7 +451,7 @@ export function VoiceInputNavItem() {
             ) : status === "error" ? (
               <MicOff size={24} />
             ) : (
-              <Mic size={24} className={status === "listening" ? "animate-pulse" : undefined} />
+              <Mic size={24} className={status === "listening" && !sustained ? "animate-pulse" : undefined} />
             )}
           </span>
         </button>
