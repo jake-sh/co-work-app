@@ -190,6 +190,15 @@ export function VoiceInputNavItem() {
   const masterGainRef = useRef<GainNode | null>(null);
   const activeCueVoicesRef = useRef<CueVoice[]>([]);
 
+  // TEMPORARY: on-screen event log to pin down a still-open "cuts off
+  // mid-speech" bug on Android Chrome. Remove once confirmed fixed.
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const debugStartRef = useRef(0);
+  const logEvent = (label: string) => {
+    const ms = Math.round(performance.now() - debugStartRef.current);
+    setDebugLog((prev) => [...prev.slice(-11), `${label} @${ms}ms`]);
+  };
+
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     if (autoStopTimerRef.current) clearTimeout(autoStopTimerRef.current);
@@ -349,12 +358,16 @@ export function VoiceInputNavItem() {
   // still engaged, treat any of these as an internal hiccup and silently
   // start a fresh recognition instance rather than tearing the session down.
   const attemptSilentRestart = (): boolean => {
-    if (!engagedRef.current || restartCountRef.current >= MAX_SILENT_RESTARTS) return false;
+    if (!engagedRef.current || restartCountRef.current >= MAX_SILENT_RESTARTS) {
+      logEvent(`restart-denied(engaged=${engagedRef.current},count=${restartCountRef.current})`);
+      return false;
+    }
     const next = createRecognition();
     if (!next) return false;
     restartCountRef.current += 1;
     recognitionRef.current = next;
     next.start();
+    logEvent(`restart#${restartCountRef.current}`);
     return true;
   };
 
@@ -398,9 +411,13 @@ export function VoiceInputNavItem() {
       // once the press has ended (that's the only time it's scheduled),
       // but harmless to update unconditionally.
       if (heardSpeech) lastSpeechAtRef.current = performance.now();
+      if (heardSpeech || finalText) {
+        logEvent(`onresult(final="${finalText.slice(0, 12)}",heard=${heardSpeech})`);
+      }
       accumulatedTextRef.current += finalText;
     };
     recognition.onend = () => {
+      logEvent("onend");
       if (attemptSilentRestart()) return;
       resetPressState();
       const text = accumulatedTextRef.current.trim();
@@ -412,6 +429,7 @@ export function VoiceInputNavItem() {
       }
     };
     recognition.onerror = (event) => {
+      logEvent(`onerror:${event.error}`);
       if (!FATAL_RECOGNITION_ERRORS.has(event.error) && attemptSilentRestart()) return;
       resetPressState();
       setStatus("error");
@@ -447,6 +465,7 @@ export function VoiceInputNavItem() {
 
   // Actually tears down the recognition session and signals it audibly.
   const finalizeStop = () => {
+    logEvent("finalizeStop");
     resetPressState();
     recognitionRef.current?.stop();
     signal(STOP_CUE, STOP_VIBRATE);
@@ -468,6 +487,7 @@ export function VoiceInputNavItem() {
     // callback, never during render — safe despite the impure call.
     // eslint-disable-next-line react-hooks/purity
     const remaining = lastSpeechAtRef.current + SILENCE_TIMEOUT_MS - performance.now();
+    logEvent(`scheduleAutoStop(wait=${Math.round(remaining)}ms)`);
     if (remaining <= 0) {
       finalizeStop();
       return;
@@ -485,6 +505,7 @@ export function VoiceInputNavItem() {
   // doesn't stop immediately — it keeps going until SILENCE_TIMEOUT_MS has
   // passed with no new speech (see scheduleAutoStop).
   const endPress = () => {
+    logEvent("up");
     // Covers the pointerup that trails a re-tap-to-stop gesture — that tap
     // already stopped things via onPointerDown's "already engaged" branch,
     // so this is a redundant echo of the same gesture, not a new release
@@ -500,6 +521,7 @@ export function VoiceInputNavItem() {
       // Checked via a ref (not the `status` state) so this can't miss a
       // second pointerdown that lands before React has re-rendered with
       // the "listening" status from the first one.
+      logEvent("down(retap→stop)");
       finalizeStop();
       return;
     }
@@ -511,6 +533,8 @@ export function VoiceInputNavItem() {
     // pointerleave that stopped the recording almost immediately.
     e.currentTarget.setPointerCapture(e.pointerId);
 
+    debugStartRef.current = performance.now();
+    logEvent("down");
     lastSpeechAtRef.current = performance.now();
 
     // Start listening immediately so no speech is lost.
@@ -529,12 +553,24 @@ export function VoiceInputNavItem() {
   // point unrelated to when the finger actually lifted. Genuine
   // interruptions (permission revoked, app backgrounded hard enough to
   // kill the mic) still surface through recognition.onerror instead.
-  const onPointerCancel = () => {};
+  const onPointerCancel = () => {
+    logEvent("cancel(ignored)");
+  };
 
   if (!(profile?.voiceInputEnabled ?? false) || !currentProject) return null;
 
   return (
     <>
+      {/* TEMPORARY: see the debugLog declaration above — remove this block
+          together with it once the "cuts off mid-speech" bug is confirmed
+          fixed on a real device. */}
+      {debugLog.length > 0 && (
+        <div className="fixed inset-x-2 top-2 z-40 rounded-md bg-black/85 p-2 font-mono text-[10px] leading-tight text-white">
+          {debugLog.map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </div>
+      )}
       {toast && (toast.memos.length > 0 || toast.todos.length > 0 || toast.events.length > 0) && (
         // Sits just above BottomNav's top divider: 61px is that nav row's
         // measured height (icon + label + padding), +1px for the divider
