@@ -155,7 +155,6 @@ const ko: Dictionary = {
     notSupported: "이 브라우저는 음성 입력을 지원하지 않습니다",
     micDenied: "마이크 권한이 필요합니다",
     error: "음성 입력을 처리하지 못했습니다",
-    addedTitle: "추가됨",
     memoLabel: "메모",
     todoLabel: "투두",
   },

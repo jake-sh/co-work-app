@@ -153,7 +153,6 @@ export interface Dictionary {
     notSupported: string;
     micDenied: string;
     error: string;
-    addedTitle: string;
     memoLabel: string;
     todoLabel: string;
   };

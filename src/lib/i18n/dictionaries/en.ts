@@ -155,7 +155,6 @@ const en: Dictionary = {
     notSupported: "This browser doesn't support voice input",
     micDenied: "Microphone permission is needed",
     error: "Couldn't process the voice input",
-    addedTitle: "Added",
     memoLabel: "memo",
     todoLabel: "to-do",
   },

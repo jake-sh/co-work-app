@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
 import { CalendarDays, CheckSquare, Loader2, Mic, MicOff, StickyNote } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
@@ -151,6 +152,7 @@ const CUE_DUCK_SEC = 0.03;
 // (e.g. chat's send button) only by letting the user drag it out of the way;
 // a dedicated nav slot sidesteps the collision entirely.
 export function VoiceInputNavItem() {
+  const router = useRouter();
   const { profile } = useAuth();
   const { currentProject } = useProjects();
   const { t } = useI18n();
@@ -291,14 +293,28 @@ export function VoiceInputNavItem() {
             );
           }
         }
-        if (items.length > 0) showToast(items);
+        if (items.length > 0) {
+          showToast(items);
+          // Same priority structureVoiceInput itself uses to classify a
+          // single utterance (date/time present -> event takes over todo
+          // takes over memo), so the tab it jumps to matches whichever
+          // type actually won for a mixed-type dictation.
+          const targetHref = items.some((i) => i.type === "event")
+            ? "/schedule"
+            : items.some((i) => i.type === "todo")
+              ? "/todo"
+              : items.some((i) => i.type === "memo")
+                ? "/memo"
+                : null;
+          if (targetHref) router.push(targetHref);
+        }
         setStatus("idle");
       } catch {
         setStatus("error");
         setTimeout(() => setStatus("idle"), 2500);
       }
     },
-    [currentProject, profile, showToast]
+    [currentProject, profile, showToast, router]
   );
 
   // Android Chrome's `continuous: true` isn't actually continuous — its
@@ -499,7 +515,6 @@ export function VoiceInputNavItem() {
           className="fixed inset-x-5 z-30 flex flex-col items-center text-center text-voice-toast"
           style={{ bottom: "calc(70px + env(safe-area-inset-bottom, 0px))" }}
         >
-          <p className="mb-1.5 text-xs font-semibold">{t.voiceInput.addedTitle}</p>
           <ul className="flex w-full flex-col items-center gap-1 text-sm">
             {toast.events.map((event, i) => (
               <li key={`event-${i}`} className="flex max-w-full items-center gap-2">
