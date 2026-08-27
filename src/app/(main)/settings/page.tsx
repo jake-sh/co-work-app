@@ -478,10 +478,14 @@ export default function SettingsPage() {
 
       <button
         onClick={() => setDeleteModalOpen(true)}
-        className="my-6 w-full text-center text-xs text-red-400"
+        className="mt-6 w-full text-center text-xs text-red-400"
       >
         {t.settings.deleteAccount}
       </button>
+
+      {process.env.NEXT_PUBLIC_APP_VERSION && (
+        <p className="my-6 text-center text-xs text-text-secondary">{process.env.NEXT_PUBLIC_APP_VERSION}</p>
+      )}
     </div>
   );
 }
