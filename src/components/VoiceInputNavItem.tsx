@@ -271,13 +271,18 @@ export function VoiceInputNavItem() {
   // there's always some confirmation the button registered.
   const signal = useCallback(
     (cue: CueSpec, vibratePattern: number | number[]) => {
-      // navigator.vibrate() can exist but still silently fail (returns
-      // false) — e.g. called outside a direct user-gesture callback, which
-      // the auto-stop's setTimeout-triggered signal() call always is. Only
-      // skip the chime if the vibration actually got queued; otherwise
-      // fall back so the user always gets *some* feedback.
-      if ((profile?.voiceInputVibrate ?? false) && canVibrate() && navigator.vibrate(vibratePattern)) {
-        return;
+      if (profile?.voiceInputVibrate ?? false) {
+        try {
+          // navigator.vibrate() can exist but still fail — either by
+          // returning false (e.g. called outside a direct user-gesture
+          // callback, which the auto-stop's setTimeout-triggered call
+          // always is) or, on some devices/browsers, by throwing instead
+          // of returning false. Either way, fall through to the chime
+          // rather than leaving the user with no feedback at all.
+          if (canVibrate() && navigator.vibrate(vibratePattern)) return;
+        } catch {
+          // Falls through to playCue below.
+        }
       }
       playCue(cue);
     },
