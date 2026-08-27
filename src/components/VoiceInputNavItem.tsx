@@ -31,15 +31,13 @@ interface SpeechRecognitionLike extends EventTarget {
   onend: (() => void) | null;
 }
 
-// Hold for this long = switch to "keeps listening through pauses" mode,
-// which only stops when the user taps again.
-const LONG_PRESS_MS = 2000;
 // A quick, genuine click can release in well under a second — too fast
 // for the user to have said anything yet. Below this, releasing doesn't
 // stop right away; listening continues until this much time has passed
 // from the press, giving a short click enough room to actually be heard.
-// Must stay below LONG_PRESS_MS so the two never race.
-const MIN_LISTEN_MS = 1500;
+// A press held longer than this simply stops the moment it's released —
+// there's no separate "long press" mode or threshold to cross.
+const MIN_LISTEN_MS = 2500;
 
 // Recognition errors treated as real, unretriable failures — everything
 // else (known benign strings like "no-speech"/"aborted" and any not seen
@@ -74,10 +72,6 @@ interface CueSpec {
 const CUE_TAIL = { taps: 2, gap: 0.1, decay: 0.3 };
 const START_CUE: CueSpec = { freq: 1175, filterHz: 4000, detune: 3, dur: 0.18, peak: 0.42, tail: CUE_TAIL };
 const STOP_CUE: CueSpec = { freq: 880, filterHz: 4000, detune: 3, dur: 0.18, peak: 0.42, tail: CUE_TAIL };
-// A brief, distinct tick played the instant the long-press threshold is
-// crossed while still held — confirms "sustained mode is on, safe to let
-// go now" audibly, separate from the start/stop chimes.
-const SUSTAIN_CUE: CueSpec = { freq: 1568, filterHz: 4500, detune: 0, dur: 0.05, peak: 0.35, tail: { taps: 0, gap: 0, decay: 0 } };
 
 function getAudioCtxCtor(): (new () => AudioContext) | null {
   if (typeof window === "undefined") return null;
@@ -161,14 +155,9 @@ export function VoiceInputNavItem() {
   const { currentProject } = useProjects();
   const { t } = useI18n();
   const [status, setStatus] = useState<Status>("idle");
-  // True once a held press has crossed the long-press threshold — the icon
-  // stops pulsing to visually confirm "locked on, safe to let go".
-  const [sustained, setSustained] = useState(false);
   const [toast, setToast] = useState<{ memos: string[]; todos: string[]; events: string[] } | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressFiredRef = useRef(false);
   // Pending "finish out the minimum listen time" timer — set when the
   // finger lifts before MIN_LISTEN_MS has elapsed (see endPress).
   const minListenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -197,7 +186,6 @@ export function VoiceInputNavItem() {
 
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
     if (minListenTimerRef.current) clearTimeout(minListenTimerRef.current);
     audioCtxRef.current?.close();
   }, []);
@@ -318,11 +306,10 @@ export function VoiceInputNavItem() {
   // firing onend or onerror well before the user has let go, and the exact
   // error string it uses for this varies ("no-speech", "aborted", and
   // maybe others not seen yet). Wiring those straight to "finalize and
-  // stop" (as this used to) meant every press, however long held, got cut
-  // short at that point instead of at the user's actual release — this is
-  // what made sustained mode impossible. The fix: while the press is still
-  // engaged, treat any of these as an internal hiccup and silently start a
-  // fresh recognition instance rather than tearing the session down.
+  // stop" (as this used to) meant a press could get cut short mid-hold
+  // instead of at the user's actual release. The fix: while the press is
+  // still engaged, treat any of these as an internal hiccup and silently
+  // start a fresh recognition instance rather than tearing the session down.
   const attemptSilentRestart = (): boolean => {
     if (!engagedRef.current || restartCountRef.current >= MAX_SILENT_RESTARTS) return false;
     const next = createRecognition();
@@ -400,15 +387,9 @@ export function VoiceInputNavItem() {
   };
 
   // Clears every bit of state tied to an in-progress press, however it
-  // ends (early release, re-tap after sustain, or a recognition error).
+  // ends (release, re-tap-to-stop, or a recognition error).
   const resetPressState = () => {
     engagedRef.current = false;
-    longPressFiredRef.current = false;
-    setSustained(false);
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
     if (minListenTimerRef.current) {
       clearTimeout(minListenTimerRef.current);
       minListenTimerRef.current = null;
@@ -422,18 +403,18 @@ export function VoiceInputNavItem() {
     playCue(STOP_CUE);
   };
 
-  // Shared by pointer up/cancel: the press has ended. If it ended before
-  // the long-press threshold, that's a push-to-talk tap. Past the
-  // threshold, listening keeps going until the user taps the button again
-  // (handled in onPointerDown's "already engaged" branch).
+  // Shared by pointer up/cancel: the press has ended. A press held past
+  // MIN_LISTEN_MS stops the moment it's released — there's no separate
+  // "keep going after release" mode. A press released earlier than that
+  // keeps listening until the minimum window is up instead (see below).
   const endPress = () => {
     logEvent("up");
-    // !engagedRef.current covers the pointerup that trails a re-tap-to-stop
-    // gesture — that tap already stopped things via onPointerDown's
-    // "already engaged" branch, so this is a redundant echo of the same
-    // gesture, not a new release to act on (it was double-firing stop()
-    // and the stop chime a moment apart before this check existed).
-    if (!engagedRef.current || longPressFiredRef.current) return;
+    // Covers the pointerup that trails a re-tap-to-stop gesture — that tap
+    // already stopped things via onPointerDown's "already engaged" branch,
+    // so this is a redundant echo of the same gesture, not a new release
+    // to act on (it was double-firing stop() and the stop chime a moment
+    // apart before this check existed).
+    if (!engagedRef.current) return;
 
     const elapsed = performance.now() - pressStartRef.current;
     if (elapsed < MIN_LISTEN_MS) {
@@ -443,9 +424,9 @@ export function VoiceInputNavItem() {
       // lifts, so a normal click actually has time to capture speech.
       minListenTimerRef.current = setTimeout(() => {
         minListenTimerRef.current = null;
-        // Could have been superseded by a re-tap or sustain in the
-        // meantime — only finalize if this press is still the live one.
-        if (!engagedRef.current || longPressFiredRef.current) return;
+        // Could have been superseded by a re-tap in the meantime — only
+        // finalize if this press is still the live one.
+        if (!engagedRef.current) return;
         logEvent("min-listen-stop");
         finalizeStop();
       }, MIN_LISTEN_MS - elapsed);
@@ -469,24 +450,15 @@ export function VoiceInputNavItem() {
     // Capture the pointer so pointerup keeps targeting this button even if
     // the finger drifts off it mid-hold (very easy to do on a ~50px nav
     // icon while dictating) — without this, that drift fired a spurious
-    // pointerleave that stopped the recording almost immediately, breaking
-    // both quick taps and sustained long-press listening.
+    // pointerleave that stopped the recording almost immediately.
     e.currentTarget.setPointerCapture(e.pointerId);
 
     pressStartRef.current = performance.now();
     logEvent("down");
 
-    // Start listening immediately so no speech is lost while the long-press
-    // threshold is still being timed.
+    // Start listening immediately so no speech is lost.
     engagedRef.current = true;
-    longPressFiredRef.current = false;
     startListening();
-    longPressTimerRef.current = setTimeout(() => {
-      longPressFiredRef.current = true;
-      setSustained(true);
-      playCue(SUSTAIN_CUE);
-      logEvent("sustain-armed");
-    }, LONG_PRESS_MS);
   };
 
   const onPointerUp = () => {
@@ -585,7 +557,7 @@ export function VoiceInputNavItem() {
             ) : status === "error" ? (
               <MicOff size={24} />
             ) : (
-              <Mic size={24} className={status === "listening" && !sustained ? "animate-pulse" : undefined} />
+              <Mic size={24} className={status === "listening" ? "animate-pulse" : undefined} />
             )}
           </span>
         </button>
