@@ -35,11 +35,16 @@ interface SpeechRecognitionLike extends EventTarget {
 // After release, listening doesn't stop right away — it keeps going until
 // this long has passed with no new speech recognized. A natural mid-
 // sentence pause won't trip it (speech pushes the deadline back out each
-// time), but stops promptly once the user's actually done talking. Also
-// acts as the effective minimum listen time for a quick click that hasn't
-// said anything yet, since the clock only starts counting from the last
-// real speech (or the press itself, if none).
+// time), but stops promptly once the user's actually done talking.
 const SILENCE_TIMEOUT_MS = 2000;
+// Android's speech recognition can take a good while to return even the
+// first *interim* result — a real device log showed ~2.1s from press to
+// first result, while the user had already been talking the whole time.
+// Using SILENCE_TIMEOUT_MS for that initial wait cut the session before
+// the recognizer had a chance to report anything. This longer grace
+// period applies only until the first result of the press arrives; every
+// silence check after that uses the tighter SILENCE_TIMEOUT_MS instead.
+const FIRST_RESULT_TIMEOUT_MS = 4500;
 
 // Recognition errors treated as real, unretriable failures — everything
 // else (known benign strings like "no-speech"/"aborted" and any not seen
@@ -176,6 +181,10 @@ export function VoiceInputNavItem() {
   // Timestamp of the last real speech segment recognized (or the press
   // start, if none yet) — the silence clock counts from here.
   const lastSpeechAtRef = useRef(0);
+  // Whether any speech at all has been recognized yet this press — governs
+  // whether scheduleAutoStop uses the longer first-result grace period or
+  // the tighter follow-up silence window. Reset on every new press.
+  const hasHeardSpeechRef = useRef(false);
   // Whether we're currently in an active press-to-listen session. Checked
   // (and updated) synchronously via a ref rather than the `status` state,
   // which only updates on React's next render — a ref can't ever be stale
@@ -410,7 +419,10 @@ export function VoiceInputNavItem() {
       // Push the silence deadline out — see scheduleAutoStop. Only matters
       // once the press has ended (that's the only time it's scheduled),
       // but harmless to update unconditionally.
-      if (heardSpeech) lastSpeechAtRef.current = performance.now();
+      if (heardSpeech) {
+        lastSpeechAtRef.current = performance.now();
+        hasHeardSpeechRef.current = true;
+      }
       if (heardSpeech || finalText) {
         logEvent(`onresult(final="${finalText.slice(0, 12)}",heard=${heardSpeech})`);
       }
@@ -471,24 +483,29 @@ export function VoiceInputNavItem() {
     signal(STOP_CUE, STOP_VIBRATE);
   };
 
-  // Checks whether SILENCE_TIMEOUT_MS has passed since the last real
+  // Checks whether the relevant timeout has passed since the last real
   // speech; if not, reschedules itself for whenever it will have. Since it
-  // always re-reads lastSpeechAtRef at fire time, a new speech segment
-  // that arrives while a check is already pending just pushes the
-  // deadline out — the pending timer fires early, sees it's not time yet,
-  // and reschedules for the new deadline. No need to touch this from
-  // onresult directly.
+  // always re-reads lastSpeechAtRef/hasHeardSpeechRef at fire time, a new
+  // speech segment that arrives while a check is already pending just
+  // pushes the deadline out — the pending timer fires early, sees it's not
+  // time yet, and reschedules for the new deadline. No need to touch this
+  // from onresult directly.
   const scheduleAutoStop = () => {
     if (autoStopTimerRef.current) {
       clearTimeout(autoStopTimerRef.current);
       autoStopTimerRef.current = null;
     }
+    const timeoutMs = hasHeardSpeechRef.current ? SILENCE_TIMEOUT_MS : FIRST_RESULT_TIMEOUT_MS;
     // Only ever invoked from a pointer event handler or its own setTimeout
     // callback, never during render — safe despite the impure call.
     // eslint-disable-next-line react-hooks/purity
-    const remaining = lastSpeechAtRef.current + SILENCE_TIMEOUT_MS - performance.now();
-    logEvent(`scheduleAutoStop(wait=${Math.round(remaining)}ms)`);
-    if (remaining <= 0) {
+    const remaining = lastSpeechAtRef.current + timeoutMs - performance.now();
+    logEvent(`scheduleAutoStop(wait=${Math.round(remaining)}ms,heard=${hasHeardSpeechRef.current})`);
+    // A small positive threshold (rather than exactly 0) avoids a rapid
+    // reschedule-reschedule-reschedule micro-loop right at the deadline —
+    // timer firing jitter means "remaining" can land at a few sub-ms
+    // positive values several times in a row before actually reaching 0.
+    if (remaining <= 50) {
       finalizeStop();
       return;
     }
@@ -536,6 +553,7 @@ export function VoiceInputNavItem() {
     debugStartRef.current = performance.now();
     logEvent("down");
     lastSpeechAtRef.current = performance.now();
+    hasHeardSpeechRef.current = false;
 
     // Start listening immediately so no speech is lost.
     engagedRef.current = true;
