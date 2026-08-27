@@ -394,50 +394,6 @@ export default function SettingsPage() {
 
         <div className="mx-1 h-px bg-border-divider" />
 
-        <div className="flex min-h-14 items-center justify-between">
-          <span className="text-sm text-text-secondary">{t.settings.voiceInput}</span>
-          <button
-            onClick={() => updateVoiceInputEnabled(!(profile?.voiceInputEnabled ?? false))}
-            className={clsx(
-              "relative h-6 w-10 rounded-full transition-colors",
-              (profile?.voiceInputEnabled ?? false) ? "bg-accent" : "bg-surface-pill"
-            )}
-          >
-            <span
-              className={clsx(
-                "absolute top-1 h-4 w-4 rounded-full bg-accent-content transition-transform",
-                (profile?.voiceInputEnabled ?? false) ? "left-5" : "left-1"
-              )}
-            />
-          </button>
-        </div>
-
-        {(profile?.voiceInputEnabled ?? false) && (
-          <>
-            <div className="mx-1 h-px bg-border-divider" />
-
-            <div className="flex min-h-14 items-center justify-between">
-              <span className="text-sm text-text-secondary">{t.settings.voiceInputVibrate}</span>
-              <button
-                onClick={() => updateVoiceInputVibrate(!(profile?.voiceInputVibrate ?? false))}
-                className={clsx(
-                  "relative h-6 w-10 rounded-full transition-colors",
-                  (profile?.voiceInputVibrate ?? false) ? "bg-accent" : "bg-surface-pill"
-                )}
-              >
-                <span
-                  className={clsx(
-                    "absolute top-1 h-4 w-4 rounded-full bg-accent-content transition-transform",
-                    (profile?.voiceInputVibrate ?? false) ? "left-5" : "left-1"
-                  )}
-                />
-              </button>
-            </div>
-          </>
-        )}
-
-        <div className="mx-1 h-px bg-border-divider" />
-
         <div className="flex min-h-14 items-center justify-between py-1">
           <span className="text-sm text-text-secondary">{t.settings.fontSize}</span>
           <div className="flex gap-1 rounded-pill bg-surface-pill p-0.5">
@@ -490,6 +446,50 @@ export default function SettingsPage() {
             )}
           </div>
         </div>
+      </Card>
+
+      <Card className="mb-6 flex flex-col !py-1">
+        <div className="flex min-h-14 items-center justify-between">
+          <span className="text-sm text-text-secondary">{t.settings.voiceInput}</span>
+          <button
+            onClick={() => updateVoiceInputEnabled(!(profile?.voiceInputEnabled ?? false))}
+            className={clsx(
+              "relative h-6 w-10 rounded-full transition-colors",
+              (profile?.voiceInputEnabled ?? false) ? "bg-accent" : "bg-surface-pill"
+            )}
+          >
+            <span
+              className={clsx(
+                "absolute top-1 h-4 w-4 rounded-full bg-accent-content transition-transform",
+                (profile?.voiceInputEnabled ?? false) ? "left-5" : "left-1"
+              )}
+            />
+          </button>
+        </div>
+
+        {(profile?.voiceInputEnabled ?? false) && (
+          <>
+            <div className="mx-1 h-px bg-border-divider" />
+
+            <div className="flex min-h-14 items-center justify-between">
+              <span className="text-sm text-text-secondary">{t.settings.voiceInputVibrate}</span>
+              <button
+                onClick={() => updateVoiceInputVibrate(!(profile?.voiceInputVibrate ?? false))}
+                className={clsx(
+                  "relative h-6 w-10 rounded-full transition-colors",
+                  (profile?.voiceInputVibrate ?? false) ? "bg-accent" : "bg-surface-pill"
+                )}
+              >
+                <span
+                  className={clsx(
+                    "absolute top-1 h-4 w-4 rounded-full bg-accent-content transition-transform",
+                    (profile?.voiceInputVibrate ?? false) ? "left-5" : "left-1"
+                  )}
+                />
+              </button>
+            </div>
+          </>
+        )}
       </Card>
 
       <button

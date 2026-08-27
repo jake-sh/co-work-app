@@ -19,7 +19,7 @@ type Status = "idle" | "listening" | "processing" | "error";
 // most browsers), so declared locally rather than guessed as a global.
 interface SpeechRecognitionResultListLike {
   length: number;
-  [i: number]: { [i: number]: { transcript: string } };
+  [i: number]: { isFinal: boolean; [i: number]: { transcript: string } };
 }
 interface SpeechRecognitionLike extends EventTarget {
   lang: string;
@@ -253,8 +253,12 @@ export function VoiceInputNavItem() {
   // there's always some confirmation the button registered.
   const signal = useCallback(
     (cue: CueSpec, vibratePattern: number | number[]) => {
-      if ((profile?.voiceInputVibrate ?? false) && canVibrate()) {
-        navigator.vibrate(vibratePattern);
+      // navigator.vibrate() can exist but still silently fail (returns
+      // false) — e.g. called outside a direct user-gesture callback, which
+      // the auto-stop's setTimeout-triggered signal() call always is. Only
+      // skip the chime if the vibration actually got queued; otherwise
+      // fall back so the user always gets *some* feedback.
+      if ((profile?.voiceInputVibrate ?? false) && canVibrate() && navigator.vibrate(vibratePattern)) {
         return;
       }
       playCue(cue);
@@ -366,25 +370,35 @@ export function VoiceInputNavItem() {
     // English recognition instead.
     recognition.lang = "ko-KR";
     recognition.continuous = true;
-    recognition.interimResults = false;
+    // Interim (non-final) results are what make silence detection actually
+    // work: a final result only fires once the recognizer decides an
+    // utterance is complete (usually right at a pause), so for one long
+    // continuous sentence it wouldn't fire again until the user was
+    // already done — nothing was around to push the silence deadline out
+    // while they were still mid-sentence. Interim results fire every few
+    // hundred ms during active speech, giving a real "still talking"
+    // signal. Only final segments still get accumulated into the transcript
+    // (interim guesses get revised and would otherwise duplicate/garble it).
+    recognition.interimResults = true;
 
-    // Browser fires onresult per finished segment (not the full transcript
-    // each time), so accumulate across calls — and across silent restarts —
-    // and only hand it off once the press genuinely ends.
     recognition.onresult = (event) => {
       // A real result means this recognizer instance is genuinely working,
       // not stuck in some failing-immediately loop — don't let restarts
       // from earlier in a long dictation count against the retry cap.
       restartCountRef.current = 0;
-      let text = "";
+      let finalText = "";
+      let heardSpeech = false;
       for (let i = event.resultIndex ?? 0; i < event.results.length; i++) {
-        text += event.results[i]?.[0]?.transcript ?? "";
+        const result = event.results[i];
+        const transcript = result?.[0]?.transcript ?? "";
+        if (transcript) heardSpeech = true;
+        if (result?.isFinal) finalText += transcript;
       }
       // Push the silence deadline out — see scheduleAutoStop. Only matters
       // once the press has ended (that's the only time it's scheduled),
       // but harmless to update unconditionally.
-      if (text) lastSpeechAtRef.current = performance.now();
-      accumulatedTextRef.current += text;
+      if (heardSpeech) lastSpeechAtRef.current = performance.now();
+      accumulatedTextRef.current += finalText;
     };
     recognition.onend = () => {
       if (attemptSilentRestart()) return;
