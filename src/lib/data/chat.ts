@@ -18,6 +18,13 @@ function normalizeCreatedAt(raw: unknown): number {
   return Date.now();
 }
 
+// Same idea as normalizeCreatedAt, but the field is absent for the (common)
+// case of a never-edited message rather than always present.
+function normalizeEditedAt(raw: unknown): number | undefined {
+  if (raw == null) return undefined;
+  return normalizeCreatedAt(raw);
+}
+
 export function subscribeMessages(projectId: string, cb: (messages: ChatMessage[]) => void) {
   const q = query(messagesCol(projectId));
   return onSnapshot(q, (snap) => {
@@ -31,6 +38,8 @@ export function subscribeMessages(projectId: string, cb: (messages: ChatMessage[
           authorName: data.authorName as string,
           authorColor: data.authorColor as string,
           createdAt: normalizeCreatedAt(data.createdAt),
+          editedAt: normalizeEditedAt(data.editedAt),
+          replyTo: (data.replyTo as ChatMessage["replyTo"]) ?? null,
         } as ChatMessage;
       })
       .sort((a, b) => a.createdAt - b.createdAt);
@@ -43,7 +52,8 @@ export async function sendMessage(
   text: string,
   authorId: string,
   authorName: string,
-  authorColor: string
+  authorColor: string,
+  replyTo?: ChatMessage["replyTo"]
 ) {
   await addDoc(messagesCol(projectId), {
     text,
@@ -51,7 +61,20 @@ export async function sendMessage(
     authorName,
     authorColor,
     createdAt: serverTimestamp(),
+    replyTo: replyTo ?? null,
   });
+}
+
+export async function editMessage(projectId: string, messageId: string, text: string) {
+  await updateDoc(doc(db, "projects", projectId, "messages", messageId), {
+    text,
+    editedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteMessage(projectId: string, messageId: string) {
+  const { deleteDoc } = await import("firebase/firestore");
+  await deleteDoc(doc(db, "projects", projectId, "messages", messageId));
 }
 
 // Tracks how far each member has read into a project's chat, so unread
