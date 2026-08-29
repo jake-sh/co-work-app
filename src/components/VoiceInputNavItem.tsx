@@ -11,6 +11,7 @@ import { structureVoiceInput, type VoiceInputItem } from "@/lib/data/voiceInput"
 import { addMemo } from "@/lib/data/memos";
 import { addTodo } from "@/lib/data/todos";
 import { addEvent } from "@/lib/data/schedule";
+import { useVoiceDebugEnabled } from "@/lib/voiceDebug";
 
 type Status = "idle" | "listening" | "processing" | "error";
 
@@ -199,14 +200,20 @@ export function VoiceInputNavItem() {
   const masterGainRef = useRef<GainNode | null>(null);
   const activeCueVoicesRef = useRef<CueVoice[]>([]);
 
-  // TEMPORARY: on-screen event log to pin down a still-open "cuts off
-  // mid-speech" bug on Android Chrome. Remove once confirmed fixed.
+  // Hidden on-screen event log for diagnosing voice-input issues on real
+  // devices — off by default, toggled via a long-press on the Settings nav
+  // item (see BottomNav + lib/voiceDebug).
+  const debugEnabled = useVoiceDebugEnabled();
   const [debugLog, setDebugLog] = useState<string[]>([]);
   const debugStartRef = useRef(0);
-  const logEvent = (label: string) => {
-    const ms = Math.round(performance.now() - debugStartRef.current);
-    setDebugLog((prev) => [...prev.slice(-11), `${label} @${ms}ms`]);
-  };
+  const logEvent = useCallback(
+    (label: string) => {
+      if (!debugEnabled) return;
+      const ms = Math.round(performance.now() - debugStartRef.current);
+      setDebugLog((prev) => [...prev.slice(-11), `${label} @${ms}ms`]);
+    },
+    [debugEnabled]
+  );
 
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -272,7 +279,7 @@ export function VoiceInputNavItem() {
     } else {
       schedule();
     }
-  }, []);
+  }, [logEvent]);
 
   // Start/stop feedback: vibration when the user's opted into it and the
   // device actually supports it, otherwise the chime — never nothing, so
@@ -302,7 +309,7 @@ export function VoiceInputNavItem() {
       logEvent("signal:playCue");
       playCue(cue);
     },
-    [profile?.voiceInputVibrate, playCue]
+    [profile?.voiceInputVibrate, playCue, logEvent]
   );
 
   const showToast = useCallback((items: VoiceInputItem[]) => {
@@ -600,10 +607,7 @@ export function VoiceInputNavItem() {
 
   return (
     <>
-      {/* TEMPORARY: see the debugLog declaration above — remove this block
-          together with it once the "cuts off mid-speech" bug is confirmed
-          fixed on a real device. */}
-      {debugLog.length > 0 && (
+      {debugEnabled && debugLog.length > 0 && (
         <div className="fixed inset-x-2 top-2 z-40 rounded-md bg-black/85 p-2 font-mono text-[10px] leading-tight text-white">
           {debugLog.map((line, i) => (
             <div key={i}>{line}</div>
