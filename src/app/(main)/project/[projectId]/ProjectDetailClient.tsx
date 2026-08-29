@@ -46,6 +46,10 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
   const [saved, setSaved] = useState(false);
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const overviewRef = useRef<HTMLTextAreaElement>(null);
+  // Which project's data the edit fields were last populated from — lets
+  // the reset below fire once per distinct project instead of on every
+  // Firestore update to the current one (see the comment at that check).
+  const [syncedProjectId, setSyncedProjectId] = useState<string | null>(null);
 
   const resizeOverview = () => {
     const el = overviewRef.current;
@@ -63,12 +67,22 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     resizeOverview();
   }, [description]);
 
-  useEffect(() => {
-    setName(project?.name ?? "");
-    setDescription(project?.description ?? "");
-    setStartDate(project?.startDate ?? "");
-    setEndDate(project?.endDate ?? "");
-  }, [project?.name, project?.description, project?.startDate, project?.endDate]);
+  // Populate the edit fields from `project`, but only the first time this
+  // project's data is seen — not (as an effect keyed off project?.name/etc.
+  // used to do) every time those fields change. `projects` is a live
+  // Firestore listener, so that resynced on every remote update to the
+  // same project, silently discarding whatever the PL was mid-typing here
+  // whenever e.g. a second open tab/device saved first. Adjusting state
+  // during render (React's own recipe for "reset state when switching to a
+  // different item") also avoids the effect-based version's extra render
+  // pass and the brief blank-fields flash on first load.
+  if (project && project.id !== syncedProjectId) {
+    setSyncedProjectId(project.id);
+    setName(project.name);
+    setDescription(project.description);
+    setStartDate(project.startDate ?? "");
+    setEndDate(project.endDate ?? "");
+  }
 
   const memberIdStr = project?.memberIds.join(",") ?? "";
   useEffect(() => {
