@@ -108,6 +108,14 @@ export interface Dictionary {
     empty: string;
     deleteAll: string;
     deleteAllConfirm: string;
+    copy: string;
+    reply: string;
+    edit: string;
+    delete: string;
+    deleteConfirm: string;
+    replyingTo: string;
+    editingLabel: string;
+    edited: string;
   };
   settings: {
     title: string;

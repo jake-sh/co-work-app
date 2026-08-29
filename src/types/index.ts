@@ -81,4 +81,10 @@ export interface ChatMessage {
   authorName: string;
   authorColor: string;
   createdAt: number;
+  editedAt?: number;
+  // Denormalized snapshot of the quoted message, same rationale as
+  // authorName/authorColor above — resolving a live reference against a
+  // message that may itself have since been edited or deleted would show
+  // a quote that keeps changing (or vanishes) underneath the reply.
+  replyTo?: { id: string; authorName: string; text: string } | null;
 }
