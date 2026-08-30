@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { useData } from "@/lib/context/DataContext";
-import { Copy, Pencil, Reply as ReplyIcon, Send, Trash2, X } from "lucide-react";
+import { Send, Trash2, X } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useProjects } from "@/lib/context/ProjectContext";
 import { useI18n } from "@/lib/i18n/I18nContext";
@@ -42,13 +42,31 @@ export default function ChatPage() {
 
   // Long-press-to-open-menu state for message bubbles (Copy/Reply/Edit/
   // Delete), plus reply/edit compose state and the per-message delete
-  // confirm dialog.
+  // confirm dialog. The menu is anchored to the pressed bubble (not a
+  // bottom sheet) — actionMenuAnchor is that bubble's viewport rect,
+  // captured at press time, and actionMenuStyle is the popup's actual
+  // computed position (see the useLayoutEffect below).
   const [actionMenuMsg, setActionMenuMsg] = useState<ChatMessage | null>(null);
+  const [actionMenuAnchor, setActionMenuAnchor] = useState<{
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+    isMine: boolean;
+  } | null>(null);
+  const HIDDEN_MENU_STYLE: React.CSSProperties = { position: "fixed", top: -9999, left: -9999, opacity: 0 };
+  const [actionMenuStyle, setActionMenuStyle] = useState<React.CSSProperties>(HIDDEN_MENU_STYLE);
+  const actionMenuRef = useRef<HTMLDivElement>(null);
   const [confirmDeleteMsg, setConfirmDeleteMsg] = useState<ChatMessage | null>(null);
   const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null);
   const [editingMsg, setEditingMsg] = useState<ChatMessage | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressStart = useRef<{ x: number; y: number } | null>(null);
+
+  const closeActionMenu = () => {
+    setActionMenuMsg(null);
+    setActionMenuAnchor(null);
+  };
 
   // A single set of refs (rather than one useTapAndHold instance per
   // message) works fine here since only one bubble can be mid-press at a
@@ -60,10 +78,14 @@ export default function ChatPage() {
       longPressTimer.current = null;
     }
   };
-  const onBubblePointerDown = (msg: ChatMessage) => (e: React.PointerEvent) => {
+  const onBubblePointerDown = (msg: ChatMessage, isMine: boolean) => (e: React.PointerEvent<HTMLDivElement>) => {
     longPressStart.current = { x: e.clientX, y: e.clientY };
+    const bubble = e.currentTarget;
     clearLongPress();
     longPressTimer.current = setTimeout(() => {
+      const rect = bubble.getBoundingClientRect();
+      setActionMenuStyle(HIDDEN_MENU_STYLE);
+      setActionMenuAnchor({ top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right, isMine });
       setActionMenuMsg(msg);
       try {
         navigator.vibrate?.(30);
@@ -82,6 +104,25 @@ export default function ChatPage() {
     clearLongPress();
     longPressStart.current = null;
   };
+
+  // Position the popup relative to the pressed bubble now that its actual
+  // size is known (only measurable post-render) — flips above the bubble
+  // instead of below, and clamps to the viewport, when there isn't room.
+  useLayoutEffect(() => {
+    if (!actionMenuMsg || !actionMenuAnchor || !actionMenuRef.current) return;
+    const menu = actionMenuRef.current;
+    const { width, height } = menu.getBoundingClientRect();
+    const margin = 8;
+    const gap = 6;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    let left = actionMenuAnchor.isMine ? actionMenuAnchor.right - width : actionMenuAnchor.left;
+    left = Math.min(Math.max(left, margin), vw - width - margin);
+    let top = actionMenuAnchor.bottom + gap;
+    if (top + height > vh - margin) top = actionMenuAnchor.top - height - gap;
+    top = Math.min(Math.max(top, margin), vh - height - margin);
+    setActionMenuStyle({ position: "fixed", top, left, opacity: 1 });
+  }, [actionMenuMsg, actionMenuAnchor]);
 
   useEffect(() => {
     type VK = { overlaysContent: boolean; boundingRect: DOMRect } & EventTarget;
@@ -276,33 +317,33 @@ export default function ChatPage() {
         </div>
       )}
 
-      {actionMenuMsg && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60"
-          onClick={() => setActionMenuMsg(null)}
-        >
+      {actionMenuMsg && actionMenuAnchor && (
+        <>
+          {/* Transparent full-screen tap-catcher to dismiss — no dark
+              backdrop, so it reads as an anchored context menu rather than
+              a modal sheet. */}
+          <div className="fixed inset-0 z-50" onClick={closeActionMenu} />
           <div
-            className="w-full max-w-md overflow-hidden rounded-t-2xl bg-surface-card pb-[env(safe-area-inset-bottom,0px)]"
-            onClick={(e) => e.stopPropagation()}
+            ref={actionMenuRef}
+            style={actionMenuStyle}
+            className="z-50 w-36 overflow-hidden rounded-xl bg-surface-card shadow-xl"
           >
             <button
               onClick={() => {
                 onCopy(actionMenuMsg);
-                setActionMenuMsg(null);
+                closeActionMenu();
               }}
-              className="flex w-full items-center gap-3 px-5 py-3.5 text-left text-sm font-medium"
+              className="block w-full px-4 py-3 text-left text-sm font-medium"
             >
-              <Copy size={18} className="text-text-secondary" />
               {t.chat.copy}
             </button>
             <button
               onClick={() => {
                 onStartReply(actionMenuMsg);
-                setActionMenuMsg(null);
+                closeActionMenu();
               }}
-              className="flex w-full items-center gap-3 px-5 py-3.5 text-left text-sm font-medium"
+              className="block w-full px-4 py-3 text-left text-sm font-medium"
             >
-              <ReplyIcon size={18} className="text-text-secondary" />
               {t.chat.reply}
             </button>
             {actionMenuMsg.authorId === profile?.uid && (
@@ -310,27 +351,25 @@ export default function ChatPage() {
                 <button
                   onClick={() => {
                     onStartEdit(actionMenuMsg);
-                    setActionMenuMsg(null);
+                    closeActionMenu();
                   }}
-                  className="flex w-full items-center gap-3 px-5 py-3.5 text-left text-sm font-medium"
+                  className="block w-full px-4 py-3 text-left text-sm font-medium"
                 >
-                  <Pencil size={18} className="text-text-secondary" />
                   {t.chat.edit}
                 </button>
                 <button
                   onClick={() => {
                     setConfirmDeleteMsg(actionMenuMsg);
-                    setActionMenuMsg(null);
+                    closeActionMenu();
                   }}
-                  className="flex w-full items-center gap-3 px-5 py-3.5 text-left text-sm font-medium text-red-400"
+                  className="block w-full px-4 py-3 text-left text-sm font-medium text-red-400"
                 >
-                  <Trash2 size={18} />
                   {t.chat.delete}
                 </button>
               </>
             )}
           </div>
-        </div>
+        </>
       )}
 
       {confirmDeleteMsg && (
@@ -403,7 +442,7 @@ export default function ChatPage() {
                         : "rounded-tr-2xl rounded-bl-2xl rounded-br-2xl rounded-tl-sm bg-surface-card text-text-primary",
                     )}
                     style={{ touchAction: "pan-y" }}
-                    onPointerDown={onBubblePointerDown(msg)}
+                    onPointerDown={onBubblePointerDown(msg, isMine)}
                     onPointerMove={onBubblePointerMove}
                     onPointerUp={onBubblePointerEnd}
                     onPointerLeave={onBubblePointerEnd}
