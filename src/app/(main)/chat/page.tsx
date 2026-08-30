@@ -452,8 +452,8 @@ export default function ChatPage() {
                     {msg.replyTo && (
                       <div
                         className={clsx(
-                          "mb-1 truncate rounded border-l-2 py-0.5 pl-2 text-xs opacity-70",
-                          isMine ? "border-accent-content/50" : "border-text-secondary/50",
+                          "mb-1 truncate rounded px-2 py-1 text-xs opacity-70",
+                          isMine ? "bg-accent-content/15" : "bg-text-secondary/15",
                         )}
                       >
                         <span className="font-semibold">{msg.replyTo.authorName}</span>
